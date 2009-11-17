@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -163,7 +163,18 @@ foreach my $field (@bug_fields) {
     $bug_params{$field} = $cgi->param($field);
 }
 $bug_params{'creation_ts'} = $timestamp;
-$bug_params{'cc'}          = [$cgi->param('cc')];
+my @cclist_form = $cgi->param('cc');
+my @cclist_save = ();
+my @cclist_once = ();
+foreach my $user_id (@cclist_form) {
+  if ($user_id =~ /^sendonce\-(.*)/) {
+    push @cclist_once, $1;
+  } else {
+    push @cclist_save, $user_id;
+  }
+}
+
+$bug_params{'cc'}          = \@cclist_save;
 $bug_params{'groups'}      = \@selected_groups;
 $bug_params{'comment'}     = $comment;
 
@@ -178,6 +189,13 @@ my $bug = Bugzilla::Bug->create(\%bug_params);
 
 # Get the bug ID back.
 my $id = $bug->bug_id;
+
+foreach my $user_id (@{$bug->{cc}}) {
+  $user_id = user_id_to_login($user_id);
+  if ($user_id =~ /^sendonce\-(.*)/) {
+    push @cclist_once, $1;
+  }
+}
 
 # Set Version cookie, but only if the user actually selected
 # a version on the page.
@@ -241,6 +259,10 @@ if ($@) {
 
 # Email everyone the details of the new bug 
 $vars->{'mailrecipients'} = {'changer' => $user->login};
+if ((scalar @selected_groups) == 0) {
+  $vars->{'mailrecipients'}{'cc'} = [];
+  push @{$vars->{'mailrecipients'}{'cc'}}, @cclist_once;
+}
 
 $vars->{'id'} = $id;
 $vars->{'bug'} = $bug;

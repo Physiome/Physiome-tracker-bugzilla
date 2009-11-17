@@ -32,8 +32,9 @@
 [% PROCESS global/header.html.tmpl
    title = "$terms.Bugzilla Main Page"
    header = "Main Page" 
-   header_addl_info = "version $constants.BUGZILLA_VERSION"
+   # header_addl_info = "version $constants.BUGZILLA_VERSION"
    style_urls = [ 'skins/standard/index.css' ]
+   onload = 'document.forms[\'searchform\'].quicksearch.focus();'
 %]
 
 
@@ -127,59 +128,64 @@ YAHOO.util.Event.onDOMReady(onLoadActions);
   <table>
     <tr>
       <td>
-        <h1 id="welcome"> Welcome to [% terms.Bugzilla %]</h1>
-        <a id="enter_bug" class="bz_common_actions"
-           href="enter_bug.cgi"><span>File [% terms.aBug %]</span></a>
-      
-        <a id="query" class="bz_common_actions" 
-           href="query.cgi"><span>Search</span></a>
-      
-        <a id="account" class="bz_common_actions"
-          [% IF user.id %]
-            href="userprefs.cgi"><span>User Preferences</span></a>
-          [% ELSIF Param('createemailregexp')
-                   && user.authorizer.user_can_create_account 
-          %]
-            href="createaccount.cgi"><span>Open a New Account</span></a>
-          [% ELSE %]
-            href="?GoAheadAndLogIn=1"><span>Log In</span></a>
+  <p>This is the Physiome Tracker site</p>
+  <p>Most common actions:</p>
+  <ul>
+    <li id="submit-a">Submit a question, comment, problem report or suggestion about:
+      <ul>
+        <li id="cellml-report"><a href="enter_bug.cgi?product=Using%20CellML&format=generalhelp">CellML</a>.</li>
+        <li id="cellml-report"><a href="enter_bug.cgi?product=cmgui&format=generalhelp">cmgui</a>.</li>
+        <li id="repo-report"><a href="enter_bug.cgi?product=CellML%20Repository%20Models%20%2F%20Curation%20Issues&format=repomodel">a repository model</a>.</li>
+        <li id="enter-general-question"><a href="enter_bug.cgi?format=software">a web service or software program</a>.</li>
+      </ul>
+    </li>
+    <li id="displayall">
+      List all open [% terms.bugs %] about:</a>
+      <ul>
+        <li><a href="buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED">anything</a></li>
+          [% FOREACH item = user.get_selectable_products %]
+            <li><a href="buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&product=[% item.name FILTER html %]">[% item.name FILTER html %]</a></li>
           [% END %]
+      </ul>
+    </li>
+    <li id="query"><a href="query.cgi">Search [% terms.bugs %]</a></li>
+    <li id="report"><a href="report.cgi">Summary reports and charts</a></li>
+[% IF user.id %]
+    <li id="userprefs"><a href="userprefs.cgi">Change password or user preferences</a></li>
+  [% IF user.authorizer.can_logout %]
+    <li id="logout"><a href="index.cgi?logout=1">Log out [% user.login FILTER html %]</a></li>
+  [% END %]
+[% ELSIF user.authorizer.can_login %]
+  </ul>
+    [% PROCESS "account/auth/login-small.html.tmpl" %]
+  <ul>
+  [% IF Param('createemailregexp') && user.authorizer.user_can_create_account %]
+    <li id="account"><a href="createaccount.cgi">Open a new [% terms.Bugzilla %] account</a></li>
+  [% END %]
+[% END %]
+    <li id="quick_search_plugin">
+      <a href="javascript:window.external.AddSearchProvider('[% Param('urlbase') %]search_plugin.cgi')">Install
+      the Quick Search plugin</a> (requires Firefox 2 or Internet Explorer 7)
+    </li>
 
-        <form id="quicksearchForm" name="quicksearchForm" action="buglist.cgi"
-              onsubmit="return checkQuicksearch(this);">
-          <div>
-            <input id="quicksearch_main" type="text" name="quicksearch"
-              onfocus="quicksearchHelpText(this.id, 'hide');"
-              onblur="quicksearchHelpText(this.id, 'show');"
-            >
-            <input id="find" type="submit" value="Quick Search">
-            <ul class="additional_links" id="quicksearch_links">
-              <li>
-                <a href="page.cgi?id=quicksearch.html">Quick Search help</a>
-              </li>
-              <li class="bz_default_hidden" id="quicksearch_plugin">
-                |
-                <a href="javascript:window.external.AddSearchProvider('[% urlbase FILTER html %]search_plugin.cgi')">
-                 Install the Quick Search plugin
-                </a>
-              </li>
-            </ul>
-            <ul class="additional_links">
-              <li>
-                <a href="[% docs_urlbase FILTER html %]using.html">
-                  [%- terms.Bugzilla %] User's Guide
-                </a>
-                &nbsp;|
-              </li>
-              <li>
-                <a href="page.cgi?id=release-notes.html" > Release Notes</a>
-              </li>
-            </ul>
-          </div>
-        </form>
-      </td>
-    </tr>
-  </table>
+
+    [%# List items of links to more things users can do on this installation. %]
+    [% Hook.process("links") %]
+
+  </ul>
+
+  <form id="f" name="f" action="buglist.cgi" method="get"
+        onsubmit="if (this.quicksearch.value == '')
+                  { alert('Please enter one or more search terms first.');
+                    return false; } return true;">
+  <div>
+    <p>Enter [% terms.abug %] # or some search terms:</p>
+    <input id="quicksearch" type="text" name="quicksearch">
+    <input id="find" type="submit" value="Find">
+    <a href="page.cgi?id=quicksearch.html">[Help]</a>
+  </div>
+  </form>
+
   <div class="outro"></div>
 </div>
 

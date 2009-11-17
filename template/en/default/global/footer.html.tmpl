@@ -26,24 +26,55 @@
 
 [% INCLUDE "global/help.html.tmpl" %]
 
-</div>
+</div></div>
+
+     </td>
+     <td id="portal-column-two">
+       <div class="visualPadding">
+         <div class="portlet" id="portlet-about">
+           <h5>About</h5>
+           <div class="portletBody">
+             <div class="portletContent odd">
+               <p>This tracker is a place where questions, comments, bug reports,
+                  an suggestions / proposals about Physiome projects can be
+                  entered and tracked.</p>
+             </div>
+           </div>
+         </div>
+       </div>
+       [%# We have no other choices than enumerating all required privileges to have
+         # at least one link in this section. %]
+       [% IF user.login
+     && (user.groups.tweakparams || user.groups.editusers || user.can_bless
+         || (Param('useclassification') && user.groups.editclassifications)
+         || user.groups.editcomponents || user.groups.admin || user.groups.creategroups
+         || user.get_products_by_permission("editcomponents").size
+         || user.groups.editkeywords || user.groups.bz_canusewhines)%]
+         <div class="portlet" id="portlet-admin">
+           <h5>Administration</h5>
+           <div class="portletBody">
+             <div class="portletContent even">
+               [% PROCESS "global/admin-links.html.tmpl" %]
+             </div>
+           </div>
+         </div>
+       </div>
+       [% END %]
+     </td>
+   </tr>
+ </tbody>
+</table>
 
 [%# Migration note: below this point, this file corresponds to the old Param
   # 'footerhtml'
   #%]
 
-<div id="footer">
-  <div class="intro"></div>
-
-[%# Migration note: the old param 'blurbhtml' goes here %]
-
-[%# Migration note: useful-links.html.tmpl corresponds to %commandmenu% %]
-
-           [% PROCESS "global/useful-links.html.tmpl" %]
-
-  <div class="outro"></div>
-</div>
-
+  <div class="visualClear"><!-- --></div>
+  <hr class="netscape4" />
+  <div id="portal-footer">
+    E-mail website feedback to 
+    <a href="mailto:webmaster@cellml.org">webmaster@cellml.org</a>
+  </div>
 </body>
 </html>
 

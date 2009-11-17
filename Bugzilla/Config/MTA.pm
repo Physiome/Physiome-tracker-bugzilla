@@ -101,7 +101,13 @@ sub get_param_list {
    name => 'globalwatchers',
    type => 't',
    default => '',
-  }, );
+  },
+
+  {
+   name => 'mailing_list',
+   type => 't',
+   default => '',
+  });
   return @param_list;
 }
 

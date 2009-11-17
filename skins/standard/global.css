@@ -25,9 +25,9 @@
 
 /* global (begin) */
     body {
-        font-family: sans-serif;
-        color: #000;
-        background: #fff url("global/body-back.gif") repeat-x;
+        /* font-family: sans-serif; */
+        /* color: #000; */
+        /* background: #fff url("global/body-back.gif") repeat-x; */
     }
     body, td, th, input {
         font-family: Verdana, sans-serif;
@@ -455,6 +455,13 @@ div.user_match {
 .field_value, form#Create th, form#Create td {
     vertical-align: top;
 }
+
+fieldset {
+ border: 0;
+}
+fieldset legend {
+ display: none;
+} 
 
 .calendar_button {
     background: transparent url("global/calendar.png") no-repeat;

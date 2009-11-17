@@ -3,3 +3,5 @@ localconfig
 data
 skins/contrib/Dusk/.*\.css
 .*~
+skins/custom/.*\.css
+mod_perl.pl

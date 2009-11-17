@@ -59,6 +59,92 @@
 
 <h2><a name="v34_point"></a>Updates In This 3.4.x Release</h2>
 
+<h3>3.4.3</h3>
+
+<ul>
+  <li>[% terms.Bugzilla %] installations running under mod_perl were leaking
+    about 512K of RAM per page load.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=517793">[% terms.Bug %] 517793</a>)
+  </li>
+  <li>Attachments with Unicode characters in their names were being downloaded
+    with mangled names. 
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=328628">[% terms.Bug %] 328628</a>)
+  </li>
+  <li>Creating custom fields with Unicode in their database column name
+    is now no longer allowed, as it would break [% terms.Bugzilla %]. If you
+    created such a custom field, you should delete it by first marking it 
+    obsolete and then clicking "Delete" in the custom field list, using
+    <a href="editfields.cgi">editfields.cgi</a>.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=525025">[% terms.Bug %] 525025</a>)
+  </li>
+  <li>Clicking "submit only my comment" on the "mid-air collisions" page
+    was leading to a "Suspicious Action" warning.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=514378">[% terms.Bug %] 514378</a>)
+  </li>
+  <li>The XML format of [% terms.abug %] accidentally contained the
+    word-wrapped content of comments instead of the unwrapped content.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=509152">[% terms.Bug %] 509152</a>)
+  </li>
+  <li>You can now do <kbd>./install-module.pl --shell</kbd> to get a CPAN
+    shell using the configuration of 
+    <a href="[% docs_urlbase FILTER html %]api/install-module.html">install-module.pl</a>,
+    which allows you to do more advanced Perl module installation tasks.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=445875">[% terms.Bug %] 445875</a>)
+  </li>
+</ul>
+
+<h3>3.4.2</h3>
+
+<p>This release contains fixes for multiple security issues, one of which
+  is highly critical. See the 
+  <a href="http://www.bugzilla.org/security/3.0.8/">Security Advisory</a>
+  for details.</p>
+
+<p>In addition, the following important fixes/changes have been made in
+  this release:</p>
+
+<ul>
+  <li>Upgrades from older releases were sometimes failing during UTF-8 
+    conversion with a foreign key error. 
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=508181">[% terms.Bug %] 508181</a>)
+  </li>
+  <li>Sorting [% terms.bug %] lists on certain fields would result in an error.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=510944">[% terms.Bug %] 510944</a>)
+  </li>
+  <li>[% terms.Bug %] update emails had two or three blank lines at the top
+    and between the various sections of the email. There is now only one
+    blank line in each of those places, making these emails more compact.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=73330">[% terms.Bug %] 73330</a>)
+  </li>
+  <li>[% terms.Bug %] email notifications for new [% terms.bugs %] incorrectly
+    had a line saying that the description was "Comment 0".
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=510798">[% terms.Bug %] 510798</a>)
+  </li>
+  <li>Running <kbd>./collectstats.pl --regenerate</kbd> is now much faster,
+    on the order of 20x or 100x faster.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=286625">[% terms.Bug %] 286625</a>)
+  </li>
+  <li>For users of RHEL, CentOS, Fedora, etc. jobqueue.pl can now automatically
+    be installed as a daemon by running <kbd>./jobqueue.pl install</kbd>
+    as root. 
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=475403">[% terms.Bug %] 475403</a>)
+  </li>
+  <li>XML-RPC interface responses had an incorrect Content-Length header
+    and would sometimes be truncated, if they contained certain UTF-8
+    characters.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=486306">[% terms.Bug %] 486306</a>)
+  </li>
+  <li>Users who didn't have access to the time-tracking fields would get an
+    empty [% terms.bug %] update email when the time-tracking fields were
+    changed.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=509035">[% terms.Bug %] 509035</a>)
+  </li>
+  <li>In the New Charts, non-public series now no longer show up as selectable
+    if you cannot access them.
+    (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=389396">[% terms.Bug %] 389396</a>)
+  </li>
+</ul>
+
 <h3>3.4.1</h3>
 
 <p>This release contains an important security fix. See the

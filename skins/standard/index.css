@@ -21,6 +21,23 @@
         padding: 0.2em 0.2em 0.15em 0.2em;
     }
 
+    /* By default these contain nothing, but these CSS rules make things
+       easier on customizers. */
+    .intro, .outro {
+        text-align: center;
+        width: 50em;
+    }
+
+    /* Hide from NN4 */
+
+    #new_release
+    {
+        border: 2px solid red;
+        padding: 0.5em 1em;
+        margin: 1em;
+        font-weight: bold;
+    }
+
     #new_release .notice
     {
         font-size: 80%;

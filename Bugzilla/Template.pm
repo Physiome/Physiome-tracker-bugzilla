@@ -262,9 +262,25 @@ sub quoteUrls {
               ~egmix;
 
     $text =~ s~\b(changeset\W+CB\W*\#?\W*([0-9|a-f|A-F]+))
-              ~($things[$count++] = "<a\ href=\"http://bitbucket.org/a1kmm/physiome-build/changeset/$2/\">$1</a>") &&
+              ~($things[$count++] = "<a\ href=\"http://cellml-api.hg.sourceforge.net/hgweb/cellml-api/cellml-build/changeset/$2/\">$1</a>") &&
                ("\0\0". ($count-1) . "\0\0")
               ~egmix;
+
+    $text =~ s~\b(changeset\W+PT\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"https://bitbucket.org/a1kmm/physiome-tracker/changeset/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+FM\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"http://fieldml.hg.sourceforge.net:8000/hgroot/fieldml/fieldml/changeset/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(revision\W+OCM\W*\#?\W*([0-9]+))
+              ~($things[$count++] = "<a\ href=\"http://opencmiss.svn.sourceforge.net/viewvc/opencmiss?view=revision&revision=$2\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
 
     # Current bug ID this comment belongs to
     my $current_bugurl = $bug ? ("show_bug.cgi?id=" . $bug->id) : "";

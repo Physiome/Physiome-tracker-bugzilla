@@ -1,0 +1,60 @@
+[%# 1.0@bugzilla.org %]
+[%# The contents of this file are subject to the Mozilla Public
+  # License Version 1.1 (the "License"); you may not use this file
+  # except in compliance with the License. You may obtain a copy of
+  # the License at http://www.mozilla.org/MPL/
+  #
+  # Software distributed under the License is distributed on an "AS
+  # IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  # implied. See the License for the specific language governing
+  # rights and limitations under the License.
+  #
+  # The Original Code is the CellML tracker
+  # The Initial Developer of the Original Code is Andrew Miller.
+  # Portions created by Andrew Miller are
+  # Copyright (C) 2007 Netscape Communications Corporation. All
+  # Rights Reserved.
+  #
+  # Contributor(s):
+  #%]
+[% PROCESS global/variables.none.tmpl %]
+
+[% IF user.in_group('tweakparams') %]
+  <h7><a href="editparams.cgi">Parameters</a></h7><br />
+  <h7><a href="editsettings.cgi">User Preferences</a></h7><br />
+[% END %]
+[% IF user.in_group('editcomponents') %]
+  <h7><a href="sanitycheck.cgi">Sanity Check</a></h7><br />
+[% END %]
+[% IF user.in_group('editusers') || user.in_group('can_bless') %]
+  <h7><a href="editusers.cgi">Users</a></h7><br />
+[% END %]
+        [% IF Param('useclassification') && user.in_group('editclassifications') %]
+          <h7><a href="editclassifications.cgi">Classifications</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]
+        [% IF user.in_group('editcomponents') || user.get_products_by_permission("editcomponents").size %]
+          <h7><a href="editproducts.cgi">Products</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]
+        [% IF user.in_group('editcomponents') %]
+          <h7><a href="editflagtypes.cgi">Flags</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]
+        [% IF user.in_group('admin') %]
+          <h7><a href="editfields.cgi">Custom Fields</a></h7><br />
+          [% print_pipe = 1 %]
+          <h7><a href="editvalues.cgi">Field Values</a></h7><br />
+        [% END %]
+        [% IF user.in_group('creategroups') %]
+          <h7><a href="editgroups.cgi">Groups</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]
+        [% IF user.in_group('editkeywords') %]
+          <h7><a href="editkeywords.cgi">Keywords</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]
+        [% IF user.in_group('bz_canusewhines') %]
+          <h7><a href="editwhines.cgi">Whining</a></h7><br />
+          [% print_pipe = 1 %]
+        [% END %]

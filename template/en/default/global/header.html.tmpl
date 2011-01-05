@@ -64,6 +64,23 @@
     [% Hook.process("start") %]
     <title>[% title %]</title>
 
+    <style type="text/css">
+      <!-- @import url([% Param('urlbase') FILTER none %]skins/standard/global/plone1.css); -->
+    </style>
+    <style type="text/css" media="screen">
+      <!-- @import url([% Param('urlbase') FILTER none %]skins/standard/global/plone2.css); -->
+    </style>
+    <style type="text/css">
+      <!-- @import url([% Param('urlbase') FILTER none %]skins/standard/global/plone3.css); -->
+    </style>
+    <style type="text/css" media="all">
+      <!-- @import url([% Param('urlbase') FILTER none %]skins/standard/global/plone4.css); -->
+    </style>
+    <style type="text/css" media="all">
+      <!-- @import url([% Param('urlbase') FILTER none %]skins/standard/global/plone5.css); -->
+    </style>
+    <link rel="shortcut icon" type="image/x-icon"
+          href="http://www.physiome.org.nz/favicon.ico" />
 [%# Migration note: contents of the old Param 'headerhtml' would go here %]
 
     [% PROCESS "global/site-navigation.html.tmpl" %]
@@ -249,7 +266,6 @@
     [%# Required for the 'Autodiscovery' feature in Firefox 2 and IE 7. %]
     <link rel="search" type="application/opensearchdescription+xml"
                        title="[% terms.Bugzilla %]" href="./search_plugin.cgi">
-    <link rel="shortcut icon" href="images/favicon.ico" >
     [% Hook.process("additional_header") %]
   </head>
 
@@ -267,32 +283,91 @@
   # 'bannerhtml'
   #%]
 
-<div id="header">
+<div id="portal-header">
+  <a class="hiddenStructure" accesskey="2"
+   href="#documentContent">Skip to content.</a>
+
+  <a class="hiddenStructure" accesskey="6"
+    href="#navigation-tree">Skip to navigation</a>
+
+  <table id="head table" width="100%">
+    <tr>
+      <td>
+        <h1 id="portal-logo">
+          <a href="http://www.physiomeproject.org" accesskey="1">Physiome Project</a>
+        </h1>
+      </td>
+      <td>
+        <div id="physiome-navbar">
+          <h2>IUPS Physiome Project</h2>
+        </div>
+      </td>
+      <td>
+        <div id="portal-searchbox">
+          <form name="searchform"
+            action="buglist.cgi" method="get"
+            style="white-space:nowrap"
+            onsubmit="return liveSearchSubmit()">
+            <label for="searchGadget" class="hiddenStructure">Search Site</label>
+            <div class="LSBox">
+              <input id="quicksearch" tabindex="30001"
+                     name="quicksearch" type="text" size="15"
+                     title="Search Site" accesskey="4"
+                     class="visibility:visible" />
+              <input class="searchButton" type="submit"
+                     tabindex="30002" value="Search" />
+              <div class="LSResult" id="LSResult" style=""><div class="LSShadow" id="LSShadow"></div></div>
+            </div>
+          </form>
+          <div id="portal-advanced-search" class="hiddenStructure">
+            <a href="http://www.cellml.org/search_form"
+               accesskey="5">
+              Advanced Search&hellip;
+            </a>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 
 [% INCLUDE global/banner.html.tmpl %]
 
-<table border="0" cellspacing="0" cellpadding="0" id="titles">
-<tr>
-    <td id="title">
-      <p>[% terms.Bugzilla %]
-      [% " &ndash; $header" IF header %]</p>
-    </td>
+<h5 class="hiddenStructure">Personal tools</h5>
 
-  [% IF subheader %]
-    <td id="subtitle">
-      <p class="subheader">[% subheader %]</p>
-    </td>
+<ul id="portal-personaltools">
+  [% IF user.login %]
+  [% html_username = user.login FILTER html %]
+  [% filtered_username = user.login FILTER url_quote %]
+  <li class="portalUser">
+    [% html_username %]
+  </li>
+  
+  [% IF user.showmybugslink %]
+    [% filtered_username = user.login FILTER url_quote %]
+    <li><a href="[% Param('mybugstemplate').replace('%userid%', filtered_username) %]">My [% terms.Bugs %]</a></li>
   [% END %]
 
-  [% IF header_addl_info %]
-    <td id="information">
-      <p class="header_addl_info">[% header_addl_info %]</p>
-    </td>
+  <li>
+    <a href="userprefs.cgi">
+      Preferences
+    </a>
+  </li>
+    
+  [% IF user.authorizer.can_logout %]
+    [% IF sudoer %]
+    <li>
+      <a href="relogin.cgi?action=end-sudo">End sudo session</a>
+    </li>
+    [% END %]
+  <li>
+    <a href="index.cgi?logout=1">Log out</a>
+  </li>
   [% END %]
-</tr>
-</table>
-
-<table id="lang_links_container" cellpadding="0" cellspacing="0"
+  [% ELSE %]
+  <li>
+    [% IF cgi.request_method == "GET" AND cgi.query_string %]
+      [% script_name = script_name _ "?" _ cgi.query_string %]
+      [% script_name = script_name _ "&GoAheadAndLogIn=1" IF !cgi.query_string.match("GoAheadAndLogIn") %]
        class="bz_default_hidden"><tr><td>
 [% IF Bugzilla.languages.size > 1 %]
   <ul class="links">
@@ -301,19 +376,90 @@
     [% IF lang == current_language %]
       <span class="lang_current">[% lang FILTER html FILTER upper %]</span>
     [% ELSE %]
-      <a href="#" onclick="set_language('[% lang FILTER none %]');">
+      [% script_name = script_name _ "?GoAheadAndLogIn=1" %]
        [%- lang FILTER html FILTER upper %]</a>
-    [% END %]
-    </li>
+    [% END %]    
+    <li><a href="[% script_name FILTER html %]">Log in</a></li>
+  </li>
+  [% IF Param('createemailregexp')
+        && user.authorizer.user_can_create_account %]
+    <li><a href="createaccount.cgi">Create account</a></li>
   [% END %]
-  </ul>
+
+  [% END %]
+</ul> 
+
+<div id="portal-breadcrumbs">
+  <span id="breadcrumbs-you-are-here">You 
+are here:</span>
+  <a href="http://www.physiomeproject.org">Home</a>
+    <span class="breadcrumbSeparator">
+        &rarr;
+    </span>
+    <span dir="ltr">
+      <a href="[% Param('urlbase') FILTER none %]">Tracker</a>
+    </span>
+    <span class="breadcrumbSeparator">
+        &rarr;
+    </span>
+    <span dir="ltr">
+      [% header %]
+      [% IF subheader %]
+        <td id="subtitle">
+        [% subheader %]
+      [% END %]
+    </span>
+</div>
+</div>
+<div class="visualClear">&nbsp;</div>
 [% END %]
 </td></tr></table>
 
-[% PROCESS "global/common-links.html.tmpl" qs_suffix = "_top" %]
-</div> [%# header %]
+<table id="portal-columns">
+  <tbody>
+    <tr>        
+     <td id="portal-column-one">
+       <div id="physiome-menu">
+         <h3>Tracker</h3>
+[% PROCESS "global/common-links.html.tmpl" btn_id = "find_top" %]
+       </div>
 
-<div id="bugzilla-body">
+      [%# Saved searches %]
+      [% IF user.showmybugslink OR user.queries.size 
+            OR user.queries_subscribed.size 
+       %]
+       <div id="physiome-menu">
+         <h3>Saved searches</h3>
+         <ul class="visualNoMarker">
+         [% IF user.showmybugslink %]
+           [% filtered_username = user.login FILTER url_quote %]
+           <li><a href="[% Param('mybugstemplate').replace('%userid%', filtered_username) %]">My [% terms.Bugs %]</a></li>
+         [% END %]
+         [% FOREACH q = user.queries %]
+           [% IF q.link_in_footer %]
+             <li>
+             <a href="buglist.cgi?cmdtype=runnamed&amp;namedcmd=[% q.name FILTER url_quote %]">[% q.name FILTER html %]</a></li>
+           [% END %]
+         [% END %]
+         [% FOREACH q = user.queries_subscribed %]
+           <li>
+             <a href="buglist.cgi?cmdtype=dorem&amp;remaction=run&amp;namedcmd=
+                      [% q.name FILTER url_quote %]&amp;sharer_id=
+                      [% q.user.id FILTER url_quote %]"
+                class="shared"
+                title="Shared by [% q.user.identity FILTER html %]"
+                >[% q.name FILTER html FILTER no_break %]</a></li>
+         [% END %]
+         </ul>
+       </div>
+       [% END %]
+       <div class="visualPadding">&nbsp;</div>
+     </td>
+     <td id="portal-column-content">
+<div id="portal-column-content">
+  <div id="content" class="document">
+
+<h1 class="documentFirstHeading">[% title %]</h1>
 
 [% IF Param('announcehtml') %]
 [% Param('announcehtml') FILTER none %]

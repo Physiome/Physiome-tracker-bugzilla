@@ -46,7 +46,7 @@
 
     #welcome-admin a
     {
-        font-weight: bold;
+        list-style: none;
     }
     
     .bz_common_actions {
@@ -69,16 +69,15 @@
     {
         text-decoration: none;
     }
-
-    #enter_bug { background: url(index/bug.gif)     no-repeat; }
-    #query     { background: url(index/search.gif)  no-repeat; }
-    #account   { background: url(index/account.gif) no-repeat; }
     
     #quicksearchForm
     {
-        clear: both;
-        text-align: center;
-        margin-bottom: 2em;
+        width: 250px;
+        height: 200px;
+
+        margin-top: 2.3em;
+        margin-right: 2.3em;
+        float: right;
     }
     
     #quicksearchForm #quicksearch_main

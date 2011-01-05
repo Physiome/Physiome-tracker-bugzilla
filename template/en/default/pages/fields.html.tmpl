@@ -261,8 +261,22 @@ This field describes the impact of [% terms.abug %].
   <tr>
     <th>[% display_value("bug_severity", "enhancement") FILTER html %]</th>
 
-    <td>Request for enhancement</td>
+    <td>Request for feature</td>
+  </tr>
+
+  <tr>
+    <th>Question</th>
+
+    <td>No change required - just a question</td>
 </table>
+
+<h2><a name="priority">Priority</a></h2>
+This field describes the importance and order in which [% terms.abug %]
+should be fixed. This field is utilized by the
+people assigned to resolve your issue to prioritize their work to be done. The
+available priorities range from <b>Highest Priority</b> (most important) to 
+<b>Lowest Priority</b> (least important). 
+
 
 <h2><a name="rep_platform">Platform</a></h2>
 This is the hardware platform against which the [% terms.bug %] was

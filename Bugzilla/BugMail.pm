@@ -42,6 +42,7 @@ use Bugzilla::Product;
 use Bugzilla::Component;
 use Bugzilla::Status;
 use Bugzilla::Mailer;
+use Bugzilla::Hook;
 
 use Date::Parse;
 use Date::Format;
@@ -108,7 +109,6 @@ sub three_columns {
 # roles when the email is sent.
 # All the names are email addresses, not userids
 # values are scalars, except for cc, which is a list
-# This hash usually comes from the "mailrecipients" var in a template call.
 sub Send {
     my ($id, $forced) = (@_);
 
@@ -119,6 +119,7 @@ sub Send {
     my $msg = "";
 
     my $dbh = Bugzilla->dbh;
+    my $bug = new Bugzilla::Bug($id);
 
     # XXX - These variables below are useless. We could use field object
     # methods directly. But we first have to implement a cache in
@@ -356,7 +357,7 @@ sub Send {
         }
     }
 
-    my ($comments, $anyprivate) = get_comments_by_bug($id, $start, $end);
+    my $comments = $bug->comments({ after => $start, to => $end });
 
     ###########################################################################
     # Start of email filtering code
@@ -417,6 +418,9 @@ sub Send {
             }
         }
     }
+
+    Bugzilla::Hook::process('bugmail_recipients',
+                            { bug => $bug, recipients => \%recipients });
     
     # Find all those user-watching anyone on the current list, who is not
     # on it already themselves.
@@ -479,11 +483,6 @@ sub Send {
             # So the user exists, can see the bug, and wants mail in at least
             # one role. But do we want to send it to them?
 
-            # If we are using insiders, and the comment is private, only send 
-            # to insiders
-            my $insider_ok = 1;
-            $insider_ok = 0 if $anyprivate && !$user->is_insider;
-
             # We shouldn't send mail if this is a dependency mail (i.e. there 
             # is something in @depbugs), and any of the depending bugs are not 
             # visible to the user. This is to avoid leaking the summaries of 
@@ -498,10 +497,7 @@ sub Send {
 
             # Make sure the user isn't in the nomail list, and the insider and 
             # dep checks passed.
-            if ($user->email_enabled &&
-                $insider_ok &&
-                $dep_ok)
-            {
+            if ($user->email_enabled && $dep_ok) {
                 # OK, OK, if we must. Email the user.
                 $sent_mail = sendMail($user, 
                                       \@headerlist,
@@ -511,7 +507,6 @@ sub Send {
                                       \%fielddescription, 
                                       \@diffparts,
                                       $comments,
-                                      $anyprivate, 
                                       ! $start, 
                                       $id,
                                       exists $watching{$user_id} ?
@@ -535,9 +530,9 @@ sub Send {
 
 sub sendMail {
     my ($user, $hlRef, $relRef, $valueRef, $dmhRef, $fdRef,
-        $diffRef, $newcomments, $anyprivate, $isnew,
-        $id, $watchingRef) = @_;
+        $diffRef, $comments_in, $isnew, $id, $watchingRef) = @_;
 
+    my @send_comments = @$comments_in;
     my %values = %$valueRef;
     my @headerlist = @$hlRef;
     my %mailhead = %$dmhRef;
@@ -577,7 +572,11 @@ sub sendMail {
         }
     }
 
-    if ($difftext eq "" && !scalar(@$newcomments) && !$isnew) {
+    if (!$user->is_insider) {
+        @send_comments = grep { !$_->is_private } @send_comments;
+    }
+
+    if ($difftext eq "" && !scalar(@send_comments) && !$isnew) {
       # Whoops, no differences!
       return 0;
     }
@@ -616,7 +615,7 @@ sub sendMail {
 
     my $vars = {
         isnew => $isnew,
-        to => $user->email,
+        to_user => $user,
         bugid => $id,
         alias => Bugzilla->params->{'usebugaliases'} ? $values{'alias'} : "",
         classification => $values{'classification'},
@@ -640,7 +639,7 @@ sub sendMail {
         reporter => $values{'reporter'},
         reportername => Bugzilla::User->new({name => $values{'reporter'}})->name,
         diffs => $diffs,
-        new_comments => $newcomments,
+        new_comments => \@send_comments,
         threadingmarker => build_thread_marker($id, $user->id, $isnew),
     };
 
@@ -653,45 +652,6 @@ sub sendMail {
     MessageToMTA($msg);
 
     return 1;
-}
-
-# Get bug comments for the given period.
-sub get_comments_by_bug {
-    my ($id, $start, $end) = @_;
-    my $dbh = Bugzilla->dbh;
-
-    my $result = "";
-    my $count = 0;
-    my $anyprivate = 0;
-
-    # $start will be undef for new bugs, and defined for pre-existing bugs.
-    if ($start) {
-        # If $start is not NULL, obtain the count-index
-        # of this comment for the leading "Comment #xxx" line.
-        $count = $dbh->selectrow_array('SELECT COUNT(*) FROM longdescs
-                                        WHERE bug_id = ? AND bug_when <= ?',
-                                        undef, ($id, $start));
-    }
-
-    my $raw = 1; # Do not format comments which are not of type CMT_NORMAL.
-    my $comments = Bugzilla::Bug::GetComments($id, "oldest_to_newest", $start, $end, $raw);
-    my $attach_base = correct_urlbase() . 'attachment.cgi?id=';
-
-    foreach my $comment (@$comments) {
-        $comment->{count} = $count++;
-        # If an attachment was created, then add an URL. (Note: the 'g'lobal
-        # replace should work with comments with multiple attachments.)
-        if ($comment->{body} =~ /Created an attachment \(/) {
-            $comment->{body} =~ s/(Created an attachment \(id=([0-9]+)\))/$1\n --> \($attach_base$2\)/g;
-        }
-        $comment->{body} = $comment->{'already_wrapped'} ? $comment->{body} : wrap_comment($comment->{body});
-    }
-
-    if (Bugzilla->params->{'insidergroup'}) {
-        $anyprivate = 1 if scalar(grep {$_->{'isprivate'} > 0} @$comments);
-    }
-
-    return ($comments, $anyprivate);
 }
 
 1;

@@ -53,7 +53,7 @@ BEGIN { chdir dirname($0); }
 use lib qw(. lib);
 use Bugzilla::Constants;
 use Bugzilla::Install::Requirements;
-use Bugzilla::Install::Util qw(install_string get_version_and_os get_console_locale);
+use Bugzilla::Install::Util qw(install_string get_version_and_os init_console);
 
 ######################################################################
 # Live Code
@@ -61,7 +61,13 @@ use Bugzilla::Install::Util qw(install_string get_version_and_os get_console_loc
 
 # When we're running at the command line, we need to pick the right
 # language before ever displaying any string.
-$ENV{'HTTP_ACCEPT_LANGUAGE'} ||= get_console_locale();
+init_console();
+# Required for displaying strings from install_string, which are always
+# in UTF-8, in every language. For other scripts, Bugzilla::init_page
+# handles this, but here we just need to assume that checksetup.pl output
+# is always UTF-8 in order for install_string to work properly in other
+# languages.
+binmode STDOUT, ':utf8';
 
 my %switch;
 GetOptions(\%switch, 'help|h|?', 'check-modules', 'no-templates|t',
@@ -96,6 +102,7 @@ exit if $switch{'check-modules'};
 # get a cryptic perl error about the missing module.
 
 require Bugzilla;
+require Bugzilla::User;
 
 require Bugzilla::Config;
 import Bugzilla::Config qw(:admin);
@@ -196,6 +203,9 @@ Bugzilla::Install::DB::update_table_definitions(\%old_params);
 
 Bugzilla::Install::update_system_groups();
 
+# "Log In" as the fake superuser who can do everything.
+Bugzilla->set_user(Bugzilla::User->super_user);
+
 ###########################################################################
 # Create --SETTINGS-- users can adjust
 ###########################################################################
@@ -213,12 +223,12 @@ Bugzilla::Install::reset_password($switch{'reset-password'})
     if $switch{'reset-password'};
 
 ###########################################################################
-# Create default Product and Classification
+# Create default Product
 ###########################################################################
 
 Bugzilla::Install::create_default_product();
 
-Bugzilla::Hook::process('install-before_final_checks', {'silent' => $silent });
+Bugzilla::Hook::process('install_before_final_checks', { silent => $silent });
 
 ###########################################################################
 # Final checks
@@ -402,6 +412,10 @@ from one version of Bugzilla to another.
 
 The code for this is in L<Bugzilla::Install::DB/update_table_definitions>.
 
+This includes creating the default Classification (using 
+L<Bugzilla::Install/create_default_classification>) and setting up all
+the foreign keys for all tables, using L<Bugzilla::DB/bz_setup_foreign_keys>.
+
 =item 14
 
 Creates the system groups--the ones like C<editbugs>, C<admin>, and so on.
@@ -422,7 +436,7 @@ the C<--make-admin> switch.
 
 =item 17
 
-Creates the default Classification, Product, and Component, using
+Creates the default Product and Component, using
 L<Bugzilla::Install/create_default_product>.
 
 =back

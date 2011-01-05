@@ -131,16 +131,18 @@ sub PrefillForm {
                       "longdesc", "longdesc_type", "bug_file_loc",
                       "bug_file_loc_type", "status_whiteboard",
                       "status_whiteboard_type", "bug_id",
-                      "bugidtype", "keywords", "keywords_type",
+                      "bug_id_type", "keywords", "keywords_type",
                       "deadlinefrom", "deadlineto",
                       "x_axis_field", "y_axis_field", "z_axis_field",
                       "chart_format", "cumulate", "x_labels_vertical",
                       "category", "subcategory", "name", "newcategory",
                       "newsubcategory", "public", "frequency");
-    # These fields can also have default values (when used in reports).
-    my @custom_select_fields =
-      grep { $_->type == FIELD_TYPE_SINGLE_SELECT } Bugzilla->active_custom_fields;
-    push(@list, map { $_->name } @custom_select_fields);
+    # These fields can also have default values. And because there are
+    # hooks in the advanced search page which let you add fields as
+    # discrete forms, we also need to retain the operators.
+    my @custom_fields = Bugzilla->active_custom_fields;
+    push(@list, map { $_->name } @custom_fields);
+    push(@list, map { $_->name . '_type'} @custom_fields);
 
     foreach my $name (@list) {
         $default{$name} = [];
@@ -230,13 +232,6 @@ if (Bugzilla->params->{'usetargetmilestone'}) {
     $vars->{'target_milestone'} = \@milestones;
 }
 
-$vars->{'have_keywords'} = Bugzilla::Keyword::keyword_count();
-
-my $legal_resolutions = get_legal_field_values('resolution');
-push(@$legal_resolutions, "---"); # Oy, what a hack.
-# Another hack - this array contains "" for some reason. See bug 106589.
-$vars->{'resolution'} = [grep ($_, @$legal_resolutions)];
-
 my @chfields;
 
 push @chfields, "[Bug creation]";
@@ -254,7 +249,7 @@ foreach my $val (editable_bug_fields()) {
     push @chfields, $val;
 }
 
-if (Bugzilla->user->in_group(Bugzilla->params->{'timetrackinggroup'})) {
+if (Bugzilla->user->is_timetracker) {
     push @chfields, "work_time";
 } else {
     @chfields = grep($_ ne "estimated_time", @chfields);
@@ -262,20 +257,19 @@ if (Bugzilla->user->in_group(Bugzilla->params->{'timetrackinggroup'})) {
 }
 @chfields = (sort(@chfields));
 $vars->{'chfield'} = \@chfields;
-$vars->{'bug_status'} = get_legal_field_values('bug_status');
-$vars->{'rep_platform'} = get_legal_field_values('rep_platform');
-$vars->{'op_sys'} = get_legal_field_values('op_sys');
-$vars->{'priority'} = get_legal_field_values('priority');
-$vars->{'bug_severity'} = get_legal_field_values('bug_severity');
+$vars->{'bug_status'} = Bugzilla::Field->new({name => 'bug_status'})->legal_values;
+$vars->{'rep_platform'} = Bugzilla::Field->new({name => 'rep_platform'})->legal_values;
+$vars->{'op_sys'} = Bugzilla::Field->new({name => 'op_sys'})->legal_values;
+$vars->{'priority'} = Bugzilla::Field->new({name => 'priority'})->legal_values;
+$vars->{'bug_severity'} = Bugzilla::Field->new({name => 'bug_severity'})->legal_values;
+$vars->{'resolution'} = Bugzilla::Field->new({name => 'resolution'})->legal_values;
 
 # Boolean charts
 my @fields = Bugzilla->get_fields({ obsolete => 0 });
 
 # If we're not in the time-tracking group, exclude time-tracking fields.
-if (!Bugzilla->user->in_group(Bugzilla->params->{'timetrackinggroup'})) {
-    foreach my $tt_field (qw(estimated_time remaining_time work_time
-                             percentage_complete deadline))
-    {
+if (!Bugzilla->user->is_timetracker) {
+    foreach my $tt_field (TIMETRACKING_FIELDS) {
         @fields = grep($_->name ne $tt_field, @fields);
     }
 }

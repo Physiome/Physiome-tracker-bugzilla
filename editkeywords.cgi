@@ -169,14 +169,14 @@ if ($action eq 'delete') {
     my $keyword =  new Bugzilla::Keyword($key_id)
         || ThrowCodeError('invalid_keyword_id', { id => $key_id });
 
-    $dbh->do('DELETE FROM keywords WHERE keywordid = ?', undef, $keyword->id);
-    $dbh->do('DELETE FROM keyworddefs WHERE id = ?', undef, $keyword->id);
+    $keyword->remove_from_db();
 
     delete_token($token);
 
     print $cgi->header();
 
     $vars->{'message'} = 'keyword_deleted';
+    $vars->{'keyword'} = $keyword;
     $vars->{'keywords'} = Bugzilla::Keyword->get_all_with_bug_count();
 
     $template->process("admin/keywords/list.html.tmpl", $vars)

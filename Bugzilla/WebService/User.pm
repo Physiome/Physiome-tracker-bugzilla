@@ -61,12 +61,12 @@ sub login {
     }
 
     # Make sure the CGI user info class works if necessary.
-    my $cgi = Bugzilla->cgi;
-    $cgi->param('Bugzilla_login', $params->{login});
-    $cgi->param('Bugzilla_password', $params->{password});
-    $cgi->param('Bugzilla_remember', $remember);
+    my $input_params = Bugzilla->input_params;
+    $input_params->{'Bugzilla_login'} =  $params->{login};
+    $input_params->{'Bugzilla_password'} = $params->{password};
+    $input_params->{'Bugzilla_remember'} = $remember;
 
-    Bugzilla->login;
+    Bugzilla->login();
     return { id => $self->type('int', Bugzilla->user->id) };
 }
 
@@ -295,6 +295,11 @@ The username does not exist, or the password is wrong.
 The account has been disabled.  A reason may be specified with the
 error.
 
+=item 305 (New Password Required)
+
+The current password is correct, but the user is asked to change
+his password.
+
 =item 50 (Param Required)
 
 A login or password parameter was not provided.
@@ -370,7 +375,7 @@ An account with that email address already exists in Bugzilla.
 
 =item C<create> 
 
-B<EXPERIMENTAL>
+B<STABLE>
 
 =over
 
@@ -419,10 +424,13 @@ the function may also throw:
 The password specified is too short. (Usually, this means the
 password is under three characters.)
 
-=item 503 (Password Too Long)
+=back
 
-The password specified is too long. (Usually, this means the
-password is over ten characters.)
+=item B<History>
+
+=over
+
+=item Error 503 (Password Too Long) removed in Bugzilla B<3.6>.
 
 =back
 
@@ -436,7 +444,7 @@ password is over ten characters.)
 
 =item C<get> 
 
-B<UNSTABLE>
+B<STABLE>
 
 =over
 

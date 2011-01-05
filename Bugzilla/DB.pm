@@ -65,7 +65,7 @@ use constant ISOLATION_LEVEL => 'REPEATABLE READ';
 use constant ENUM_DEFAULTS => {
     bug_severity  => ['blocker', 'critical', 'major', 'normal',
                       'minor', 'trivial', 'enhancement'],
-    priority     => ["P1","P2","P3","P4","P5"],
+    priority     => ["Highest", "High", "Normal", "Low", "Lowest", "---"],
     op_sys       => ["All","Windows","Mac OS","Linux","Other"],
     rep_platform => ["All","PC","Macintosh","Other"],
     bug_status   => ["UNCONFIRMED","NEW","ASSIGNED","REOPENED","RESOLVED",
@@ -271,9 +271,9 @@ EOT
 }
 
 # List of abstract methods we are checking the derived class implements
-our @_abstract_methods = qw(REQUIRED_VERSION PROGRAM_NAME DBD_VERSION
-                            new sql_regexp sql_not_regexp sql_limit sql_to_days
-                            sql_date_format sql_interval bz_explain);
+our @_abstract_methods = qw(new sql_regexp sql_not_regexp sql_limit sql_to_days
+                            sql_date_format sql_interval bz_explain
+                            sql_group_concat);
 
 # This overridden import method will check implementation of inherited classes
 # for missing implementation of abstract methods
@@ -286,7 +286,7 @@ sub import {
         # make sure all abstract methods are implemented
         foreach my $meth (@_abstract_methods) {
             $pkg->can($meth)
-                or croak("Class $pkg does not define method $meth");
+                or die("Class $pkg does not define method $meth");
         }
     }
 
@@ -362,15 +362,28 @@ sub sql_fulltext_search {
     # make the string lowercase to do case insensitive search
     my $lower_text = lc($text);
 
-    # split the text we search for into separate words
-    my @words = split(/\s+/, $lower_text);
+    # split the text we're searching for into separate words. As a hack
+    # to allow quicksearch to work, if the field starts and ends with
+    # a double-quote, then we don't split it into words. We can't use
+    # Text::ParseWords here because it gets very confused by unbalanced
+    # quotes, which breaks searches like "don't try this" (because of the
+    # unbalanced single-quote in "don't").
+    my @words;
+    if ($lower_text =~ /^"/ and $lower_text =~ /"$/) {
+        $lower_text =~ s/^"//;
+        $lower_text =~ s/"$//;
+        @words = ($lower_text);
+    }
+    else {
+        @words = split(/\s+/, $lower_text);
+    }
 
     # surround the words with wildcards and SQL quotes so we can use them
     # in LIKE search clauses
-    @words = map($self->quote("%$_%"), @words);
+    @words = map($self->quote("\%$_\%"), @words);
 
     # untaint words, since they are safe to use now that we've quoted them
-    map(trick_taint($_), @words);
+    trick_taint($_) foreach @words;
 
     # turn the words into a set of LIKE search clauses
     @words = map("LOWER($column) LIKE $_", @words);
@@ -536,6 +549,13 @@ sub bz_alter_column {
                 "SELECT 1 FROM $table WHERE $name IS NULL");
             ThrowCodeError('column_not_null_no_default_alter', 
                            { name => "$table.$name" }) if ($any_nulls);
+        }
+        # Preserve foreign key definitions in the Schema object when altering
+        # types.
+        if (defined $current_def->{REFERENCES}) {
+            # Make sure we don't modify the caller's $new_def.
+            $new_def = dclone($new_def);
+            $new_def->{REFERENCES} = $current_def->{REFERENCES};
         }
         $self->bz_alter_column_raw($table, $name, $new_def, $current_def,
                                    $set_nulls_to);
@@ -738,8 +758,14 @@ sub bz_drop_fk {
         print get_text('install_fk_drop',
                        { table => $table, column => $column, fk => $def })
             . "\n" if Bugzilla->usage_mode == USAGE_MODE_CMDLINE;
-        my @sql = $self->_bz_real_schema->get_drop_fk_sql($table,$column,$def);
-        $self->do($_) foreach @sql;
+        my @statements = 
+            $self->_bz_real_schema->get_drop_fk_sql($table,$column,$def);
+        foreach my $sql (@statements) {
+            # Because this is a deletion, we don't want to die hard if
+            # we fail because of some local customization. If something
+            # is already gone, that's fine with us!
+            eval { $self->do($sql); } or warn "Failed SQL: [$sql] Error: $@";
+        }
         delete $col_def->{REFERENCES};
         $self->_bz_real_schema->set_column($table, $column, $col_def);
         $self->_bz_store_real_schema;
@@ -830,6 +856,14 @@ sub bz_drop_table {
     }
 }
 
+sub bz_fk_info {
+    my ($self, $table, $column) = @_;
+    my $col_info = $self->bz_column_info($table, $column);
+    return undef if !$col_info;
+    my $fk = $col_info->{REFERENCES};
+    return $fk;
+}
+
 sub bz_rename_column {
     my ($self, $table, $old_name, $new_name) = @_;
 
@@ -870,6 +904,16 @@ sub bz_rename_table {
     $self->do($_) foreach @sql;
     $self->_bz_real_schema->rename_table($old_name, $new_name);
     $self->_bz_store_real_schema;
+}
+
+sub bz_set_next_serial_value {
+    my ($self, $table, $column, $value) = @_;
+    if (!$value) {
+        $value = $self->selectrow_array("SELECT MAX($column) FROM $table") || 0;
+        $value++;
+    }
+    my @sql = $self->_bz_real_schema->get_set_serial_sql($table, $column, $value);
+    $self->do($_) foreach @sql;
 }
 
 #####################################################################

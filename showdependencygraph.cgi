@@ -58,7 +58,7 @@ local our (%seen, %edgesdone, %bugtitles);
 sub CreateImagemap {
     my $mapfilename = shift;
     my $map = "<map name=\"imagemap\">\n";
-    my $default;
+    my $default = "";
 
     open MAP, "<$mapfilename";
     while(my $line = <MAP>) {
@@ -89,7 +89,7 @@ sub AddLink {
     my $key = "$blocked,$dependson";
     if (!exists $edgesdone{$key}) {
         $edgesdone{$key} = 1;
-        print $fh "$blocked -> $dependson\n";
+        print $fh "$dependson -> $blocked\n";
         $seen{$blocked} = 1;
         $seen{$dependson} = 1;
     }
@@ -206,6 +206,10 @@ foreach my $k (keys(%seen)) {
     my @params;
 
     if ($summary ne "" && $cgi->param('showsummary')) {
+        # Wide characters cause GraphViz to die.
+        if (Bugzilla->params->{'utf8'}) {
+            utf8::encode($summary) if utf8::is_utf8($summary);
+        }
         $summary =~ s/([\\\"])/\\$1/g;
         push(@params, qq{label="$k\\n$summary"});
     }
@@ -267,7 +271,7 @@ if ($webdotbase =~ /^https?:/) {
     close $pngfh;
     
     # On Windows $pngfilename will contain \ instead of /
-    $pngfilename =~ s|\\|/|g if $^O eq 'MSWin32';
+    $pngfilename =~ s|\\|/|g if ON_WINDOWS;
 
     # Under mod_perl, pngfilename will have an absolute path, and we
     # need to make that into a relative path.

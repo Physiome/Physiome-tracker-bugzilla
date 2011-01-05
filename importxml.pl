@@ -512,7 +512,7 @@ sub process_bug {
         $long_desc{'isprivate'} = $comment->{'att'}->{'isprivate'} || 0;
 
         # if one of the comments is private we need to set this flag
-        if ( $long_desc{'isprivate'} && $exporter->in_group($params->{'insidergroup'})) {
+        if ( $long_desc{'isprivate'} && $exporter->is_insider) {
             $private = 1;
         }
         my $data = $comment->field('thetext');
@@ -523,6 +523,8 @@ sub process_bug {
             $data = decode_base64($data);
         }
 
+        # For backwards-compatibility with Bugzillas before 3.6:
+        #
         # If we leave the attachment ID in the comment it will be made a link
         # to the wrong attachment. Since the new attachment ID is unknown yet
         # let's strip it out for now. We will make a comment with the right ID
@@ -911,7 +913,7 @@ sub process_bug {
     
     # Check everconfirmed 
     my $everconfirmed;
-    if ($product->votes_to_confirm) {
+    if ($product->allows_unconfirmed) {
         $everconfirmed = $bug_fields{'everconfirmed'} || 0;
     }
     else {
@@ -940,7 +942,7 @@ sub process_bug {
         $initial_status = $bug_statuses[0]->name;
     }
     else {
-        @bug_statuses = @{Bugzilla::Status->get_all()};
+        @bug_statuses = Bugzilla::Status->get_all();
         # Exclude UNCO and inactive bug statuses.
         @bug_statuses = grep { $_->is_active && $_->name ne 'UNCONFIRMED'} @bug_statuses;
         my @open_statuses = grep { $_->is_open } @bug_statuses;
@@ -1198,7 +1200,7 @@ sub process_bug {
             $err .= "No attachment ID specified, dropping attachment\n";
             next;
         }
-        if (!$exporter->in_group($params->{'insidergroup'}) && $att->{'isprivate'}){
+        if (!$exporter->is_insider && $att->{'isprivate'}) {
             $err .= "Exporter not in insidergroup and attachment marked private.\n";
             $err .= "   Marking attachment public\n";
             $att->{'isprivate'} = 0;
@@ -1251,7 +1253,7 @@ sub process_bug {
 
     # Insert longdesc and append any errors
     my $worktime = $bug_fields{'actual_time'} || 0.0;
-    $worktime = 0.0 if (!$exporter->in_group($params->{'timetrackinggroup'}));
+    $worktime = 0.0 if (!$exporter->is_timetracker);
     $long_description .= "\n" . $comments;
     if ($err) {
         $long_description .= "\n$err\n";

@@ -63,7 +63,7 @@
 
 [% IF value.is_default || value.bug_count || (value_count == 1)
       || value.controls_visibility_of_fields.size
-      || value.controlled_values.size 
+      || value.controlled_values_array.size 
 %]
 
   <p>Sorry, but the '[% value.name FILTER html %]' value cannot be deleted
@@ -88,7 +88,7 @@
           There are [% value.bug_count FILTER html %] [%+ terms.bugs %] 
           with this field value.
         [% ELSE %]
-          There is is 1 [% terms.bug %] with this field value.
+          There is 1 [% terms.bug %] with this field value.
         [% END %]
         You must change the field value on
           <a title="List of [% terms.bugs %] where '
@@ -123,7 +123,7 @@
       </li>
     [% END %]
 
-    [% IF value.controlled_values.size %]
+    [% IF value.controlled_values_array.size %]
       <li>This value controls the visibility of the following values in
         other fields:<br>
        [% FOREACH field_name = value.controlled_values.keys %]

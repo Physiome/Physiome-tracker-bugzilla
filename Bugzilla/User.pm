@@ -50,8 +50,9 @@ use Bugzilla::Classification;
 use Bugzilla::Field;
 use Bugzilla::Group;
 
-use Scalar::Util qw(blessed);
 use DateTime::TimeZone;
+use Scalar::Util qw(blessed);
+use Storable qw(dclone);
 
 use base qw(Bugzilla::Object Exporter);
 @Bugzilla::User::EXPORT = qw(is_available_username
@@ -133,6 +134,18 @@ sub new {
     return $user unless $param;
 
     return $class->SUPER::new(@_);
+}
+
+sub super_user {
+    my $invocant = shift;
+    my $class = ref($invocant) || $invocant;
+    my ($param) = @_;
+
+    my $user = dclone(DEFAULT_USER);
+    $user->{groups} = [Bugzilla::Group->get_all];
+    $user->{bless_groups} = [Bugzilla::Group->get_all];
+    bless $user, $class;
+    return $user;
 }
 
 sub update {
@@ -234,6 +247,15 @@ sub is_disabled { $_[0]->disabledtext ? 1 : 0; }
 sub showmybugslink { $_[0]->{showmybugslink}; }
 sub email_disabled { $_[0]->{disable_mail}; }
 sub email_enabled { !($_[0]->{disable_mail}); }
+sub cryptpassword {
+    my $self = shift;
+    # We don't store it because we never want it in the object (we
+    # don't want to accidentally dump even the hash somewhere).
+    my ($pw) = Bugzilla->dbh->selectrow_array(
+        'SELECT cryptpassword FROM profiles WHERE userid = ?',
+        undef, $self->id);
+    return $pw;
+}
 
 sub set_authorizer {
     my ($self, $authorizer) = @_;
@@ -486,6 +508,7 @@ sub bless_groups {
 
 sub in_group {
     my ($self, $group, $product_id) = @_;
+    $group = $group->name if blessed $group;
     if (scalar grep($_->name eq $group, @{ $self->groups })) {
         return 1;
     }
@@ -629,12 +652,13 @@ sub visible_bugs {
         }
 
         $sth->execute(@check_ids);
+        my $use_qa_contact = Bugzilla->params->{'useqacontact'};
         while (my $row = $sth->fetchrow_arrayref) {
             my ($bug_id, $reporter, $owner, $qacontact, $reporter_access, 
                 $cclist_access, $isoncclist, $missinggroup) = @$row;
             $visible_cache->{$bug_id} ||= 
                 ((($reporter == $user_id) && $reporter_access)
-                 || (Bugzilla->params->{'useqacontact'}
+                 || ($use_qa_contact
                      && $qacontact && ($qacontact == $user_id))
                  || ($owner == $user_id)
                  || ($isoncclist && $cclist_access)
@@ -643,6 +667,13 @@ sub visible_bugs {
     }
 
     return [grep { $visible_cache->{blessed $_ ? $_->id : $_} } @$bugs];
+}
+
+sub clear_product_cache {
+    my $self = shift;
+    delete $self->{enterable_products};
+    delete $self->{selectable_products};
+    delete $self->{selectable_classifications};
 }
 
 sub can_see_product {
@@ -660,13 +691,9 @@ sub get_selectable_products {
         my $query = "SELECT id " .
                     "  FROM products " .
                  "LEFT JOIN group_control_map " .
-                    "    ON group_control_map.product_id = products.id ";
-        if (Bugzilla->params->{'useentrygroupdefault'}) {
-            $query .= " AND group_control_map.entry != 0 ";
-        } else {
-            $query .= " AND group_control_map.membercontrol = " . CONTROLMAPMANDATORY;
-        }
-        $query .= "     AND group_id NOT IN(" . $self->groups_as_string . ") " .
+                        "ON group_control_map.product_id = products.id " .
+                      " AND group_control_map.membercontrol = " . CONTROLMAPMANDATORY .
+                      " AND group_id NOT IN(" . $self->groups_as_string . ") " .
                   "   WHERE group_id IS NULL " .
                   "ORDER BY name";
 
@@ -695,17 +722,27 @@ sub get_selectable_classifications {
 }
 
 sub can_enter_product {
-    my ($self, $product_name, $warn) = @_;
+    my ($self, $input, $warn) = @_;
     my $dbh = Bugzilla->dbh;
+    $warn ||= 0;
 
-    if (!defined($product_name)) {
+    $input = trim($input) if !ref $input;
+    if (!defined $input or $input eq '') {
+        return unless $warn == THROW_ERROR;
+        ThrowUserError('object_not_specified',
+                       { class => 'Bugzilla::Product' });
+    }
+
+    if (!scalar @{ $self->get_enterable_products }) {
         return unless $warn == THROW_ERROR;
         ThrowUserError('no_products');
     }
-    my $product = new Bugzilla::Product({name => $product_name});
 
+    my $product = blessed($input) ? $input 
+                                  : new Bugzilla::Product({ name => $input });
     my $can_enter =
-      $product && grep($_->name eq $product->name, @{$self->get_enterable_products});
+      $product && grep($_->name eq $product->name,
+                       @{ $self->get_enterable_products });
 
     return 1 if $can_enter;
 
@@ -714,21 +751,26 @@ sub can_enter_product {
     # Check why access was denied. These checks are slow,
     # but that's fine, because they only happen if we fail.
 
+    # We don't just use $product->name for error messages, because if it
+    # changes case from $input, then that's a clue that the product does
+    # exist but is hidden.
+    my $name = blessed($input) ? $input->name : $input;
+
     # The product could not exist or you could be denied...
     if (!$product || !$product->user_has_access($self)) {
-        ThrowUserError('entry_access_denied', {product => $product_name});
+        ThrowUserError('entry_access_denied', { product => $name });
     }
     # It could be closed for bug entry...
-    elsif ($product->disallow_new) {
-        ThrowUserError('product_disabled', {product => $product});
+    elsif (!$product->is_active) {
+        ThrowUserError('product_disabled', { product => $product });
     }
     # It could have no components...
     elsif (!@{$product->components}) {
-        ThrowUserError('missing_component', {product => $product});
+        ThrowUserError('missing_component', { product => $product });
     }
     # It could have no versions...
     elsif (!@{$product->versions}) {
-        ThrowUserError ('missing_version', {product => $product});
+        ThrowUserError ('missing_version', { product => $product });
     }
 
     die "can_enter_product reached an unreachable location.";
@@ -750,7 +792,7 @@ sub get_enterable_products {
                       AND group_control_map.entry != 0
                       AND group_id NOT IN (' . $self->groups_as_string . ')
             WHERE group_id IS NULL
-                  AND products.disallownew = 0') || []};
+                  AND products.isactive = 1') || []};
 
     if (@enterable_ids) {
         # And all of these products must have at least one component
@@ -769,8 +811,8 @@ sub get_enterable_products {
 }
 
 sub can_access_product {
-    my ($self, $product_name) = @_;
-
+    my ($self, $product) = @_;
+    my $product_name = blessed($product) ? $product->name : $product;
     return scalar(grep {$_->name eq $product_name} @{$self->get_accessible_products});
 }
 
@@ -1024,14 +1066,11 @@ sub match {
     # first try wildcards
     my $wildstr = $str;
 
-    if ($wildstr =~ s/\*/\%/g # don't do wildcards if no '*' in the string
-        # or if we only want exact matches
-        && Bugzilla->params->{'usermatchmode'} ne 'off') 
-    {
-
+    # Do not do wildcards if there is no '*' in the string.
+    if ($wildstr =~ s/\*/\%/g && $user->id) {
         # Build the query.
         trick_taint($wildstr);
-        my $query  = "SELECT DISTINCT login_name FROM profiles ";
+        my $query  = "SELECT DISTINCT userid FROM profiles ";
         if (Bugzilla->params->{'usevisibilitygroups'}) {
             $query .= "INNER JOIN user_group_map
                                ON user_group_map.user_id = profiles.userid ";
@@ -1045,15 +1084,12 @@ sub match {
                       join(', ', (-1, @{$user->visible_groups_inherited})) . ") ";
         }
         $query    .= " AND disabledtext = '' " if $exclude_disabled;
-        $query    .= " ORDER BY login_name ";
         $query    .= $dbh->sql_limit($limit) if $limit;
 
         # Execute the query, retrieve the results, and make them into
         # User objects.
-        my $user_logins = $dbh->selectcol_arrayref($query, undef, ($wildstr, $wildstr));
-        foreach my $login_name (@$user_logins) {
-            push(@users, new Bugzilla::User({ name => $login_name }));
-        }
+        my $user_ids = $dbh->selectcol_arrayref($query, undef, ($wildstr, $wildstr));
+        @users = @{Bugzilla::User->new_from_list($user_ids)};
     }
     else {    # try an exact match
         # Exact matches don't care if a user is disabled.
@@ -1066,13 +1102,10 @@ sub match {
     }
 
     # then try substring search
-    if ((scalar(@users) == 0)
-        && (Bugzilla->params->{'usermatchmode'} eq 'search')
-        && (length($str) >= 3))
-    {
+    if (!scalar(@users) && length($str) >= 3 && $user->id) {
         trick_taint($str);
 
-        my $query   = "SELECT DISTINCT login_name FROM profiles ";
+        my $query   = "SELECT DISTINCT userid FROM profiles ";
         if (Bugzilla->params->{'usevisibilitygroups'}) {
             $query .= "INNER JOIN user_group_map
                                ON user_group_map.user_id = profiles.userid ";
@@ -1086,68 +1119,22 @@ sub match {
                 join(', ', (-1, @{$user->visible_groups_inherited})) . ") ";
         }
         $query     .= " AND disabledtext = '' " if $exclude_disabled;
-        $query    .= " ORDER BY login_name ";
         $query     .= $dbh->sql_limit($limit) if $limit;
-
-        my $user_logins = $dbh->selectcol_arrayref($query, undef, ($str, $str));
-        foreach my $login_name (@$user_logins) {
-            push(@users, new Bugzilla::User({ name => $login_name }));
-        }
+        my $user_ids = $dbh->selectcol_arrayref($query, undef, ($str, $str));
+        @users = @{Bugzilla::User->new_from_list($user_ids)};
     }
     return \@users;
 }
 
-# match_field() is a CGI wrapper for the match() function.
-#
-# Here's what it does:
-#
-# 1. Accepts a list of fields along with whether they may take multiple values
-# 2. Takes the values of those fields from the first parameter, a $cgi object 
-#    and passes them to match()
-# 3. Checks the results of the match and displays confirmation or failure
-#    messages as appropriate.
-#
-# The confirmation screen functions the same way as verify-new-product and
-# confirm-duplicate, by rolling all of the state information into a
-# form which is passed back, but in this case the searched fields are
-# replaced with the search results.
-#
-# The act of displaying the confirmation or failure messages means it must
-# throw a template and terminate.  When confirmation is sent, all of the
-# searchable fields have been replaced by exact fields and the calling script
-# is executed as normal.
-#
-# You also have the choice of *never* displaying the confirmation screen.
-# In this case, match_field will return one of the three USER_MATCH 
-# constants described in the POD docs. To make match_field behave this
-# way, pass in MATCH_SKIP_CONFIRM as the third argument.
-#
-# match_field must be called early in a script, before anything external is
-# done with the form data.
-#
-# In order to do a simple match without dealing with templates, confirmation,
-# or globals, simply calling Bugzilla::User::match instead will be
-# sufficient.
-
-# How to call it:
-#
-# Bugzilla::User::match_field($cgi, {
-#   'field_name'    => { 'type' => fieldtype },
-#   'field_name2'   => { 'type' => fieldtype },
-#   [...]
-# });
-#
-# fieldtype can be either 'single' or 'multi'.
-#
-
 sub match_field {
-    my $cgi          = shift;   # CGI object to look up fields in
     my $fields       = shift;   # arguments as a hash
+    my $data         = shift || Bugzilla->input_params; # hash to look up fields in
     my $behavior     = shift || 0; # A constant that tells us how to act
     my $matches      = {};      # the values sent to the template
     my $matchsuccess = 1;       # did the match fail?
     my $need_confirm = 0;       # whether to display confirmation screen
     my $match_multiple = 0;     # whether we ever matched more than one user
+    my @non_conclusive_fields;  # fields which don't have a unique user.
 
     my $params = Bugzilla->params;
 
@@ -1165,7 +1152,8 @@ sub match_field {
             $expanded_fields->{$field_pattern} = $fields->{$field_pattern};
         }
         else {
-            my @field_names = grep(/$field_pattern/, $cgi->param());
+            my @field_names = grep(/$field_pattern/, keys %$data);
+
             foreach my $field_name (@field_names) {
                 $expanded_fields->{$field_name} = 
                   { type => $fields->{$field_pattern}->{'type'} };
@@ -1191,7 +1179,7 @@ sub match_field {
                         # No need to look for a valid requestee if the flag(type)
                         # has been deleted (may occur in race conditions).
                         delete $expanded_fields->{$field_name};
-                        $cgi->delete($field_name);
+                        delete $data->{$field_name};
                     }
                 }
             }
@@ -1199,54 +1187,34 @@ sub match_field {
     }
     $fields = $expanded_fields;
 
-    for my $field (keys %{$fields}) {
+    foreach my $field (keys %{$fields}) {
+        next unless defined $data->{$field};
 
-        # Tolerate fields that do not exist.
-        #
-        # This is so that fields like qa_contact can be specified in the code
-        # and it won't break if the CGI object does not know about them.
-        #
-        # It has the side-effect that if a bad field name is passed it will be
-        # quietly ignored rather than raising a code error.
-
-        next if !defined $cgi->param($field);
-
-        # We need to move the query to $raw_field, where it will be split up,
-        # modified by the search, and put back into the CGI environment
-        # incrementally.
-
-        my $raw_field = join(" ", $cgi->param($field));
-
-        # When we add back in values later, it matters that we delete
-        # the field here, and not set it to '', so that we will add
-        # things to an empty list, and not to a list containing one
-        # empty string.
-        # If the field accepts only one match (type eq "single") and
-        # no match or more than one match is found for this field,
-        # we will set it back to '' so that the field remains defined
-        # outside this function (it was if we came here; else we would
-        # have returned earlier above).
-        # If the field accepts several matches (type eq "multi") and no match
-        # is found, we leave this field undefined (= empty array).
-        $cgi->delete($field);
-
-        my @queries = ();
+        #Concatenate login names, so that we have a common way to handle them.
+        my $raw_field;
+        if (ref $data->{$field}) {
+            $raw_field = join(" ", @{$data->{$field}});
+        }
+        else {
+            $raw_field = $data->{$field};
+        }
+        $raw_field = clean_text($raw_field || '');
 
         # Now we either split $raw_field by spaces/commas and put the list
         # into @queries, or in the case of fields which only accept single
         # entries, we simply use the verbatim text.
-
-        $raw_field =~ s/^\s+|\s+$//sg;  # trim leading/trailing space
-
-        # single field
+        my @queries;
         if ($fields->{$field}->{'type'} eq 'single') {
-            @queries = ($raw_field) unless $raw_field =~ /^\s*$/;
-
-        # multi-field
+            @queries = ($raw_field);
+            # We will repopulate it later if a match is found, else it must
+            # be set to an empty string so that the field remains defined.
+            $data->{$field} = '';
         }
         elsif ($fields->{$field}->{'type'} eq 'multi') {
-            @queries =  split(/[\s,]+/, $raw_field);
-
+            @queries =  split(/[\s,;]+/, $raw_field);
+            # We will repopulate it later if a match is found, else it must
+            # be undefined.
+            delete $data->{$field};
         }
         else {
             # bad argument
@@ -1256,40 +1224,31 @@ sub match_field {
                            });
         }
 
+        # Tolerate fields that do not exist (in case you specify
+        # e.g. the QA contact, and it's currently not in use).
+        next unless (defined $raw_field && $raw_field ne '');
+
         my $limit = 0;
         if ($params->{'maxusermatches'}) {
             $limit = $params->{'maxusermatches'} + 1;
         }
 
+        my @logins;
         for my $query (@queries) {
-
             my $users = match(
                 $query,   # match string
                 $limit,   # match limit
                 1         # exclude_disabled
             );
 
-            # skip confirmation for exact matches
-            if ((scalar(@{$users}) == 1)
-                && (lc(@{$users}[0]->login) eq lc($query)))
-
-            {
-                $cgi->append(-name=>$field,
-                             -values=>[@{$users}[0]->login]);
-
-                next;
-            }
-
-            $matches->{$field}->{$query}->{'users'}  = $users;
-            $matches->{$field}->{$query}->{'status'} = 'success';
-
             # here is where it checks for multiple matches
-
             if (scalar(@{$users}) == 1) { # exactly one match
+                push(@logins, @{$users}[0]->login);
 
-                $cgi->append(-name=>$field,
-                             -values=>[@{$users}[0]->login]);
+                # skip confirmation for exact matches
+                next if (lc(@{$users}[0]->login) eq lc($query));
 
+                $matches->{$field}->{$query}->{'status'} = 'success';
                 $need_confirm = 1 if $params->{'confirmuniqueusermatch'};
 
             }
@@ -1297,6 +1256,7 @@ sub match_field {
                     && ($params->{'maxusermatches'} != 1)) {
                 $need_confirm = 1;
                 $match_multiple = 1;
+                push(@non_conclusive_fields, $field);
 
                 if (($params->{'maxusermatches'})
                    && (scalar(@{$users}) > $params->{'maxusermatches'}))
@@ -1304,23 +1264,31 @@ sub match_field {
                     $matches->{$field}->{$query}->{'status'} = 'trunc';
                     pop @{$users};  # take the last one out
                 }
+                else {
+                    $matches->{$field}->{$query}->{'status'} = 'success';
+                }
 
             }
             else {
                 # everything else fails
                 $matchsuccess = 0; # fail
+                push(@non_conclusive_fields, $field);
                 $matches->{$field}->{$query}->{'status'} = 'fail';
                 $need_confirm = 1;  # confirmation screen shows failures
             }
+
+            $matches->{$field}->{$query}->{'users'}  = $users;
         }
-        # Above, we deleted the field before adding matches. If no match
-        # or more than one match has been found for a field expecting only
-        # one match (type eq "single"), we set it back to '' so
-        # that the caller of this function can still check whether this
+
+        # If no match or more than one match has been found for a field
+        # expecting only one match (type eq "single"), we set it back to ''
+        # so that the caller of this function can still check whether this
         # field was defined or not (and it was if we came here).
-        if (!defined $cgi->param($field)
-            && $fields->{$field}->{'type'} eq 'single') {
-            $cgi->param($field, '');
+        if ($fields->{$field}->{'type'} eq 'single') {
+            $data->{$field} = $logins[0] || '';
+        }
+        elsif (scalar @logins) {
+            $data->{$field} = \@logins;
         }
     }
 
@@ -1336,22 +1304,24 @@ sub match_field {
     }
 
     # Skip confirmation if we were told to, or if we don't need to confirm.
-    return $retval if ($behavior == MATCH_SKIP_CONFIRM || !$need_confirm);
+    if ($behavior == MATCH_SKIP_CONFIRM || !$need_confirm) {
+        return wantarray ? ($retval, \@non_conclusive_fields) : $retval;
+    }
 
     my $template = Bugzilla->template;
+    my $cgi = Bugzilla->cgi;
     my $vars = {};
 
-    $vars->{'script'}        = Bugzilla->cgi->url(-relative => 1); # for self-referencing URLs
+    $vars->{'script'}        = $cgi->url(-relative => 1); # for self-referencing URLs
     $vars->{'fields'}        = $fields; # fields being matched
     $vars->{'matches'}       = $matches; # matches that were made
     $vars->{'matchsuccess'}  = $matchsuccess; # continue or fail
     $vars->{'matchmultiple'} = $match_multiple;
 
-    print Bugzilla->cgi->header();
+    print $cgi->header();
 
     $template->process("global/confirm-user-match.html.tmpl", $vars)
       || ThrowTemplateError($template->error());
-
     exit;
 
 }
@@ -1379,7 +1349,6 @@ sub wants_bug_mail {
     my $self = shift;
     my ($bug_id, $relationship, $fieldDiffs, $comments, $dependencyText,
         $changer, $bug_is_new) = @_;
-    my $comments_concatenated = join("\n", map { $_->{body} } (@$comments));
 
     # Make a list of the events which have happened during this bug change,
     # from the point of view of this user.    
@@ -1428,7 +1397,7 @@ sub wants_bug_mail {
         }
     }
 
-    if ($comments_concatenated =~ /Created an attachment \(/) {
+    if (grep { $_->type == CMT_ATTACHMENT_CREATED } @$comments) {
         $events{+EVT_ATTACHMENT} = 1;
     }
     elsif (defined($$comments[0])) {
@@ -1638,6 +1607,54 @@ sub create {
     return $user;
 }
 
+###########################
+# Account Lockout Methods #
+###########################
+
+sub account_is_locked_out {
+    my $self = shift;
+    my $login_failures = scalar @{ $self->account_ip_login_failures };
+    return $login_failures >= MAX_LOGIN_ATTEMPTS ? 1 : 0;
+}
+
+sub note_login_failure {
+    my $self = shift;
+    my $ip_addr = remote_ip();
+    trick_taint($ip_addr);
+    Bugzilla->dbh->do("INSERT INTO login_failure (user_id, ip_addr, login_time)
+                       VALUES (?, ?, LOCALTIMESTAMP(0))",
+                      undef, $self->id, $ip_addr);
+    delete $self->{account_ip_login_failures};
+}
+
+sub clear_login_failures {
+    my $self = shift;
+    my $ip_addr = remote_ip();
+    trick_taint($ip_addr);
+    Bugzilla->dbh->do(
+        'DELETE FROM login_failure WHERE user_id = ? AND ip_addr = ?',
+        undef, $self->id, $ip_addr);
+    delete $self->{account_ip_login_failures};
+}
+
+sub account_ip_login_failures {
+    my $self = shift;
+    my $dbh = Bugzilla->dbh;
+    my $time = $dbh->sql_interval(LOGIN_LOCKOUT_INTERVAL, 'MINUTE');
+    my $ip_addr = remote_ip();
+    trick_taint($ip_addr);
+    $self->{account_ip_login_failures} ||= Bugzilla->dbh->selectall_arrayref(
+        "SELECT login_time, ip_addr, user_id FROM login_failure
+          WHERE user_id = ? AND login_time > LOCALTIMESTAMP(0) - $time
+                AND ip_addr = ?
+       ORDER BY login_time", {Slice => {}}, $self->id, $ip_addr);
+    return $self->{account_ip_login_failures};
+}
+
+###############
+# Subroutines #
+###############
+
 sub is_available_username {
     my ($username, $old_username) = @_;
 
@@ -1663,7 +1680,7 @@ sub is_available_username {
                     $dbh->sql_position(q{':'}, 'eventdata') . "-  1)) = ?)
              OR (tokentype = 'emailnew'
                 AND SUBSTRING(eventdata, (" .
-                    $dbh->sql_position(q{':'}, 'eventdata') . "+ 1)) = ?)",
+                    $dbh->sql_position(q{':'}, 'eventdata') . "+ 1), LENGTH(eventdata)) = ?)",
          undef, ($username, $username));
 
     if ($eventdata) {
@@ -1711,8 +1728,6 @@ sub validate_password {
 
     if (length($password) < USER_PASSWORD_MIN_LENGTH) {
         ThrowUserError('password_too_short');
-    } elsif (length($password) > USER_PASSWORD_MAX_LENGTH) {
-        ThrowUserError('password_too_long');
     } elsif ((defined $matchpassword) && ($password ne $matchpassword)) {
         ThrowUserError('passwords_dont_match');
     }
@@ -1787,6 +1802,18 @@ confirmation screen.
 
 =head1 METHODS
 
+=head2 Constructors
+
+=over
+
+=item C<super_user>
+
+Returns a user who is in all groups, but who does not really exist in the
+database. Used for non-web scripts like L<checksetup> that need to make 
+database changes and so on.
+
+=back
+
 =head2 Saved and Shared Queries
 
 =over
@@ -1818,6 +1845,29 @@ internally, such code must call this method to flush the cached result.
 
 An arrayref of group ids. The user can share their own queries with these
 groups.
+
+=back
+
+=head2 Account Lockout
+
+=over
+
+=item C<account_is_locked_out>
+
+Returns C<1> if the account has failed to log in too many times recently,
+and thus is locked out for a period of time. Returns C<0> otherwise.
+
+=item C<account_ip_login_failures>
+
+Returns an arrayref of hashrefs, that contains information about the recent
+times that this account has failed to log in from the current remote IP.
+The hashes contain C<ip_addr>, C<login_time>, and C<user_id>.
+
+=item C<note_login_failure>
+
+This notes that this account has failed to log in, and stores the fact
+in the database. The storing happens immediately, it does not wait for
+you to call C<update>.
 
 =back
 
@@ -1956,6 +2006,12 @@ care of by the constructor. However, when updating the email address, the
 user may be placed into different groups, based on a new email regexp. This
 method should be called in such a case to force reresolution of these groups.
 
+=item C<clear_product_cache>
+
+Clears the stored values for L</get_selectable_products>, 
+L</get_enterable_products>, etc. so that their data will be read from
+the database again. Used mostly by L<Bugzilla::Product>.
+
 =item C<get_selectable_products>
 
  Description: Returns all products the user is allowed to access. This list
@@ -2003,10 +2059,11 @@ method should be called in such a case to force reresolution of these groups.
 
  Returns:     an array of product objects.
 
-=item C<can_access_product(product_name)>
+=item C<can_access_product($product)>
 
-Returns 1 if the user can search or enter bugs into the specified product,
-and 0 if the user should not be aware of the existence of the product.
+Returns 1 if the user can search or enter bugs into the specified product
+(either a L<Bugzilla::Product> or a product name), and 0 if the user should
+not be aware of the existence of the product.
 
 =item C<get_accessible_products>
 
@@ -2182,6 +2239,49 @@ Untaints C<$passwd1> if successful.
 
 If a second password is passed in, this function also verifies that
 the two passwords match.
+
+=item C<match_field($data, $fields, $behavior)>
+
+=over
+
+=item B<Description>
+
+Wrapper for the C<match()> function.
+
+=item B<Params>
+
+=over
+
+=item C<$fields> - A hashref with field names as keys and a hash as values.
+Each hash is of the form { 'type' => 'single|multi' }, which specifies
+whether the field can take a single login name only or several.
+
+=item C<$data> (optional) - A hashref with field names as keys and field values
+as values. If undefined, C<Bugzilla-E<gt>input_params> is used.
+
+=item C<$behavior> (optional) - If set to C<MATCH_SKIP_CONFIRM>, no confirmation
+screen is displayed. In that case, the fields which don't match a unique user
+are left undefined. If not set, a confirmation screen is displayed if at
+least one field doesn't match any login name or match more than one.
+
+=back
+
+=item B<Returns>
+
+If the third parameter is set to C<MATCH_SKIP_CONFIRM>, the function returns
+either C<USER_MATCH_SUCCESS> if all fields can be set unambiguously,
+C<USER_MATCH_FAILED> if at least one field doesn't match any user account,
+or C<USER_MATCH_MULTIPLE> if some fields match more than one user account.
+
+If the third parameter is not set, then if all fields could be set
+unambiguously, nothing is returned, else a confirmation page is displayed.
+
+=item B<Note>
+
+This function must be called early in a script, before anything external
+is done with the data.
+
+=back
 
 =back
 

@@ -119,6 +119,12 @@ sub get_rename_table_sql {
     return ("ALTER TABLE $old_name RENAME TO $new_name");
 }
 
+sub get_set_serial_sql {
+    my ($self, $table, $column, $value) = @_;
+    return ("SELECT setval('${table}_${column}_seq', $value, false)
+               FROM $table");
+}
+
 sub _get_alter_type_sql {
     my ($self, $table, $column, $new_def, $old_def) = @_;
     my @statements;
@@ -130,8 +136,9 @@ sub _get_alter_type_sql {
     if ($type =~ /serial/i && $old_def->{TYPE} !~ /serial/i) {
         die("You cannot specify a DEFAULT on a SERIAL-type column.") 
             if $new_def->{DEFAULT};
-        $type =~ s/serial/integer/i;
     }
+
+    $type =~ s/\bserial\b/integer/i;
 
     # On Pg, you don't need UNIQUE if you're a PK--it creates
     # two identical indexes otherwise.

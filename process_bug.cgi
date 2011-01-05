@@ -69,7 +69,6 @@ my $cgi = Bugzilla->cgi;
 my $dbh = Bugzilla->dbh;
 my $template = Bugzilla->template;
 my $vars = {};
-$vars->{'use_keywords'} = 1 if Bugzilla::Keyword::keyword_count();
 
 ######################################################################
 # Subroutines
@@ -79,10 +78,9 @@ $vars->{'use_keywords'} = 1 if Bugzilla::Keyword::keyword_count();
 sub send_results {
     my ($bug_id, $vars) = @_;
     my $template = Bugzilla->template;
-    if (Bugzilla->usage_mode == USAGE_MODE_EMAIL) {
-         Bugzilla::BugMail::Send($bug_id, $vars->{'mailrecipients'});
-    }
-    else {
+    $vars->{'sent_bugmail'} = 
+        Bugzilla::BugMail::Send($bug_id, $vars->{'mailrecipients'});
+    if (Bugzilla->usage_mode != USAGE_MODE_EMAIL) {
         $template->process("bug/process/results.html.tmpl", $vars)
             || ThrowTemplateError($template->error());
     }
@@ -143,51 +141,44 @@ if (defined $cgi->param('dontchange')) {
 }
 
 # do a match on the fields if applicable
-
-# The order of these function calls is important, as Flag::validate
-# assumes User::match_field has ensured that the values
-# in the requestee fields are legitimate user email addresses.
-&Bugzilla::User::match_field($cgi, {
+Bugzilla::User::match_field({
     'qa_contact'                => { 'type' => 'single' },
     'newcc'                     => { 'type' => 'multi'  },
     'masscc'                    => { 'type' => 'multi'  },
     'assigned_to'               => { 'type' => 'single' },
-    '^requestee(_type)?-(\d+)$' => { 'type' => 'multi'  },
 });
-
-# Validate flags in all cases. validate() should not detect any
-# reference to flags if $cgi->param('id') is undefined.
-Bugzilla::Flag::validate($cgi->param('id'));
 
 print $cgi->header() unless Bugzilla->usage_mode == USAGE_MODE_EMAIL;
 
 # Check for a mid-air collision. Currently this only works when updating
 # an individual bug.
-if (defined $cgi->param('delta_ts')
-    && $cgi->param('delta_ts') ne $first_bug->delta_ts)
+if (defined $cgi->param('delta_ts'))
 {
-    ($vars->{'operations'}) =
-        Bugzilla::Bug::GetBugActivity($first_bug->id, undef,
-                                      scalar $cgi->param('delta_ts'));
+    my $delta_ts_z = datetime_from($cgi->param('delta_ts'));
+    my $first_delta_tz_z =  datetime_from($first_bug->delta_ts);
+    if ($first_delta_tz_z ne $delta_ts_z) {
+        ($vars->{'operations'}) =
+            Bugzilla::Bug::GetBugActivity($first_bug->id, undef,
+                                          scalar $cgi->param('delta_ts'));
 
-    $vars->{'title_tag'} = "mid_air";
+        $vars->{'title_tag'} = "mid_air";
     
-    ThrowCodeError('undefined_field', { field => 'longdesclength' })
-        if !defined $cgi->param('longdesclength');
+        ThrowCodeError('undefined_field', { field => 'longdesclength' })
+            if !defined $cgi->param('longdesclength');
 
-    $vars->{'start_at'} = $cgi->param('longdesclength');
-    # Always sort midair collision comments oldest to newest,
-    # regardless of the user's personal preference.
-    $vars->{'comments'} = Bugzilla::Bug::GetComments($first_bug->id,
-                                                     "oldest_to_newest");
-    $vars->{'bug'} = $first_bug;
-    # The token contains the old delta_ts. We need a new one.
-    $cgi->param('token', issue_hash_token([$first_bug->id, $first_bug->delta_ts]));
-    
-    # Warn the user about the mid-air collision and ask them what to do.
-    $template->process("bug/process/midair.html.tmpl", $vars)
-      || ThrowTemplateError($template->error());
-    exit;
+        $vars->{'start_at'} = $cgi->param('longdesclength');
+        # Always sort midair collision comments oldest to newest,
+        # regardless of the user's personal preference.
+        $vars->{'comments'} = $first_bug->comments({ order => "oldest_to_newest" });
+        $vars->{'bug'} = $first_bug;
+
+        # The token contains the old delta_ts. We need a new one.
+        $cgi->param('token', issue_hash_token([$first_bug->id, $first_bug->delta_ts]));
+        # Warn the user about the mid-air collision and ask them what to do.
+        $template->process("bug/process/midair.html.tmpl", $vars)
+          || ThrowTemplateError($template->error());
+        exit;
+    }
 }
 
 # We couldn't do this check earlier as we first had to validate bug IDs
@@ -208,30 +199,29 @@ else {
 
 $vars->{'title_tag'} = "bug_processed";
 
-# Set up the vars for navigational <link> elements
-my @bug_list;
-if ($cgi->cookie("BUGLIST")) {
-    @bug_list = split(/:/, $cgi->cookie("BUGLIST"));
-    $vars->{'bug_list'} = \@bug_list;
-}
-
-my ($action, $next_bug);
+my $action;
 if (defined $cgi->param('id')) {
     $action = Bugzilla->user->settings->{'post_bug_submit_action'}->{'value'};
 
     if ($action eq 'next_bug') {
+        my @bug_list;
+        if ($cgi->cookie("BUGLIST")) {
+            @bug_list = split(/:/, $cgi->cookie("BUGLIST"));
+        }
         my $cur = lsearch(\@bug_list, $cgi->param('id'));
         if ($cur >= 0 && $cur < $#bug_list) {
-            $next_bug = $bug_list[$cur + 1];
-            # No need to check whether the user can see the bug or not.
-            # All we want is its ID. An error will be thrown later
-            # if the user cannot see it.
-            $vars->{'bug'} = {bug_id => $next_bug};
+            my $next_bug_id = $bug_list[$cur + 1];
+            detaint_natural($next_bug_id);
+            if ($next_bug_id and $user->can_see_bug($next_bug_id)) {
+                # We create an object here so that send_results can use it
+                # when displaying the header.
+                $vars->{'bug'} = new Bugzilla::Bug($next_bug_id);
+            }
         }
     }
     # Include both action = 'same_bug' and 'nothing'.
     else {
-        $vars->{'bug'} = {bug_id => $cgi->param('id')};
+        $vars->{'bug'} = $first_bug;
     }
 }
 else {
@@ -248,36 +238,45 @@ foreach my $bug (@bug_objects) {
     }
 }
 
-my $product_change;
-foreach my $bug (@bug_objects) {
-    my $args;
-    if (should_set('product')) {
-        $args->{product} = scalar $cgi->param('product');
-        $args->{component} = scalar $cgi->param('component');
-        $args->{version} = scalar $cgi->param('version');
-        $args->{target_milestone} = scalar $cgi->param('target_milestone');
-        $args->{confirm_product_change} =  scalar $cgi->param('confirm_product_change');
-        $args->{other_bugs} = \@bug_objects;
+# For security purposes, and because lots of other checks depend on it,
+# we set the product first before anything else.
+my $product_change; # Used only for strict_isolation checks, right now.
+if (should_set('product')) {
+    foreach my $b (@bug_objects) {
+        my $changed = $b->set_product(scalar $cgi->param('product'),
+            { component        => scalar $cgi->param('component'),
+              version          => scalar $cgi->param('version'),
+              target_milestone => scalar $cgi->param('target_milestone'),
+              change_confirmed => scalar $cgi->param('confirm_product_change'),
+              other_bugs => \@bug_objects,
+            });
+        $product_change ||= $changed;
     }
+}
 
-    foreach my $group (@{$bug->product_obj->groups_valid}) {
+# strict_isolation checks mean that we should set the groups
+# immediately after changing the product.
+foreach my $b (@bug_objects) {
+    foreach my $group (@{$b->product_obj->groups_valid}) {
         my $gid = $group->id;
         if (should_set("bit-$gid", 1)) {
             # Check ! first to avoid having to check defined below.
             if (!$cgi->param("bit-$gid")) {
-                push (@{$args->{remove_group}}, $gid);
+                $b->remove_group($gid);
             }
             # "== 1" is important because mass-change uses -1 to mean
             # "don't change this restriction"
             elsif ($cgi->param("bit-$gid") == 1) {
-               push (@{$args->{add_group}}, $gid);
+                $b->add_group($gid);
             }
         }
     }
+}
 
-    # this will be deleted later when code moves to $bug->set_all
-    my $changed = $bug->set_all($args);
-    $product_change ||= $changed;
+# Flags should be set AFTER the bug has been moved into another product/component.
+if ($cgi->param('id')) {
+    my ($flags, $new_flags) = Bugzilla::Flag->extract_flags_from_cgi($first_bug, undef, $vars);
+    $first_bug->set_flags($flags, $new_flags);
 }
 
 if ($cgi->param('id') && (defined $cgi->param('dependson')
@@ -543,7 +542,7 @@ foreach my $b (@bug_objects) {
 foreach my $bug (@bug_objects) {
     $dbh->bz_start_transaction();
 
-    my $timestamp = $dbh->selectrow_array(q{SELECT NOW()});
+    my $timestamp = $dbh->selectrow_array(q{SELECT LOCALTIMESTAMP(0)});
     my $changes = $bug->update($timestamp);
 
     my %notify_deps;
@@ -560,7 +559,7 @@ foreach my $bug (@bug_objects) {
         # status, so we should inform the user about that.
         if (!is_open_state($new_status) && $changes->{'remaining_time'}) {
             $vars->{'message'} = "remaining_time_zeroed"
-              if Bugzilla->user->in_group(Bugzilla->params->{'timetrackinggroup'});
+              if Bugzilla->user->is_timetracker;
         }
     }
 
@@ -585,9 +584,6 @@ foreach my $bug (@bug_objects) {
         @msgs = RemoveVotes($bug->id, 0, 'votes_bug_moved');
         CheckIfVotedConfirmed($bug->id);
     }
-
-    # Set and update flags.
-    Bugzilla::Flag->process($bug, undef, $timestamp, $vars);
 
     $dbh->bz_commit_transaction();
 
@@ -644,41 +640,26 @@ foreach my $bug (@bug_objects) {
     }
 }
 
-# Determine if Patch Viewer is installed, for Diff link
-# (NB: Duplicate code with show_bug.cgi.)
-eval {
-    require PatchReader;
-    $vars->{'patchviewerinstalled'} = 1;
-};
-
 if (Bugzilla->usage_mode == USAGE_MODE_EMAIL) {
     # Do nothing.
 }
-elsif ($action eq 'next_bug') {
-    if ($next_bug) {
-        if (detaint_natural($next_bug) && Bugzilla->user->can_see_bug($next_bug)) {
-            my $bug = new Bugzilla::Bug($next_bug);
-            ThrowCodeError("bug_error", { bug => $bug }) if $bug->error;
-
-            $vars->{'bugs'} = [$bug];
-            $vars->{'nextbug'} = $bug->bug_id;
-
-            $template->process("bug/show.html.tmpl", $vars)
-              || ThrowTemplateError($template->error());
-
-            exit;
+elsif ($action eq 'next_bug' or $action eq 'same_bug') {
+    my $bug = $vars->{'bug'};
+    if ($bug and $user->can_see_bug($bug)) {
+        if ($action eq 'same_bug') {
+            # $bug->update() does not update the internal structure of
+            # the bug sufficiently to display the bug with the new values.
+            # (That is, if we just passed in the old Bug object, we'd get
+            # a lot of old values displayed.)
+            $bug = new Bugzilla::Bug($bug->id);
+            $vars->{'bug'} = $bug;
         }
-    }
-} elsif ($action eq 'same_bug') {
-    if (Bugzilla->user->can_see_bug($cgi->param('id'))) {
-        my $bug = new Bugzilla::Bug($cgi->param('id'));
-        ThrowCodeError("bug_error", { bug => $bug }) if $bug->error;
-
         $vars->{'bugs'} = [$bug];
-
+        if ($action eq 'next_bug') {
+            $vars->{'nextbug'} = $bug->id;
+        }
         $template->process("bug/show.html.tmpl", $vars)
           || ThrowTemplateError($template->error());
-
         exit;
     }
 } elsif ($action ne 'nothing') {

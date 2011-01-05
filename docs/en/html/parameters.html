@@ -7,7 +7,7 @@
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REL="HOME"
-TITLE="The Bugzilla Guide - 3.4.3 
+TITLE="The Bugzilla Guide - 3.6.3 
     Release"
 HREF="index.html"><LINK
 REL="UP"
@@ -38,7 +38,7 @@ CELLSPACING="0"
 ><TH
 COLSPAN="3"
 ALIGN="center"
->The Bugzilla Guide - 3.4.3 
+>The Bugzilla Guide - 3.6.3 
     Release</TH
 ></TR
 ><TR
@@ -186,15 +186,12 @@ CLASS="filename"
               </P
 ></DD
 ><DT
->ssl</DT
+>ssl_redirect</DT
 ><DD
 ><P
->&#13;                Determines when Bugzilla will force HTTPS (SSL) connections, using
-                the URL defined in <B
-CLASS="command"
->sslbase</B
->. 
-                Options include "always", "never", and "authenticated sessions". 
+>&#13;                If enabled, Bugzilla will force HTTPS (SSL) connections, by
+                automatically redirecting any users who try to use a non-SSL
+                connection.
               </P
 ></DD
 ><DT
@@ -681,24 +678,6 @@ CLASS="variablelist"
 >&#13;                Determines whether or not to automatically create groups
                 when new products are created. If this is on, the groups will be
                 used for querying bugs.
-              </P
-></DD
-><DT
->useentrygroupdefault</DT
-><DD
-><P
->&#13;                Bugzilla products can have a group associated with them, so that
-                certain users can only see bugs in certain products. When this 
-                parameter is set to <SPAN
-CLASS="QUOTE"
->"on"</SPAN
->, this 
-                causes the initial group controls on newly created products 
-                to place all newly-created bugs in the group 
-                having the same name as the product immediately.
-                After a product is initially created, the group controls
-                can be further adjusted without interference by 
-                this mechanism.
               </P
 ></DD
 ><DT

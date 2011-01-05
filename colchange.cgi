@@ -71,11 +71,13 @@ if (Bugzilla->params->{"useqacontact"}) {
 if (Bugzilla->params->{"usestatuswhiteboard"}) {
     push(@masterlist, "status_whiteboard");
 }
-if (Bugzilla::Keyword::keyword_count()) {
+if (Bugzilla::Keyword->any_exist) {
     push(@masterlist, "keywords");
 }
-
-if (Bugzilla->user->in_group(Bugzilla->params->{"timetrackinggroup"})) {
+if (Bugzilla->has_flags) {
+    push(@masterlist, "flagtypes.name");
+}
+if (Bugzilla->user->is_timetracker) {
     push(@masterlist, ("estimated_time", "remaining_time", "actual_time",
                        "percentage_complete", "deadline")); 
 }
@@ -86,7 +88,7 @@ my @custom_fields = grep { $_->type != FIELD_TYPE_MULTI_SELECT }
                          Bugzilla->active_custom_fields;
 push(@masterlist, map { $_->name } @custom_fields);
 
-Bugzilla::Hook::process("colchange-columns", {'columns' => \@masterlist} );
+Bugzilla::Hook::process('colchange_columns', {'columns' => \@masterlist} );
 
 $vars->{'masterlist'} = \@masterlist;
 
@@ -148,10 +150,13 @@ if (defined $cgi->param('rememberedquery')) {
     $vars->{'redirect_url'} = "buglist.cgi?".$params->query_string();
 
 
-    # If we're running on Microsoft IIS, using cgi->redirect discards
-    # the Set-Cookie lines -- workaround is to use the old-fashioned 
-    # redirection mechanism. See bug 214466 for details.
-    if ($ENV{'SERVER_SOFTWARE'} =~ /Microsoft-IIS/
+    # If we're running on Microsoft IIS, $cgi->redirect discards
+    # the Set-Cookie lines. In mod_perl, $cgi->redirect with cookies
+    # causes the page to be rendered as text/plain.
+    # Workaround is to use the old-fashioned  redirection mechanism. 
+    # See bug 214466 and bug 376044 for details.
+    if ($ENV{'MOD_PERL'} 
+        || $ENV{'SERVER_SOFTWARE'} =~ /Microsoft-IIS/
         || $ENV{'SERVER_SOFTWARE'} =~ /Sun ONE Web/)
     {
       print $cgi->header(-type => "text/html",
@@ -159,6 +164,7 @@ if (defined $cgi->param('rememberedquery')) {
     }
     else {
       print $cgi->redirect($vars->{'redirect_url'});
+      exit;
     }
     
     $template->process("global/message.html.tmpl", $vars)

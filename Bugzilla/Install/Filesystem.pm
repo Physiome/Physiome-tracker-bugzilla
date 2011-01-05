@@ -30,11 +30,13 @@ use strict;
 use Bugzilla::Constants;
 use Bugzilla::Error;
 use Bugzilla::Install::Localconfig;
+use Bugzilla::Install::Util qw(install_string);
 use Bugzilla::Util;
 
 use File::Find;
 use File::Path;
 use File::Basename;
+use File::Copy qw(move);
 use IO::File;
 use POSIX ();
 
@@ -43,7 +45,14 @@ our @EXPORT = qw(
     update_filesystem
     create_htaccess
     fix_all_file_permissions
+    fix_file_permissions
 );
+
+use constant HT_DEFAULT_DENY => <<EOT;
+# nothing in this directory is retrievable unless overridden by an .htaccess
+# in a subdirectory
+deny from all
+EOT
 
 # This looks like a constant because it effectively is, but
 # it has to call other subroutines and read the current filesystem,
@@ -51,10 +60,10 @@ our @EXPORT = qw(
 # a perldoc. However, look at the various hashes defined inside this 
 # function to understand what it returns. (There are comments throughout.)
 #
-# The rationale for the file permissions is that the web server generally 
-# runs as apache, so the cgi scripts should not be writable for apache,
-# otherwise someone may find it possible to change the cgis when exploiting
-# some security flaw somewhere (not necessarily in Bugzilla!)
+# The rationale for the file permissions is that there is a group the
+# web server executes the scripts as, so the cgi scripts should not be writable
+# by this group. Otherwise someone may find it possible to change the cgis
+# when exploiting some security flaw somewhere (not necessarily in Bugzilla!)
 sub FILESYSTEM {
     my $datadir       = bz_locations()->{'datadir'};
     my $attachdir     = bz_locations()->{'attachdir'};
@@ -65,8 +74,17 @@ sub FILESYSTEM {
     my $extlib        = bz_locations()->{'ext_libpath'};
     my $skinsdir      = bz_locations()->{'skinsdir'};
     my $localconfig   = bz_locations()->{'localconfig'};
+    my $graphsdir     = bz_locations()->{'graphsdir'};
+
+    # We want to set the permissions the same for all localconfig files
+    # across all PROJECTs, so we do something special with $localconfig,
+    # lower down in the permissions section.
+    if ($ENV{PROJECT}) {
+        $localconfig =~ s/\.\Q$ENV{PROJECT}\E$//;
+    }
 
     my $ws_group      = Bugzilla->localconfig->{'webservergroup'};
+    my $use_suexec    = Bugzilla->localconfig->{'use_suexec'};
 
     # The set of permissions that we use:
 
@@ -76,15 +94,18 @@ sub FILESYSTEM {
     # Executable by the owner only.
     my $owner_executable = 0700;
     # Readable by the web server.
-    my $ws_readable = $ws_group ? 0640 : 0644;
+    my $ws_readable = ($ws_group && !$use_suexec) ? 0640 : 0644;
     # Readable by the owner only.
     my $owner_readable = 0600;
     # Writeable by the web server.
     my $ws_writeable = $ws_group ? 0660 : 0666;
 
+    # Script-readable files that should not be world-readable under suexec.
+    my $script_readable = $use_suexec ? 0640 : $ws_readable;
+
     # DIRECTORIES
     # Readable by the web server.
-    my $ws_dir_readable  = $ws_group ? 0750 : 0755;
+    my $ws_dir_readable  = ($ws_group && !$use_suexec) ? 0750 : 0755;
     # Readable only by the owner.
     my $owner_dir_readable = 0700;
     # Writeable by the web server.
@@ -116,17 +137,24 @@ sub FILESYSTEM {
         'email_in.pl'     => { perms => $ws_executable },
         'sanitycheck.pl'  => { perms => $ws_executable },
         'jobqueue.pl'     => { perms => $owner_executable },
+        'migrate.pl'      => { perms => $owner_executable },
         'install-module.pl' => { perms => $owner_executable },
 
+        # Set the permissions for localconfig the same across all
+        # PROJECTs.
+        $localconfig       => { perms => $script_readable },
+        "$localconfig.*"   => { perms => $script_readable },
         "$localconfig.old" => { perms => $owner_readable },
 
-        'docs/makedocs.pl'   => { perms => $owner_executable },
+        'contrib/README'       => { perms => $owner_readable },
+        'contrib/*/README'     => { perms => $owner_readable },
+        'docs/makedocs.pl'     => { perms => $owner_executable },
         'docs/style.css'       => { perms => $ws_readable },
         'docs/*/rel_notes.txt' => { perms => $ws_readable },
         'docs/*/README.docs'   => { perms => $owner_readable },
-        "$datadir/bugzilla-update.xml" => { perms => $ws_writeable },
         "$datadir/params" => { perms => $ws_writeable },
-        "$datadir/mailer.testfile" => { perms => $ws_writeable },
+        "$datadir/old-params.txt" => { perms => $owner_readable },
+        "$extensionsdir/create.pl" => { perms => $owner_executable },
     );
 
     # Directories that we want to set the perms on, but not
@@ -149,13 +177,11 @@ sub FILESYSTEM {
                                   dirs => $ws_dir_writeable },
          $webdotdir         => { files => $ws_writeable,
                                   dirs => $ws_dir_writeable },
-         graphs             => { files => $ws_writeable,
+         $graphsdir         => { files => $ws_writeable,
                                   dirs => $ws_dir_writeable },
 
          # Readable directories
          "$datadir/mining"     => { files => $ws_readable,
-                                     dirs => $ws_dir_readable },
-         "$datadir/duplicates" => { files => $ws_readable,
                                      dirs => $ws_dir_readable },
          "$libdir/Bugzilla"    => { files => $ws_readable,
                                      dirs => $ws_dir_readable },
@@ -187,6 +213,10 @@ sub FILESYSTEM {
                                      dirs => $owner_dir_readable },
          'docs/*/xml'          => { files => $owner_readable,
                                      dirs => $owner_dir_readable },
+         'contrib'             => { files => $owner_executable,
+                                     dirs => $owner_dir_readable, },
+         '.bzr'                => { files => $owner_readable,
+                                     dirs => $owner_dir_readable },
     );
 
     # --- FILES TO CREATE --- #
@@ -196,10 +226,10 @@ sub FILESYSTEM {
     my %create_dirs = (
         $datadir                => $ws_dir_full_control,
         "$datadir/mining"       => $ws_dir_readable,
-        "$datadir/duplicates"   => $ws_dir_readable,
+        "$datadir/extensions"   => $ws_dir_readable,
         $attachdir              => $ws_dir_writeable,
         $extensionsdir          => $ws_dir_readable,
-        graphs                  => $ws_dir_writeable,
+        $graphsdir              => $ws_dir_writeable,
         $webdotdir              => $ws_dir_writeable,
         "$skinsdir/custom"      => $ws_dir_readable,
         "$skinsdir/contrib"     => $ws_dir_readable,
@@ -207,7 +237,16 @@ sub FILESYSTEM {
 
     # The name of each file, pointing at its default permissions and
     # default contents.
-    my %create_files = ();
+    my %create_files = (
+        "$datadir/extensions/additional" => { perms    => $ws_readable, 
+                                              contents => '' },
+        # We create this file so that it always has the right owner
+        # and permissions. Otherwise, the webserver creates it as
+        # owned by itself, which can cause problems if jobqueue.pl
+        # or something else is not running as the webserver or root.
+        "$datadir/mailer.testfile" => { perms    => $ws_writeable,
+                                        contents => '' },
+    );
 
     # Each standard stylesheet has an associated custom stylesheet that
     # we create. Also, we create placeholders for standard stylesheets
@@ -244,21 +283,19 @@ EOT
     # Because checksetup controls the .htaccess creation separately
     # by a localconfig variable, these go in a separate variable from
     # %create_files.
-    my $ht_default_deny = <<EOT;
-# nothing in this directory is retrievable unless overridden by an .htaccess
-# in a subdirectory
-deny from all
-EOT
-
     my %htaccess = (
         "$attachdir/.htaccess"       => { perms    => $ws_readable,
-                                          contents => $ht_default_deny },
+                                          contents => HT_DEFAULT_DENY },
         "$libdir/Bugzilla/.htaccess" => { perms    => $ws_readable,
-                                          contents => $ht_default_deny },
+                                          contents => HT_DEFAULT_DENY },
         "$extlib/.htaccess"          => { perms    => $ws_readable,
-                                          contents => $ht_default_deny },
+                                          contents => HT_DEFAULT_DENY },
         "$templatedir/.htaccess"     => { perms    => $ws_readable,
-                                          contents => $ht_default_deny },
+                                          contents => HT_DEFAULT_DENY },
+        'contrib/.htaccess'          => { perms    => $ws_readable,
+                                          contents => HT_DEFAULT_DENY },
+        't/.htaccess'                => { perms    => $ws_readable,
+                                          contents => HT_DEFAULT_DENY },
 
         '.htaccess' => { perms => $ws_readable, contents => <<EOT
 # Don't allow people to retrieve non-cgi executable files or our private data
@@ -295,8 +332,17 @@ EOT
 # in a subdirectory.
 deny from all
 EOT
+        },
 
+        "$graphsdir/.htaccess" => { perms => $ws_readable, contents => <<EOT
+# Allow access to .png and .gif files.
+<FilesMatch (\\.gif|\\.png)\$>
+  Allow from all
+</FilesMatch>
 
+# And no directory listings, either.
+Deny from all
+EOT
         },
     );
 
@@ -322,10 +368,11 @@ sub update_filesystem {
     my %files = %{$fs->{create_files}};
 
     my $datadir = bz_locations->{'datadir'};
+    my $graphsdir = bz_locations->{'graphsdir'};
     # If the graphs/ directory doesn't exist, we're upgrading from
     # a version old enough that we need to update the $datadir/mining 
     # format.
-    if (-d "$datadir/mining" && !-d 'graphs') {
+    if (-d "$datadir/mining" && !-d $graphsdir) {
         _update_old_charts($datadir);
     }
 
@@ -335,11 +382,24 @@ sub update_filesystem {
     foreach my $dir (sort keys %dirs) {
         unless (-d $dir) {
             print "Creating $dir directory...\n";
-            mkdir $dir || die $!;
+            mkdir $dir or die "mkdir $dir failed: $!";
             # For some reason, passing in the permissions to "mkdir"
             # doesn't work right, but doing a "chmod" does.
-            chmod $dirs{$dir}, $dir || die $!;
+            chmod $dirs{$dir}, $dir or warn "Cannot chmod $dir: $!";
         }
+    }
+
+    # Move the testfile if we can't write to it, so that we can re-create
+    # it with the correct permissions below.
+    my $testfile = "$datadir/mailer.testfile";
+    if (-e $testfile and !-w $testfile) {
+        _rename_file($testfile, "$testfile.old");
+    }
+
+    # If old-params.txt exists in the root directory, move it to datadir.
+    my $oldparamsfile = "old_params.txt";
+    if (-e $oldparamsfile) {
+        _rename_file($oldparamsfile, "$datadir/$oldparamsfile");
     }
 
     _create_files(%files);
@@ -376,6 +436,11 @@ EOT
         print "Removing duplicates.rdf...\n";
         unlink "$datadir/duplicates.rdf";
         unlink "$datadir/duplicates-old.rdf";
+    }
+
+    if (-e "$datadir/duplicates") {
+        print "Removing duplicates directory...\n";
+        rmtree("$datadir/duplicates");
     }
 }
 
@@ -429,6 +494,17 @@ sub create_htaccess {
         $webdot = new IO::File("$webdot_dir/.htaccess", 'w') || die $!;
         print $webdot $webdot_data;
         $webdot->close;
+    }
+}
+
+sub _rename_file {
+    my ($from, $to) = @_;
+    print "Renaming $from to $to...\n";
+    if (-e $to) {
+        warn "$to already exists, not moving\n";
+    }
+    else {
+        move($from, $to) or warn $!;
     }
 }
 
@@ -528,12 +604,20 @@ sub _update_old_charts {
     } 
 }
 
+sub fix_file_permissions {
+    my ($file) = @_;
+    return if ON_WINDOWS;
+    my $perms = FILESYSTEM()->{all_files}->{$file}->{perms};
+    # Note that _get_owner_and_group is always silent here.
+    my ($owner_id, $group_id) = _get_owner_and_group();
+    _fix_perms($file, $owner_id, $group_id, $perms);
+}
 
 sub fix_all_file_permissions {
     my ($output) = @_;
 
-    my $ws_group = Bugzilla->localconfig->{'webservergroup'};
-    my $group_id = _check_web_server_group($ws_group, $output);
+    # _get_owner_and_group also checks that the webservergroup is valid.
+    my ($owner_id, $group_id) = _get_owner_and_group($output);
 
     return if ON_WINDOWS;
 
@@ -544,30 +628,18 @@ sub fix_all_file_permissions {
 
     print get_text('install_file_perms_fix') . "\n" if $output;
 
-    my $owner_id = POSIX::getuid();
-    $group_id = POSIX::getgid() unless defined $group_id;
-
     foreach my $dir (sort keys %dirs) {
         next unless -d $dir;
         _fix_perms($dir, $owner_id, $group_id, $dirs{$dir});
     }
 
-    foreach my $dir (sort keys %recurse_dirs) {
-        next unless -d $dir;
-        # Set permissions on the directory itself.
-        my $perms = $recurse_dirs{$dir};
-        _fix_perms($dir, $owner_id, $group_id, $perms->{dirs});
-        # Now recurse through the directory and set the correct permissions
-        # on subdirectories and files.
-        find({ no_chdir => 1, wanted => sub {
-            my $name = $File::Find::name;
-            if (-d $name) {
-                _fix_perms($name, $owner_id, $group_id, $perms->{dirs});
-            }
-            else {
-                _fix_perms($name, $owner_id, $group_id, $perms->{files});
-            }
-        }}, $dir);
+    foreach my $pattern (sort keys %recurse_dirs) {
+        my $perms = $recurse_dirs{$pattern};
+        # %recurse_dirs supports globs
+        foreach my $dir (glob $pattern) {
+            next unless -d $dir;
+            _fix_perms_recursively($dir, $owner_id, $group_id, $perms);
+        }
     }
 
     foreach my $file (sort keys %files) {
@@ -583,6 +655,16 @@ sub fix_all_file_permissions {
     _fix_cvs_dirs($owner_id, '.');
 }
 
+sub _get_owner_and_group {
+    my ($output) = @_;
+    my $group_id = _check_web_server_group($output);
+    return () if ON_WINDOWS;
+
+    my $owner_id = POSIX::getuid();
+    $group_id = POSIX::getgid() unless defined $group_id;
+    return ($owner_id, $group_id);
+}
+
 # A helper for fix_all_file_permissions
 sub _fix_cvs_dirs {
     my ($owner_id, $dir) = @_;
@@ -590,8 +672,13 @@ sub _fix_cvs_dirs {
     find({ no_chdir => 1, wanted => sub {
         my $name = $File::Find::name;
         if ($File::Find::dir =~ /\/CVS/ || $_ eq '.cvsignore'
-            || (-d $name && $_ eq 'CVS')) {
-            _fix_perms($name, $owner_id, $owner_gid, 0700);
+            || (-d $name && $_ =~ /CVS$/)) 
+        {
+            my $perms = 0600;
+            if (-d $name) {
+                $perms = 0700;
+            }
+            _fix_perms($name, $owner_id, $owner_gid, $perms);
         }
     }}, $dir);
 }
@@ -599,15 +686,39 @@ sub _fix_cvs_dirs {
 sub _fix_perms {
     my ($name, $owner, $group, $perms) = @_;
     #printf ("Changing $name to %o\n", $perms);
-    chown $owner, $group, $name 
-        || warn "Failed to change ownership of $name: $!";
+
+    # The webserver should never try to chown files.
+    if (Bugzilla->usage_mode == USAGE_MODE_CMDLINE) {
+        chown $owner, $group, $name
+            or warn install_string('chown_failed', { path => $name, 
+                                                     error => $! }) . "\n";
+    }
     chmod $perms, $name
-        || warn "Failed to change permissions of $name: $!";
+        or warn install_string('chmod_failed', { path => $name, 
+                                                 error => $! }) . "\n";
+}
+
+sub _fix_perms_recursively {
+    my ($dir, $owner_id, $group_id, $perms) = @_;
+    # Set permissions on the directory itself.
+    _fix_perms($dir, $owner_id, $group_id, $perms->{dirs});
+    # Now recurse through the directory and set the correct permissions
+    # on subdirectories and files.
+    find({ no_chdir => 1, wanted => sub {
+        my $name = $File::Find::name;
+        if (-d $name) {
+            _fix_perms($name, $owner_id, $group_id, $perms->{dirs});
+        }
+        else {
+            _fix_perms($name, $owner_id, $group_id, $perms->{files});
+        }
+    }}, $dir);
 }
 
 sub _check_web_server_group {
-    my ($group, $output) = @_;
+    my ($output) = @_;
 
+    my $group    = Bugzilla->localconfig->{'webservergroup'};
     my $filename = bz_locations()->{'localconfig'};
     my $group_id;
 
@@ -690,5 +801,11 @@ Params:      C<$output> - C<true> if you want this function to print
                  out information about what it's doing.
 
 Returns:     nothing
+
+=item C<fix_file_permissions>
+
+Given the name of a file, its permissions will be fixed according to
+how they are supposed to be set in Bugzilla's current configuration.
+If it fails to set the permissions, a warning will be printed to STDERR.
 
 =back

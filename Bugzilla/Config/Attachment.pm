@@ -35,7 +35,7 @@ use strict;
 
 use Bugzilla::Config::Common;
 
-$Bugzilla::Config::Attachment::sortkey = "025";
+our $sortkey = 400;
 
 sub get_param_list {
   my $class = shift;
@@ -84,13 +84,6 @@ sub get_param_list {
    type => 't',
    default => '0',
    checker => \&check_numeric
-  },
-  
-  {
-   name => 'convert_uncompressed_images',
-   type => 'b',
-   default => 0,
-   checker => \&check_image_converter
   } );
   return @param_list;
 }

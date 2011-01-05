@@ -64,7 +64,7 @@ sub _throw_error {
         for (1..75) { $mesg .= "-"; };
         $mesg .= "\n[$$] " . time2str("%D %H:%M:%S ", time());
         $mesg .= "$name $error ";
-        $mesg .= "$ENV{REMOTE_ADDR} " if $ENV{REMOTE_ADDR};
+        $mesg .= remote_ip();
         $mesg .= Bugzilla->user->login;
         $mesg .= (' actually ' . Bugzilla->sudoer->login) if Bugzilla->sudoer;
         $mesg .= "\n";
@@ -101,18 +101,39 @@ sub _throw_error {
         if (Bugzilla->error_mode == ERROR_MODE_DIE) {
             die("$message\n");
         }
-        elsif (Bugzilla->error_mode == ERROR_MODE_DIE_SOAP_FAULT) {
+        elsif (Bugzilla->error_mode == ERROR_MODE_DIE_SOAP_FAULT
+               || Bugzilla->error_mode == ERROR_MODE_JSON_RPC)
+        {
             # Clone the hash so we aren't modifying the constant.
             my %error_map = %{ WS_ERROR_CODE() };
             require Bugzilla::Hook;
-            Bugzilla::Hook::process('webservice-error_codes', 
+            Bugzilla::Hook::process('webservice_error_codes', 
                                     { error_map => \%error_map });
             my $code = $error_map{$error};
             if (!$code) {
                 $code = ERROR_UNKNOWN_FATAL if $name =~ /code/i;
                 $code = ERROR_UNKNOWN_TRANSIENT if $name =~ /user/i;
             }
-            die SOAP::Fault->faultcode($code)->faultstring($message);
+
+            if (Bugzilla->error_mode == ERROR_MODE_DIE_SOAP_FAULT) {
+                die SOAP::Fault->faultcode($code)->faultstring($message);
+            }
+            else {
+                my $server = Bugzilla->_json_server;
+                # Technically JSON-RPC isn't allowed to have error numbers
+                # higher than 999, but we do this to avoid conflicts with
+                # the internal JSON::RPC error codes.
+                $server->raise_error(code    => 100000 + $code,
+                                     message => $message,
+                                     id      => $server->{_bz_request_id},
+                                     version => $server->version);
+                # Most JSON-RPC Throw*Error calls happen within an eval inside
+                # of JSON::RPC. So, in that circumstance, instead of exiting,
+                # we die with no message. JSON::RPC checks raise_error before
+                # it checks $@, so it returns the proper error.
+                die if _in_eval();
+                $server->response($server->error_response_header);
+            }
         }
     }
     exit;

@@ -15,6 +15,7 @@
 # Contributor(s): Dan Mosedale <dmose@mozilla.org>
 #                 Frédéric Buclin <LpSolit@gmail.com>
 #                 Myk Melez <myk@mozilla.org>
+#                 Greg Hendricks <ghendricks@novell.com>
 
 =head1 NAME
 
@@ -218,7 +219,7 @@ use constant DEFAULT_FIELDS => (
     {name => 'deadline',              desc => 'Deadline',
      in_new_bugmail => 1, buglist => 1},
     {name => 'commenter',             desc => 'Commenter'},
-    {name => 'flagtypes.name',        desc => 'Flag'},
+    {name => 'flagtypes.name',        desc => 'Flags', buglist => 1},
     {name => 'requestees.login_name', desc => 'Flag Requestee'},
     {name => 'setters.login_name',    desc => 'Flag Setter'},
     {name => 'work_time',             desc => 'Hours Worked', buglist => 1},
@@ -720,15 +721,13 @@ sub remove_from_db {
         $bugs_query = "SELECT COUNT(*) FROM bug_$name";
     }
     else {
-        $bugs_query = "SELECT COUNT(*) FROM bugs WHERE $name IS NOT NULL
-                                AND $name != ''";
+        $bugs_query = "SELECT COUNT(*) FROM bugs WHERE $name IS NOT NULL";
+        if ($self->type != FIELD_TYPE_BUG_ID && $self->type != FIELD_TYPE_DATETIME) {
+            $bugs_query .= " AND $name != ''";
+        }
         # Ignore the default single select value
         if ($self->type == FIELD_TYPE_SINGLE_SELECT) {
             $bugs_query .= " AND $name != '---'";
-        }
-        # Ignore blank dates.
-        if ($self->type == FIELD_TYPE_DATETIME) {
-            $bugs_query .= " AND $name != '00-00-00 00:00:00'";
         }
     }
 
@@ -836,6 +835,11 @@ sub run_create_validators {
                                      $params->{visibility_field_id});
 
     my $type = $params->{type} || 0;
+    
+    if ($params->{custom} && !$type) {
+        ThrowCodeError('field_type_not_specified');
+    }
+    
     $params->{value_field_id} = 
         $class->_check_value_field_id($params->{value_field_id},
             ($type == FIELD_TYPE_SINGLE_SELECT 
@@ -1033,8 +1037,14 @@ sub check_field {
     my $dbh = Bugzilla->dbh;
 
     # If $legalsRef is undefined, we use the default valid values.
+    # Valid values for this check are all possible values. 
+    # Using get_legal_values would only return active values, but since
+    # some bugs may have inactive values set, we want to check them too. 
     unless (defined $legalsRef) {
-        $legalsRef = get_legal_field_values($name);
+        $legalsRef = Bugzilla::Field->new({name => $name})->legal_values;
+        my @values = map($_->name, @$legalsRef);
+        $legalsRef = \@values;
+
     }
 
     if (!defined($value)

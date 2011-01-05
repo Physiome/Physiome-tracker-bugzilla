@@ -28,6 +28,7 @@
 #                 Joel Peshkin <bugreport@peshkin.net>
 #                 Lance Larsh <lance.larsh@oracle.com>
 #                 Jesse Clark <jjclark1982@gmail.com>
+#                 Rémi Zara <remi_zara@mac.com>
 
 use strict;
 
@@ -123,6 +124,9 @@ sub COLUMNS {
               . " ELSE 100"
                    . " * ($actual_time / ($actual_time + bugs.remaining_time))"
               . " END)",
+
+        'flagtypes.name' => $dbh->sql_group_concat('DISTINCT '
+                            . $dbh->sql_string_concat('flagtypes.name', 'flags.status'), "', '"),
     );
 
     # Backward-compatibility for old field names. Goes new_name => old_name.
@@ -167,7 +171,7 @@ sub COLUMNS {
     # The short_short_desc column is identical to short_desc
     $columns{'short_short_desc'} = $columns{'short_desc'};
 
-    Bugzilla::Hook::process("buglist-columns", { columns => \%columns });
+    Bugzilla::Hook::process('buglist_columns', { columns => \%columns });
 
     $cache->{search_columns} = \%columns;
     return $cache->{search_columns};
@@ -191,6 +195,7 @@ sub init {
     my $self = shift;
     my @fields = @{ $self->{'fields'} || [] };
     my $params = $self->{'params'};
+    $params->convert_old_params();
     $self->{'user'} ||= Bugzilla->user;
     my $user = $self->{'user'};
 
@@ -270,6 +275,11 @@ sub init {
                           "ON ldtime.bug_id = bugs.bug_id");
     }
 
+    if (grep($_ eq 'flagtypes.name', @fields)) {
+        push(@supptables, "LEFT JOIN flags ON flags.bug_id = bugs.bug_id AND attach_id IS NULL");
+        push(@supptables, "LEFT JOIN flagtypes ON flagtypes.id = flags.type_id");
+    }
+
     my $minvotes;
     if (defined $params->param('votes')) {
         my $c = trim($params->param('votes'));
@@ -282,22 +292,24 @@ sub init {
         }
     }
 
-    if ($params->param('bug_id')) {
-        my $type = "anyexact";
-        if ($params->param('bugidtype') && $params->param('bugidtype') eq 'exclude') {
-            $type = "nowords";
-        }
-        push(@specialchart, ["bug_id", $type, join(',', $params->param('bug_id'))]);
-    }
-
     # If the user has selected all of either status or resolution, change to
     # selecting none. This is functionally equivalent, but quite a lot faster.
     # Also, if the status is __open__ or __closed__, translate those
     # into their equivalent lists of open and closed statuses.
     if ($params->param('bug_status')) {
         my @bug_statuses = $params->param('bug_status');
-        my @legal_statuses = @{get_legal_field_values('bug_status')};
-        if (scalar(@bug_statuses) == scalar(@legal_statuses)
+        # Also include inactive bug statuses, as you can query them.
+        my @legal_statuses =
+          map {$_->name} @{Bugzilla::Field->new({name => 'bug_status'})->legal_values};
+
+        # Filter out any statuses that have been removed completely that are still 
+        # being used by the client
+        my @valid_statuses;
+        foreach my $status (@bug_statuses) {
+            push(@valid_statuses, $status) if grep($_ eq $status, @legal_statuses);
+        }
+        
+        if (scalar(@valid_statuses) == scalar(@legal_statuses)
             || $bug_statuses[0] eq "__all__")
         {
             $params->delete('bug_status');
@@ -310,37 +322,46 @@ sub init {
             $params->param('bug_status', grep(!is_open_state($_), 
                                               @legal_statuses));
         }
+        else {
+            $params->param('bug_status', @valid_statuses);
+        }
     }
     
     if ($params->param('resolution')) {
         my @resolutions = $params->param('resolution');
-        my $legal_resolutions = get_legal_field_values('resolution');
+        # Also include inactive resolutions, as you can query them.
+        my $legal_resolutions = Bugzilla::Field->new({name => 'resolution'})->legal_values;
         if (scalar(@resolutions) == scalar(@$legal_resolutions)) {
             $params->delete('resolution');
         }
     }
     
-    my @legal_fields = ("product", "version", "assigned_to", "reporter", 
-                        "component", "classification", "target_milestone",
-                        "bug_group");
-
-    # Include custom select fields.
-    push(@legal_fields, map { $_->name } @select_fields);
-    push(@legal_fields, map { $_->name } @multi_select_fields);
-
-    foreach my $field ($params->param()) {
-        if (lsearch(\@legal_fields, $field) != -1) {
-            push(@specialchart, [$field, "anyexact",
-                                 join(',', $params->param($field))]);
+    # All fields that don't have a . in their name should be specifyable
+    # in the URL directly.
+    my @legal_fields = grep { $_->name !~ /\./ } Bugzilla->get_fields;
+    if (!$user->is_timetracker) {
+        foreach my $field (TIMETRACKING_FIELDS) {
+            @legal_fields = grep { $_->name ne $field } @legal_fields;
         }
     }
 
-    if ($params->param('keywords')) {
-        my $t = $params->param('keywords_type');
-        if (!$t || $t eq "or") {
-            $t = "anywords";
+    foreach my $field ($params->param()) {
+        # "votes" got special treatment, above.
+        next if $field eq 'votes';
+        if (grep { $_->name eq $field } @legal_fields) {
+            my $type = $params->param("${field}_type");
+            if (!$type) {
+                if ($field eq 'keywords') {
+                    $type = 'anywords';
+                }
+                else {
+                    $type = 'anyexact';
+                }
+            }
+            $type = 'matches' if $field eq 'content';
+            push(@specialchart, [$field, $type,
+                                 join(',', $params->param($field))]);
         }
-        push(@specialchart, ["keywords", $t, $params->param('keywords')]);
     }
 
     foreach my $id ("1", "2") {
@@ -379,8 +400,8 @@ sub init {
         }
     }
 
-    my $chfieldfrom = trim(lc($params->param('chfieldfrom'))) || '';
-    my $chfieldto = trim(lc($params->param('chfieldto'))) || '';
+    my $chfieldfrom = trim(lc($params->param('chfieldfrom') || ''));
+    my $chfieldto = trim(lc($params->param('chfieldto') || ''));
     $chfieldfrom = '' if ($chfieldfrom eq 'now');
     $chfieldto = '' if ($chfieldto eq 'now');
     my @chfield = $params->param('chfield');
@@ -518,15 +539,9 @@ sub init {
     my $sql_deadlinefrom;
     my $sql_deadlineto;
     if ($user->is_timetracker) {
-      my $deadlinefrom;
-      my $deadlineto;
-            
-      if ($params->param('deadlinefrom')){
-        $deadlinefrom = $params->param('deadlinefrom');
-        validate_date($deadlinefrom)
-          || ThrowUserError('illegal_date', {date => $deadlinefrom,
-                                             format => 'YYYY-MM-DD'});
-        $sql_deadlinefrom = $dbh->quote($deadlinefrom);
+      if ($params->param('deadlinefrom')) {
+        my $deadlinefrom = $params->param('deadlinefrom');
+        $sql_deadlinefrom = $dbh->quote(SqlifyDate($deadlinefrom));
         trick_taint($sql_deadlinefrom);
         my $term = "bugs.deadline >= $sql_deadlinefrom";
         push(@wherepart, $term);
@@ -536,12 +551,9 @@ sub init {
         });
       }
       
-      if ($params->param('deadlineto')){
-        $deadlineto = $params->param('deadlineto');
-        validate_date($deadlineto)
-          || ThrowUserError('illegal_date', {date => $deadlineto,
-                                             format => 'YYYY-MM-DD'});
-        $sql_deadlineto = $dbh->quote($deadlineto);
+      if ($params->param('deadlineto')) {
+        my $deadlineto = $params->param('deadlineto');
+        $sql_deadlineto = $dbh->quote(SqlifyDate($deadlineto));
         trick_taint($sql_deadlineto);
         my $term = "bugs.deadline <= $sql_deadlineto";
         push(@wherepart, $term);
@@ -564,10 +576,6 @@ sub init {
                 push(@specialchart, [$f, $type, $s]);
             }
         }
-    }
-
-    if (defined $params->param('content')) {
-        push(@specialchart, ['content', 'matches', $params->param('content')]);
     }
 
     my $multi_fields = join('|', map($_->name, @multi_select_fields));
@@ -611,7 +619,7 @@ sub init {
         "^long_?desc,changedby" => \&_long_desc_changedby,
         "^long_?desc,changedbefore" => \&_long_desc_changedbefore_after,
         "^long_?desc,changedafter" => \&_long_desc_changedbefore_after,
-        "^content,matches" => \&_content_matches,
+        "^content,(?:not)?matches" => \&_content_matches,
         "^content," => sub { ThrowUserError("search_content_without_matches"); },
         "^(?:deadline|creation_ts|delta_ts),(?:lessthan|greaterthan|equals|notequals),(?:-|\\+)?(?:\\d+)(?:[dDwWmMyY])\$" => \&_timestamp_compare,
         "^commenter,(?:equals|anyexact),(%\\w+%)" => \&_commenter_exact,
@@ -636,6 +644,8 @@ sub init {
         "^component,(?!changed)" => \&_component_nonchanged,
         "^product,(?!changed)" => \&_product_nonchanged,
         "^classification,(?!changed)" => \&_classification_nonchanged,
+        "^keywords,(?:equals|anyexact|anyword|allwords)" => \&_keywords_exact,
+        "^keywords,(?:notequals|notregexp|notsubstring|nowords|nowordssubstr)" => \&_multiselect_negative,
         "^keywords,(?!changed)" => \&_keywords_nonchanged,
         "^dependson,(?!changed)" => \&_dependson_nonchanged,
         "^blocked,(?!changed)" => \&_blocked_nonchanged,
@@ -654,6 +664,7 @@ sub init {
         ",notregexp" => \&_notregexp,
         ",lessthan" => \&_lessthan,
         ",matches" => sub { ThrowUserError("search_content_without_matches"); },
+        ",notmatches" => sub { ThrowUserError("search_content_without_matches"); },
         ",greaterthan" => \&_greaterthan,
         ",anyexact" => \&_anyexact,
         ",anywordssubstr" => \&_anywordsubstr,
@@ -789,6 +800,12 @@ sub init {
     %chartfields = @{$dbh->selectcol_arrayref(
         q{SELECT name, id FROM fielddefs}, { Columns=>[1,2] })};
 
+    if (!$user->is_timetracker) {
+        foreach my $tt_field (TIMETRACKING_FIELDS) {
+            delete $chartfields{$tt_field};
+        }
+    }
+
     $row = 0;
     for ($chart=-1 ;
          $chart < 0 || $params->param("field$chart-0-0") ;
@@ -911,8 +928,15 @@ sub init {
     # Make sure we create a legal SQL query.
     @andlist = ("1 = 1") if !@andlist;
 
-    my @sql_fields = map { $_ eq EMPTY_COLUMN ? EMPTY_COLUMN 
-                           : COLUMNS->{$_}->{name} . ' AS ' . $_ } @fields;
+    my @sql_fields;
+    foreach my $field (@fields) {
+        my $alias = $field;
+        # Aliases cannot contain dots in them. We convert them to underscores.
+        $alias =~ s/\./_/g;
+        my $sql_field = ($field eq EMPTY_COLUMN) ? EMPTY_COLUMN
+                                                 : COLUMNS->{$field}->{name} . " AS $alias";
+        push(@sql_fields, $sql_field);
+    }
     my $query = "SELECT " . join(', ', @sql_fields) .
                 " FROM $suppstring" .
                 " LEFT JOIN bug_group_map " .
@@ -945,7 +969,7 @@ sub init {
         # These fields never go into the GROUP BY (bug_id goes in
         # explicitly, below).
         next if (grep($_ eq $field, EMPTY_COLUMN, 
-                      qw(bug_id actual_time percentage_complete)));
+                      qw(bug_id actual_time percentage_complete flagtypes.name)));
         my $col = COLUMNS->{$field}->{name};
         push(@groupby, $col) if !grep($_ eq $col, @groupby);
     }
@@ -976,7 +1000,7 @@ sub init {
 ###############################################################################
 sub SqlifyDate {
     my ($str) = @_;
-    $str = "" if !defined $str;
+    $str = "" if (!defined $str || lc($str) eq 'now');
     if ($str eq "") {
         my ($sec, $min, $hour, $mday, $month, $year, $wday) = localtime(time());
         return sprintf("%4d-%02d-%02d 00:00:00", $year+1900, $month+1, $mday);
@@ -1034,6 +1058,7 @@ sub GetByWordList {
     my ($field, $strs) = (@_);
     my @list;
     my $dbh = Bugzilla->dbh;
+    return [] unless defined $strs;
 
     foreach my $w (split(/[\s,]+/, $strs)) {
         my $word = $w;
@@ -1160,6 +1185,8 @@ sub BuildOrderBy {
         }
         return;
     }
+    # Aliases cannot contain dots in them. We convert them to underscores.
+    $orderfield =~ s/\./_/g if exists COLUMNS->{$orderfield};
 
     push(@$stringlist, trim($orderfield . ' ' . $orderdirection));
 }
@@ -1168,8 +1195,7 @@ sub BuildOrderBy {
 sub split_order_term {
     my $fragment = shift;
     $fragment =~ /^(.+?)(?:\s+(ASC|DESC))?$/i;
-    my ($column_name, $direction) = (lc($1), uc($2));
-    $direction ||= "";
+    my ($column_name, $direction) = (lc($1), uc($2 || ''));
     return wantarray ? ($column_name, $direction) : $column_name;
 }
 
@@ -1212,7 +1238,8 @@ sub _contact_exact_group {
     $$v =~ m/%group\\.([^%]+)%/;
     my $group = $1;
     my $groupid = Bugzilla::Group::ValidateGroupName( $group, ($user));
-    $groupid || ThrowUserError('invalid_group_name',{name => $group});
+    ($groupid && $user->in_group_id($groupid))
+      || ThrowUserError('invalid_group_name',{name => $group});
     my @childgroups = @{Bugzilla::Group->flatten_group_membership($groupid)};
     my $table = "user_group_map_$$chartid";
     push (@$supptables, "LEFT JOIN user_group_map AS $table " .
@@ -1284,7 +1311,8 @@ sub _cc_exact_group {
     $$v =~ m/%group\\.([^%]+)%/;
     my $group = $1;
     my $groupid = Bugzilla::Group::ValidateGroupName( $group, ($user));
-    $groupid || ThrowUserError('invalid_group_name',{name => $group});
+    ($groupid && $user->in_group_id($groupid))
+      || ThrowUserError('invalid_group_name',{name => $group});
     my @childgroups = @{Bugzilla::Group->flatten_group_membership($groupid)};
     my $chartseq = $$chartid;
     if ($$chartid eq "") {
@@ -1403,8 +1431,8 @@ sub _long_desc_changedbefore_after {
 sub _content_matches {
     my $self = shift;
     my %func_args = @_;
-    my ($chartid, $supptables, $term, $groupby, $fields, $v) =
-        @func_args{qw(chartid supptables term groupby fields v)};
+    my ($chartid, $supptables, $term, $groupby, $fields, $t, $v) =
+        @func_args{qw(chartid supptables term groupby fields t v)};
     my $dbh = Bugzilla->dbh;
     
     # "content" is an alias for columns containing text for which we
@@ -1431,19 +1459,21 @@ sub _content_matches {
 
     # The term to use in the WHERE clause.
     $$term = "$term1 > 0 OR $term2 > 0";
+    if ($$t =~ /not/i) {
+        $$term = "NOT($$term)";
+    }
     
     # In order to sort by relevance (in case the user requests it),
     # we SELECT the relevance value so we can add it to the ORDER BY
     # clause. Every time a new fulltext chart isadded, this adds more 
-    # terms to the relevance sql. (That doesn't make sense in
-    # "NOT" charts, but Bugzilla never uses those with fulltext
-    # by default.)
+    # terms to the relevance sql.
     #
     # We build the relevance SQL by modifying the COLUMNS list directly,
     # which is kind of a hack but works.
     my $current = COLUMNS->{'relevance'}->{name};
     $current = $current ? "$current + " : '';
-    my $select_term = "($current$rterm1 + $rterm2)";
+    # For NOT searches, we just add 0 to the relevance.
+    my $select_term = $$t =~ /not/ ? 0 : "($current$rterm1 + $rterm2)";
     COLUMNS->{'relevance'}->{name} = $select_term;
 }
 
@@ -1856,12 +1886,12 @@ sub _classification_nonchanged {
                               $$term);
 }
 
-sub _keywords_nonchanged {
+sub _keywords_exact {
     my $self = shift;
     my %func_args = @_;
     my ($chartid, $v, $ff, $f, $t, $term, $supptables) =
         @func_args{qw(chartid v ff f t term supptables)};
-    
+
     my @list;
     my $table = "keywords_$$chartid";
     foreach my $value (split(/[\s,]+/, $$v)) {
@@ -1893,6 +1923,23 @@ sub _keywords_nonchanged {
         push(@$supptables, "LEFT JOIN keywords AS $table " .
                            "ON $table.bug_id = bugs.bug_id");
     }
+}
+
+sub _keywords_nonchanged {
+    my $self = shift;
+    my %func_args = @_;
+    my ($chartid, $v, $ff, $f, $t, $term, $supptables) =
+        @func_args{qw(chartid v ff f t term supptables)};
+
+    my $k_table = "keywords_$$chartid";
+    my $kd_table = "keyworddefs_$$chartid";
+    
+    push(@$supptables, "LEFT JOIN keywords AS $k_table " .
+                       "ON $k_table.bug_id = bugs.bug_id");
+    push(@$supptables, "LEFT JOIN keyworddefs AS $kd_table " .
+                       "ON $kd_table.id = $k_table.keywordid");
+    
+    $$f = "$kd_table.name";
 }
 
 sub _dependson_nonchanged {
@@ -1992,8 +2039,16 @@ sub _multiselect_negative {
         nowordssubstr => 'anywordssubstr',
     );
 
-    my $table = "bug_$$f";
-    $$ff = "$table.value";
+    my $table;
+    if ($$f eq 'keywords') {
+        $table = "keywords LEFT JOIN keyworddefs"
+                 . " ON keywords.keywordid = keyworddefs.id";
+        $$ff = "keyworddefs.name";
+    }
+    else {
+        $table = "bug_$$f";
+        $$ff = "$table.value";
+    }
     
     $$funcsbykey{",".$map{$$t}}($self, %func_args);
     $$term = "bugs.bug_id NOT IN (SELECT bug_id FROM $table WHERE $$term)";

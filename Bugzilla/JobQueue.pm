@@ -27,7 +27,7 @@ use strict;
 use Bugzilla::Constants;
 use Bugzilla::Error;
 use Bugzilla::Install::Util qw(install_string);
-BEGIN { eval "use base qw(TheSchwartz)"; }
+use base qw(TheSchwartz);
 
 # This maps job names for Bugzilla::JobQueue to the appropriate modules.
 # If you add new types of jobs, you should add a mapping here.
@@ -38,14 +38,16 @@ use constant JOB_MAP => {
 sub new {
     my $class = shift;
 
-    if (!eval { require TheSchwartz; }) {
-        ThrowCodeError('jobqueue_not_configured');
+    if (!Bugzilla->feature('jobqueue')) {
+        ThrowCodeError('feature_disabled', { feature => 'jobqueue' });
     }
 
     my $lc = Bugzilla->localconfig;
+    # We need to use the main DB as TheSchwartz module is going
+    # to write to it.
     my $self = $class->SUPER::new(
         databases => [{
-            dsn    => Bugzilla->dbh->{private_bz_dsn},
+            dsn    => Bugzilla->dbh_main->{private_bz_dsn},
             user   => $lc->{db_user},
             pass   => $lc->{db_pass},
             prefix => 'ts_',

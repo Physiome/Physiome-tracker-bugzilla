@@ -24,6 +24,7 @@ use strict;
 package Bugzilla::Object;
 
 use Bugzilla::Constants;
+use Bugzilla::Hook;
 use Bugzilla::Util;
 use Bugzilla::Error;
 
@@ -36,6 +37,11 @@ use constant LIST_ORDER => NAME_FIELD;
 use constant UPDATE_VALIDATORS => {};
 use constant NUMERIC_COLUMNS   => ();
 use constant DATE_COLUMNS      => ();
+
+# This allows the JSON-RPC interface to return Bugzilla::Object instances
+# as though they were hashes. In the future, this may be modified to return
+# less information.
+sub TO_JSON { return { %{ $_[0] } }; }
 
 ###############################
 ####    Initialization     ####
@@ -75,6 +81,9 @@ sub _init {
         detaint_natural($id)
           || ThrowCodeError('param_must_be_numeric',
                             {function => $class . '::_init'});
+
+        # Too large integers make PostgreSQL crash.
+        return if $id > MAX_INT_32;
 
         $object = $dbh->selectrow_hashref(qq{
             SELECT $columns FROM $table
@@ -117,12 +126,29 @@ sub check {
     if (!ref $param) {
         $param = { name => $param };
     }
+
     # Don't allow empty names or ids.
-    my $check_param = exists $param->{id} ? $param->{id} : $param->{name};
-    $check_param = trim($check_param);
-    $check_param || ThrowUserError('object_not_specified', { class => $class });
-    my $obj = $class->new($param)
-        || ThrowUserError('object_does_not_exist', {%$param, class => $class});
+    my $check_param = exists $param->{id} ? 'id' : 'name';
+    $param->{$check_param} = trim($param->{$check_param});
+    # If somebody passes us "0", we want to throw an error like
+    # "there is no X with the name 0". This is true even for ids. So here,
+    # we only check if the parameter is undefined or empty.
+    if (!defined $param->{$check_param} or $param->{$check_param} eq '') {
+        ThrowUserError('object_not_specified', { class => $class });
+    }
+
+    my $obj = $class->new($param);
+    if (!$obj) {
+        # We don't want to override the normal template "user" object if
+        # "user" is one of the params.
+        delete $param->{user};
+        if (my $error = delete $param->{_error}) {
+            ThrowUserError($error, { %$param, class => $class });
+        }
+        else {
+            ThrowUserError('object_does_not_exist', { %$param, class => $class });
+        }
+    }
     return $obj;
 }
 
@@ -137,6 +163,8 @@ sub new_from_list {
         detaint_natural($id) ||
             ThrowCodeError('param_must_be_numeric',
                           {function => $class . '::new_from_list'});
+        # Too large integers make PostgreSQL crash.
+        next if $id > MAX_INT_32;
         push(@detainted_ids, $id);
     }
     # We don't do $invocant->match because some classes have
@@ -235,7 +263,12 @@ sub _do_list_select {
     $sql .= " $postamble" if $postamble;
         
     my $dbh = Bugzilla->dbh;
-    my $objects = $dbh->selectall_arrayref($sql, {Slice=>{}}, @$values);
+    # Sometimes the values are tainted, but we don't want to untaint them
+    # for the caller. So we copy the array. It's safe to untaint because
+    # they're only used in placeholders here.
+    my @untainted = @{ $values || [] };
+    trick_taint($_) foreach @untainted;
+    my $objects = $dbh->selectall_arrayref($sql, {Slice=>{}}, @untainted);
     bless ($_, $class) foreach @$objects;
     return $objects
 }
@@ -261,6 +294,10 @@ sub set {
                             superclass => __PACKAGE__,
                             function   => 'Bugzilla::Object->set' });
 
+    Bugzilla::Hook::process('object_before_set',
+                            { object => $self, field => $field,
+                              value => $value });
+
     my %validators = (%{$self->VALIDATORS}, %{$self->UPDATE_VALIDATORS});
     if (exists $validators{$field}) {
         my $validator = $validators{$field};
@@ -273,6 +310,9 @@ sub set {
     }
 
     $self->{$field} = $value;
+
+    Bugzilla::Hook::process('object_end_of_set',
+                            { object => $self, field => $field });
 }
 
 sub set_all {
@@ -281,6 +321,8 @@ sub set_all {
         my $method = "set_$key";
         $self->$method($params->{$key});
     }
+    Bugzilla::Hook::process('object_end_of_set_all', { object => $self,
+                                                       params => $params });
 }
 
 sub update {
@@ -324,6 +366,10 @@ sub update {
     $dbh->do("UPDATE $table SET $columns WHERE $id_field = ?", undef, 
              @values, $self->id) if @values;
 
+    Bugzilla::Hook::process('object_end_of_update',
+                            { object => $self, old_object => $old_self,
+                              changes => \%changes });
+
     $dbh->bz_commit_transaction();
 
     if (wantarray) {
@@ -335,6 +381,7 @@ sub update {
 
 sub remove_from_db {
     my $self = shift;
+    Bugzilla::Hook::process('object_before_delete', { object => $self });
     my $table = $self->DB_TABLE;
     my $id_field = $self->ID_FIELD;
     Bugzilla->dbh->do("DELETE FROM $table WHERE $id_field = ?",
@@ -345,6 +392,15 @@ sub remove_from_db {
 ###############################
 ####      Subroutines    ######
 ###############################
+
+sub any_exist {
+    my $class = shift;
+    my $table = $class->DB_TABLE;
+    my $dbh = Bugzilla->dbh;
+    my $any_exist = $dbh->selectrow_array(
+        "SELECT 1 FROM $table " . $dbh->sql_limit(1));
+    return $any_exist ? 1 : 0;
+}
 
 sub create {
     my ($class, $params) = @_;
@@ -372,6 +428,11 @@ sub _check_field {
 
 sub check_required_create_fields {
     my ($class, $params) = @_;
+
+    # This hook happens here so that even subclasses that don't call
+    # SUPER::create are still affected by the hook.
+    Bugzilla::Hook::process('object_before_create', { class => $class,
+                                                      params => $params });
 
     foreach my $field ($class->REQUIRED_CREATE_FIELDS) {
         ThrowCodeError('param_required',
@@ -403,6 +464,9 @@ sub run_create_validators {
         $field_values{$field} = $value;
     }
 
+    Bugzilla::Hook::process('object_end_of_create_validators',
+                            { class => $class, params => \%field_values });
+
     return \%field_values;
 }
 
@@ -423,7 +487,12 @@ sub insert_create_data {
     $dbh->do("INSERT INTO $table (" . join(', ', @field_names)
              . ") VALUES ($qmarks)", undef, @values);
     my $id = $dbh->bz_last_key($table, $class->ID_FIELD);
-    return $class->new($id);
+
+    my $object = $class->new($id);
+
+    Bugzilla::Hook::process('object_end_of_create', { class => $class,
+                                                      object => $object });
+    return $object;
 }
 
 sub get_all {
@@ -902,6 +971,11 @@ Returns C<1> if the passed-in value is true, C<0> otherwise.
 =head1 CLASS FUNCTIONS
 
 =over
+
+=item C<any_exist>
+
+Returns C<1> if there are any of these objects in the database,
+C<0> otherwise.
 
 =item C<get_all>
 

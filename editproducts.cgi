@@ -176,18 +176,22 @@ if ($action eq 'new') {
 
     check_token_data($token, 'add_product');
 
-    my $product =
-      Bugzilla::Product->create({classification   => $classification_name,
-                                 name             => $product_name,
-                                 description      => scalar $cgi->param('description'),
-                                 version          => scalar $cgi->param('version'),
-                                 defaultmilestone => scalar $cgi->param('defaultmilestone'),
-                                 milestoneurl     => scalar $cgi->param('milestoneurl'),
-                                 disallownew      => scalar $cgi->param('disallownew'),
-                                 votesperuser     => scalar $cgi->param('votesperuser'),
-                                 maxvotesperbug   => scalar $cgi->param('maxvotesperbug'),
-                                 votestoconfirm   => scalar $cgi->param('votestoconfirm'),
-                                 create_series    => scalar $cgi->param('createseries')});
+    my %create_params = (
+        classification   => $classification_name,
+        name             => $product_name,
+        description      => scalar $cgi->param('description'),
+        version          => scalar $cgi->param('version'),
+        defaultmilestone => scalar $cgi->param('defaultmilestone'),
+        isactive         => scalar $cgi->param('is_active'),
+        create_series    => scalar $cgi->param('createseries'),
+        allows_unconfirmed => scalar $cgi->param('allows_unconfirmed'),
+    );
+    if (Bugzilla->params->{'usevotes'}) {
+        $create_params{votesperuser}   = $cgi->param('votesperuser');
+        $create_params{maxvotesperbug} = $cgi->param('maxvotesperbug');
+        $create_params{votestoconfirm} = $cgi->param('votestoconfirm');
+    }
+    my $product = Bugzilla::Product->create(\%create_params);
 
     delete_token($token);
 
@@ -218,7 +222,7 @@ if ($action eq 'del') {
     $vars->{'product'} = $product;
     $vars->{'token'} = issue_session_token('delete_product');
     
-    Bugzilla::Hook::process("product-confirm_delete", { vars => $vars });
+    Bugzilla::Hook::process('product_confirm_delete', { vars => $vars });
     
     $template->process("admin/products/confirm-delete.html.tmpl", $vars)
         || ThrowTemplateError($template->error());
@@ -233,7 +237,7 @@ if ($action eq 'delete') {
     my $product = $user->check_can_admin_product($product_name);
     check_token_data($token, 'delete_product');
 
-    $product->remove_from_db;
+    $product->remove_from_db({ delete_series => scalar $cgi->param('delete_series')});
     delete_token($token);
 
     $vars->{'message'} = 'product_deleted';
@@ -294,11 +298,13 @@ if ($action eq 'update') {
     $product->set_name($product_name);
     $product->set_description(scalar $cgi->param('description'));
     $product->set_default_milestone(scalar $cgi->param('defaultmilestone'));
-    $product->set_milestone_url(scalar $cgi->param('milestoneurl'));
-    $product->set_disallow_new(scalar $cgi->param('disallownew'));
-    $product->set_votes_per_user(scalar $cgi->param('votesperuser'));
-    $product->set_votes_per_bug(scalar $cgi->param('maxvotesperbug'));
-    $product->set_votes_to_confirm(scalar $cgi->param('votestoconfirm'));
+    $product->set_is_active(scalar $cgi->param('is_active'));
+    if (Bugzilla->params->{'usevotes'}) {
+        $product->set_votes_per_user(scalar $cgi->param('votesperuser'));
+        $product->set_votes_per_bug(scalar $cgi->param('maxvotesperbug'));
+        $product->set_votes_to_confirm(scalar $cgi->param('votestoconfirm'));
+    }
+    $product->set_allows_unconfirmed(scalar $cgi->param('allows_unconfirmed'));
 
     my $changes = $product->update();
 

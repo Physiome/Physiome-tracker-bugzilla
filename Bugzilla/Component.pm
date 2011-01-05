@@ -60,6 +60,7 @@ use constant UPDATE_COLUMNS => qw(
 );
 
 use constant VALIDATORS => {
+    create_series    => \&Bugzilla::Object::check_boolean,
     product          => \&_check_product,
     initialowner     => \&_check_initialowner,
     initialqacontact => \&_check_initialqacontact,
@@ -114,14 +115,15 @@ sub create {
     $class->check_required_create_fields(@_);
     my $params = $class->run_create_validators(@_);
     my $cc_list = delete $params->{initial_cc};
+    my $create_series = delete $params->{create_series};
 
     my $component = $class->insert_create_data($params);
 
     # We still have to fill the component_cc table.
-    $component->_update_cc_list($cc_list);
+    $component->_update_cc_list($cc_list) if $cc_list;
 
     # Create series for the new component.
-    $component->_create_series();
+    $component->_create_series() if $create_series;
 
     $dbh->bz_commit_transaction();
     return $component;
@@ -372,16 +374,14 @@ sub flag_types {
     my $self = shift;
 
     if (!defined $self->{'flag_types'}) {
+        my $flagtypes = Bugzilla::FlagType::match({ product_id   => $self->product_id,
+                                                    component_id => $self->id });
+
         $self->{'flag_types'} = {};
         $self->{'flag_types'}->{'bug'} =
-          Bugzilla::FlagType::match({ 'target_type'  => 'bug',
-                                      'product_id'   => $self->product_id,
-                                      'component_id' => $self->id });
-
+          [grep { $_->target_type eq 'bug' } @$flagtypes];
         $self->{'flag_types'}->{'attachment'} =
-          Bugzilla::FlagType::match({ 'target_type'  => 'attachment',
-                                      'product_id'   => $self->product_id,
-                                      'component_id' => $self->id });
+          [grep { $_->target_type eq 'attachment' } @$flagtypes];
     }
     return $self->{'flag_types'};
 }

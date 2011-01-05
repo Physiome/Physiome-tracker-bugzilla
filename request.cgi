@@ -63,7 +63,7 @@ unless (defined $cgi->param('requestee')
     $fields->{'requestee'}->{'type'} = 'single';
 }
 
-Bugzilla::User::match_field($cgi, $fields);
+Bugzilla::User::match_field($fields);
 
 if ($action eq 'queue') {
     queue();
@@ -73,12 +73,11 @@ else {
     my @types = ('all', @$flagtypes);
 
     my $vars = {};
-    $vars->{'products'} = $user->get_selectable_products;
     $vars->{'types'} = \@types;
     $vars->{'requests'} = {};
 
     my %components;
-    foreach my $prod (@{$vars->{'products'}}) {
+    foreach my $prod (@{$user->get_selectable_products}) {
         foreach my $comp (@{$prod->components}) {
             $components{$comp->name} = 1;
         }
@@ -207,7 +206,7 @@ sub queue {
     
     # Filter results by exact product or component.
     if (defined $cgi->param('product') && $cgi->param('product') ne "") {
-        my $product = Bugzilla::Product::check_product(scalar $cgi->param('product'));
+        my $product = Bugzilla::Product->check(scalar $cgi->param('product'));
         push(@criteria, "bugs.product_id = " . $product->id);
         push(@excluded_columns, 'product') unless $cgi->param('do_union');
         if (defined $cgi->param('component') && $cgi->param('component') ne "") {
@@ -303,14 +302,13 @@ sub queue {
     my $flagtypes = get_flag_types();
     push(@types, @$flagtypes);
 
-    $vars->{'products'} = $user->get_selectable_products;
     $vars->{'excluded_columns'} = \@excluded_columns;
     $vars->{'group_field'} = $form_group;
     $vars->{'requests'} = \@requests;
     $vars->{'types'} = \@types;
 
     my %components;
-    foreach my $prod (@{$vars->{'products'}}) {
+    foreach my $prod (@{$user->get_selectable_products}) {
         foreach my $comp (@{$prod->components}) {
             $components{$comp->name} = 1;
         }

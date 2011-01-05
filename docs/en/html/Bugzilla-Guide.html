@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->The Bugzilla Guide - 3.4.3 
+>The Bugzilla Guide - 3.6.3 
     Release</TITLE
 ><META
 NAME="GENERATOR"
@@ -43,7 +43,7 @@ CLASS="TITLEPAGE"
 CLASS="title"
 ><A
 NAME="AEN2"
->The Bugzilla Guide - 3.4.3 
+>The Bugzilla Guide - 3.6.3 
     Release</A
 ></H1
 ><H3
@@ -51,7 +51,7 @@ CLASS="corpauthor"
 >The Bugzilla Team</H3
 ><P
 CLASS="pubdate"
->2009-11-05<BR></P
+>2010-11-02<BR></P
 ><DIV
 ><DIV
 CLASS="abstract"
@@ -362,18 +362,18 @@ HREF="#customization"
 ><DL
 ><DT
 >6.1. <A
+HREF="#extensions"
+>Bugzilla Extensions</A
+></DT
+><DT
+>6.2. <A
 HREF="#cust-skins"
 >Custom Skins</A
 ></DT
 ><DT
->6.2. <A
+>6.3. <A
 HREF="#cust-templates"
 >Template Customization</A
-></DT
-><DT
->6.3. <A
-HREF="#cust-hooks"
->The Bugzilla Extension Mechanism</A
 ></DT
 ><DT
 >6.4. <A
@@ -430,11 +430,6 @@ HREF="#trbl-relogin-everyone"
 ></DT
 ><DT
 >A.7. <A
-HREF="#trbl-relogin-some"
->Some users are constantly being forced to relogin</A
-></DT
-><DT
->A.8. <A
 HREF="#trbl-index"
 ><TT
 CLASS="filename"
@@ -442,7 +437,7 @@ CLASS="filename"
 > doesn't show up unless specified in the URL</A
 ></DT
 ><DT
->A.9. <A
+>A.8. <A
 HREF="#trbl-passwd-encryption"
 >checksetup.pl reports "Client does not support authentication protocol
       requested by server..."</A
@@ -619,7 +614,7 @@ NAME="copyright"
 >1.1. Copyright Information</A
 ></H2
 ><P
->This document is copyright (c) 2000-2009 by the various
+>This document is copyright (c) 2000-2010 by the various
     Bugzilla contributors who wrote it.</P
 ><A
 NAME="AEN26"
@@ -688,123 +683,33 @@ NAME="newversions"
 >1.3. New Versions</A
 ></H2
 ><P
->&#13;      This is the 3.4.3 version of The Bugzilla Guide. It is so named 
+>&#13;      This is the 3.6.3 version of The Bugzilla Guide. It is so named 
       to match the current version of Bugzilla. 
     </P
 ><P
 >&#13;      The latest version of this guide can always be found at <A
-HREF="http://www.bugzilla.org"
+HREF="http://www.bugzilla.org/docs/"
 TARGET="_top"
->http://www.bugzilla.org</A
->, or checked out via CVS by
-      following the <A
-HREF="http://www.mozilla.org/cvs.html"
-TARGET="_top"
->Mozilla 
-      CVS</A
-> instructions and check out the 
-      <TT
-CLASS="filename"
->mozilla/webtools/bugzilla/docs/</TT
->
-      subtree. However, you should read the version
-      which came with the Bugzilla release you are using.
-    </P
-><P
->&#13;      The Bugzilla Guide, or a section of it, is also available in
-      the following languages:
-      <A
-HREF="http://www.traduc.org/docs/guides/lecture/bugzilla/"
-TARGET="_top"
->French</A
->,
-      <A
-HREF="http://bugzilla-de.sourceforge.net/docs/html/"
-TARGET="_top"
->German</A
->,
-      <A
-HREF="http://www.bugzilla.jp/docs/2.18/"
-TARGET="_top"
->Japanese</A
->.
-      Note that these may be outdated or not up to date.
+>http://www.bugzilla.org/docs/</A
+>. However, you should read
+      the version which came with the Bugzilla release you are using.
     </P
 ><P
 >  
       In addition, there are Bugzilla template localization projects in
-      the following languages. They may have translated documentation 
-      available: 
       <A
-HREF="http://sourceforge.net/projects/bugzilla-ar/"
+HREF="http://www.bugzilla.org/download/#localizations"
 TARGET="_top"
->Arabic</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-be/"
-TARGET="_top"
->Belarusian</A
->,
-      <A
-HREF="http://openfmi.net/projects/mozilla-bg/"
-TARGET="_top"
->Bulgarian</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-br/"
-TARGET="_top"
->Brazilian Portuguese</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-cn/"
-TARGET="_top"
->Chinese</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-fr/"
-TARGET="_top"
->French</A
->,
-      <A
-HREF="http://germzilla.ganderbay.net/"
-TARGET="_top"
->German</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-it/"
-TARGET="_top"
->Italian</A
->,
-      <A
-HREF="http://www.bugzilla.jp/about/jp.html"
-TARGET="_top"
->Japanese</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-kr/"
-TARGET="_top"
->Korean</A
->,
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-ru/"
-TARGET="_top"
->Russian</A
-> and
-      <A
-HREF="http://sourceforge.net/projects/bugzilla-es/"
-TARGET="_top"
->Spanish</A
+>several languages</A
 >.
-    </P
-><P
->  
-      If you would like to volunteer to translate the Guide into additional
-      languages, please contact
+      They may have translated documentation available. If you would like to
+      volunteer to translate the Guide into additional languages, please visit the
       <A
-HREF="mailto:justdave@bugzilla.org"
+HREF="https://wiki.mozilla.org/Bugzilla:L10n"
 TARGET="_top"
->Dave Miller</A
->.
+>Bugzilla L10n team</A
+>
+      page.
     </P
 ></DIV
 ><DIV
@@ -958,7 +863,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN121"
+NAME="AEN103"
 ></A
 ><TABLE
 BORDER="0"
@@ -1420,9 +1325,9 @@ CLASS="programlisting"
 >Any machine that doesn't have Perl on it is a sad machine indeed.
       If you don't have it and your OS doesn't provide official packages, 
       visit <A
-HREF="http://www.perl.com"
+HREF="http://www.perl.org"
 TARGET="_top"
->http://www.perl.com</A
+>http://www.perl.org</A
 >.
       Although Bugzilla runs with Perl 5.8.1,
       it's a good idea to be using the latest stable version.
@@ -1779,20 +1684,37 @@ CLASS="filename"
         may already have several of them installed.
       </P
 ><P
->&#13;        The preferred way of installing Perl modules is to use the
-        <TT
-CLASS="filename"
->install-module.pl</TT
-> script on Unix,
-        or PPM on Windows (see <A
+>&#13;        The preferred way to install missing Perl modules is to use the package
+        manager provided by your operating system (e.g <SPAN
+CLASS="QUOTE"
+>"rpm"</SPAN
+> or
+        <SPAN
+CLASS="QUOTE"
+>"yum"</SPAN
+> on Linux distros, or <SPAN
+CLASS="QUOTE"
+>"ppm"</SPAN
+> on Windows
+        if using ActivePerl, see <A
 HREF="#win32-perl-modules"
 >Section 2.5.1.2</A
->). If for
-        some reason you need to install the Perl modules manually, see
+>).
+        If some Perl modules are still missing or are too old, then we recommend
+        using the <TT
+CLASS="filename"
+>install-module.pl</TT
+> script (doesn't work
+        with ActivePerl on Windows). If for some reason you really need to
+        install the Perl modules manually, see
         <A
 HREF="#install-perlmodules-manual"
 >Appendix C</A
->. For instance, on Unix:
+>. For instance, on Unix,
+        you invoke <TT
+CLASS="filename"
+>install-module.pl</TT
+> as follows:
       </P
 ><TABLE
 BORDER="0"
@@ -1899,7 +1821,7 @@ CLASS="filename"
 TYPE="1"
 ><LI
 ><P
->&#13;            CGI 3.21
+>&#13;            CGI (3.21)
           </P
 ></LI
 ><LI
@@ -1909,16 +1831,22 @@ TYPE="1"
 ></LI
 ><LI
 ><P
+>&#13;            DateTime (0.28)
+          </P
+></LI
+><LI
+><P
+>&#13;            DateTime::TimeZone (0.71)
+          </P
+></LI
+><LI
+><P
 >&#13;            DBI (1.41)
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-dbd-mysql"
->DBD::mysql</A
->
-            (4.00) if using MySQL
+>&#13;            DBD::mysql (4.00) if using MySQL
           </P
 ></LI
 ><LI
@@ -1933,11 +1861,7 @@ HREF="#install-modules-dbd-mysql"
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-template"
->Template</A
->
-            (2.22)
+>&#13;            Digest::SHA (any)
           </P
 ></LI
 ><LI
@@ -1947,7 +1871,27 @@ HREF="#install-modules-template"
 ></LI
 ><LI
 ><P
+>&#13;            Email::MIME (1.861)
+          </P
+></LI
+><LI
+><P
+>&#13;            Email::MIME::Encodings (1.313)
+          </P
+></LI
+><LI
+><P
 >&#13;            Email::MIME::Modifier (1.442)
+          </P
+></LI
+><LI
+><P
+>&#13;            Template (2.22)
+          </P
+></LI
+><LI
+><P
+>&#13;            URI (any)
           </P
 ></LI
 ></OL
@@ -1960,53 +1904,33 @@ HREF="#install-modules-template"
 TYPE="1"
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-gd"
->GD</A
->
-            (1.20) for bug charting
+>&#13;            GD (1.20) for bug charting
           </P
 ></LI
 ><LI
 ><P
 >&#13;            Template::Plugin::GD::Image
-            (1.20) for Graphical Reports
+            (any) for Graphical Reports
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-chart-base"
->Chart::Base</A
->
-            (1.0) for bug charting
+>&#13;            Chart::Lines (2.1) for bug charting
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-gd-graph"
->GD::Graph</A
->
-            (any) for bug charting
+>&#13;            GD::Graph (any) for bug charting
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-gd-text"
->GD::Text</A
->
-            (any) for bug charting
+>&#13;            GD::Text (any) for bug charting
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-xml-twig"
->XML::Twig</A
->
-            (any) for bug import/export
+>&#13;            XML::Twig (any) for bug import/export
           </P
 ></LI
 ><LI
@@ -2022,16 +1946,7 @@ HREF="#install-modules-xml-twig"
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-patchreader"
->PatchReader</A
->
-            (0.9.4) for pretty HTML view of patches
-          </P
-></LI
-><LI
-><P
->&#13;            Image::Magick (any) for converting BMP image attachments to PNG
+>&#13;            PatchReader (0.9.4) for pretty HTML view of patches
           </P
 ></LI
 ><LI
@@ -2042,17 +1957,31 @@ HREF="#install-modules-patchreader"
 ></LI
 ><LI
 ><P
+>&#13;            Authen::SASL
+            (any) for SASL Authentication
+          </P
+></LI
+><LI
+><P
 >&#13;            Authen::Radius
             (any) for RADIUS Authentication
           </P
 ></LI
 ><LI
 ><P
->&#13;            <A
-HREF="#install-modules-soap-lite"
->SOAP::Lite</A
->
-            (0.710.06) for the web service interface
+>&#13;            SOAP::Lite (0.710.06) for the web service interface
+          </P
+></LI
+><LI
+><P
+>&#13;            JSON::RPC
+            (any) for the JSON-RPC interface
+          </P
+></LI
+><LI
+><P
+>&#13;            Test::Taint
+            (any) for the web service interface
           </P
 ></LI
 ><LI
@@ -2081,6 +2010,18 @@ HREF="#install-modules-soap-lite"
 ></LI
 ><LI
 ><P
+>&#13;            TheSchwartz
+            (any) for Mail Queueing
+          </P
+></LI
+><LI
+><P
+>&#13;            Daemon::Generic
+            (any) for Mail Queueing
+          </P
+></LI
+><LI
+><P
 >&#13;            mod_perl2
             (1.999022) for mod_perl
           </P
@@ -2088,217 +2029,6 @@ HREF="#install-modules-soap-lite"
 ></OL
 >
       </P
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-dbd-mysql"
->2.1.5.1. DBD::mysql</A
-></H4
-><P
->The installation process will ask you a few questions about the
-        desired compilation target and your MySQL installation. For most of the
-        questions the provided default will be adequate, but when asked if your
-        desired target is the MySQL or mSQL packages, you should
-        select the MySQL-related ones. Later you will be asked if you wish to
-        provide backwards compatibility with the older MySQL packages; you
-        should answer YES to this question. The default is NO.</P
-><P
->A host of 'localhost' should be fine. A testing user of 'test',
-        with a null password, should have sufficient access to run
-        tests on the 'test' database which MySQL creates upon installation.
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-template"
->2.1.5.2. Template Toolkit (2.22)</A
-></H4
-><P
->When you install Template Toolkit, you'll get asked various
-        questions about features to enable. The defaults are fine, except
-        that it is recommended you use the high speed XS Stash of the Template
-        Toolkit, in order to achieve best performance.
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-gd"
->2.1.5.3. GD (1.20)</A
-></H4
-><P
->The GD module is only required if you want graphical reports.
-        </P
-><DIV
-CLASS="note"
-><P
-></P
-><TABLE
-CLASS="note"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/note.gif"
-HSPACE="5"
-ALT="Note"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->The Perl GD module requires some other libraries that may or
-          may not be installed on your system, including 
-          <CODE
-CLASS="classname"
->libpng</CODE
->
-          and 
-          <CODE
-CLASS="classname"
->libgd</CODE
->. 
-          The full requirements are listed in the Perl GD module README.
-          If compiling GD fails, it's probably because you're
-          missing a required library.</P
-></TD
-></TR
-></TABLE
-></DIV
-><DIV
-CLASS="tip"
-><P
-></P
-><TABLE
-CLASS="tip"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/tip.gif"
-HSPACE="5"
-ALT="Tip"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->The version of the GD module you need is very closely tied
-          to the <CODE
-CLASS="classname"
->libgd</CODE
-> version installed on your system.
-          If you have a version 1.x of <CODE
-CLASS="classname"
->libgd</CODE
-> the 2.x
-          versions of the GD module won't work for you.
-         </P
-></TD
-></TR
-></TABLE
-></DIV
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-chart-base"
->2.1.5.4. Chart::Base (1.0)</A
-></H4
-><P
->The Chart::Base module is only required if you want graphical 
-        reports. 
-        Note that earlier versions that 0.99c used GIFs, which are no longer
-        supported by the latest versions of GD.</P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-gd-graph"
->2.1.5.5. GD::Graph (any)</A
-></H4
-><P
->The GD::Graph module is only required if you want graphical 
-        reports.
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-gd-text"
->2.1.5.6. GD::Text (any)</A
-></H4
-><P
->The GD::Text module is only required if you want graphical 
-        reports.
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-xml-twig"
->2.1.5.7. XML::Twig (any)</A
-></H4
-><P
->The XML::Twig module is only required if you want to import
-        XML bugs using the <TT
-CLASS="filename"
->importxml.pl</TT
->
-        script. This is required to use Bugzilla's "move bugs" feature;
-        you may also want to use it for migrating from another bug database.
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-soap-lite"
->2.1.5.8. SOAP::Lite (0.710.06)</A
-></H4
-><P
->Installing SOAP::Lite enables your Bugzilla installation to be
-        accessible at a standardized Web Service interface (SOAP/XML-RPC)
-        by third-party applications via HTTP(S).
-        </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H4
-CLASS="section"
-><A
-NAME="install-modules-patchreader"
->2.1.5.9. PatchReader (0.9.4)</A
-></H4
-><P
->The PatchReader module is only required if you want to use
-        Patch Viewer, a
-        Bugzilla feature to show code patches in your web browser in a more
-        readable form.
-        </P
-></DIV
 ></DIV
 ><DIV
 CLASS="section"
@@ -2762,7 +2492,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN482"
+NAME="AEN442"
 >2.2.2.2.2. Allow small words in full-text indexes</A
 ></H5
 ><P
@@ -2903,7 +2633,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN509"
+NAME="AEN469"
 >2.2.2.2.4. Permit attachments table to grow beyond 4GB</A
 ></H5
 ><P
@@ -3003,7 +2733,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN525"
+NAME="AEN485"
 >2.2.2.3.1. Add a User to PostgreSQL</A
 ></H5
 ><P
@@ -3088,7 +2818,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN541"
+NAME="AEN501"
 >2.2.2.3.2. Configure PostgreSQL</A
 ></H5
 ><P
@@ -3149,7 +2879,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN557"
+NAME="AEN517"
 >2.2.2.4.1. Create a New Tablespace</A
 ></H5
 ><P
@@ -3201,7 +2931,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN565"
+NAME="AEN525"
 >2.2.2.4.2. Add a User to Oracle</A
 ></H5
 ><P
@@ -3257,7 +2987,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN573"
+NAME="AEN533"
 >2.2.2.4.3. Configure the Web Server</A
 ></H5
 ><P
@@ -3295,7 +3025,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN579"
+NAME="AEN539"
 >2.2.3. checksetup.pl</A
 ></H3
 ><P
@@ -4086,9 +3816,7 @@ VALIGN="TOP"
 CLASS="filename"
 >checksetup.pl</TT
 > run. You should go through 
-        the parameters on the Edit Parameters page
-        (see link in the footer) and see if there are any you wish to
-        change. 
+        the Parameters page and see if there are any you wish to change.
         They key parameters are documented in <A
 HREF="#parameters"
 >Section 3.1</A
@@ -4109,19 +3837,6 @@ CLASS="command"
 CLASS="command"
 >requirelogin</B
 >.
-      </P
-><P
->&#13;        This would also be a good time to revisit the
-        <TT
-CLASS="filename"
->localconfig</TT
-> file and make sure that the 
-        names of the priorities, severities, platforms and operating systems
-        are those you wish to use when you start creating bugs. Remember
-        to rerun <TT
-CLASS="filename"
->checksetup.pl</TT
-> if you change it.
       </P
 ><P
 >&#13;        Bugzilla has several optional features which require extra 
@@ -4150,7 +3865,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN733"
+NAME="AEN690"
 >2.3.1. Bug Graphs</A
 ></H3
 ><P
@@ -5284,7 +4999,7 @@ CLASS="section"
 ><H3
 CLASS="section"
 ><A
-NAME="AEN898"
+NAME="AEN855"
 >2.6.1. Introduction</A
 ></H3
 ><P
@@ -5304,7 +5019,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN902"
+NAME="AEN859"
 >2.6.2. MySQL</A
 ></H3
 ><P
@@ -5360,7 +5075,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN910"
+NAME="AEN867"
 >2.6.2.1. Running MySQL as Non-Root</A
 ></H4
 ><DIV
@@ -5368,7 +5083,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN912"
+NAME="AEN869"
 >2.6.2.1.1. The Custom Configuration Method</A
 ></H5
 ><P
@@ -5412,7 +5127,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN916"
+NAME="AEN873"
 >2.6.2.1.2. The Custom Built Method</A
 ></H5
 ><P
@@ -5435,7 +5150,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN921"
+NAME="AEN878"
 >2.6.2.1.3. Starting the Server</A
 ></H5
 ><P
@@ -5563,7 +5278,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN937"
+NAME="AEN894"
 >2.6.3. Perl</A
 ></H3
 ><P
@@ -5588,7 +5303,7 @@ CLASS="prompt"
 >
         <B
 CLASS="command"
->wget http://perl.com/CPAN/src/stable.tar.gz</B
+>wget http://perl.org/CPAN/src/stable.tar.gz</B
 >
         <SAMP
 CLASS="prompt"
@@ -5667,7 +5382,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN959"
+NAME="AEN916"
 >2.6.5. HTTP Server</A
 ></H3
 ><P
@@ -5681,7 +5396,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN962"
+NAME="AEN919"
 >2.6.5.1. Running Apache as Non-Root</A
 ></H4
 ><P
@@ -5763,7 +5478,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN971"
+NAME="AEN928"
 >2.6.6. Bugzilla</A
 ></H3
 ><P
@@ -6133,7 +5848,7 @@ NAME="upgrade-modified"
           degree and methods of local customization can be found in
           <A
 HREF="#template-method"
->Section 6.2.2</A
+>Section 6.3.2</A
 >.
         </P
 ><P
@@ -6807,15 +6522,12 @@ CLASS="filename"
               </P
 ></DD
 ><DT
->ssl</DT
+>ssl_redirect</DT
 ><DD
 ><P
->&#13;                Determines when Bugzilla will force HTTPS (SSL) connections, using
-                the URL defined in <B
-CLASS="command"
->sslbase</B
->. 
-                Options include "always", "never", and "authenticated sessions". 
+>&#13;                If enabled, Bugzilla will force HTTPS (SSL) connections, by
+                automatically redirecting any users who try to use a non-SSL
+                connection.
               </P
 ></DD
 ><DT
@@ -7302,24 +7014,6 @@ CLASS="variablelist"
 >&#13;                Determines whether or not to automatically create groups
                 when new products are created. If this is on, the groups will be
                 used for querying bugs.
-              </P
-></DD
-><DT
->useentrygroupdefault</DT
-><DD
-><P
->&#13;                Bugzilla products can have a group associated with them, so that
-                certain users can only see bugs in certain products. When this 
-                parameter is set to <SPAN
-CLASS="QUOTE"
->"on"</SPAN
->, this 
-                causes the initial group controls on newly created products 
-                to place all newly-created bugs in the group 
-                having the same name as the product immediately.
-                After a product is initially created, the group controls
-                can be further adjusted without interference by 
-                this mechanism.
               </P
 ></DD
 ><DT
@@ -8291,7 +7985,10 @@ VALIGN="TOP"
 >: 
             If you have created some groups, e.g. "securitysensitive", then
             checkboxes will appear here to allow you to add users to, or
-            remove them from, these groups.
+            remove them from, these groups. The first checkbox gives the
+            user the ability to add and remove other users as members of
+            this group. The second checkbox adds the user himself as a member
+            of the group.
             </P
 ></LI
 ><LI
@@ -8601,14 +8298,6 @@ CLASS="variablelist"
 ><P
 > 
             A brief description of the product
-          </P
-></DD
-><DT
->URL describing milestones for this product</DT
-><DD
-><P
-> 
-            If there is reference URL, provide it here
           </P
 ></DD
 ><DT
@@ -9389,8 +9078,7 @@ VALIGN="TOP"
 ></TABLE
 ></DIV
 ><P
->To create new Milestones, set Default Milestones, and set
-    Milestone URL:</P
+>To create new Milestones, and set Default Milestones:</P
 ><P
 ></P
 ><OL
@@ -9401,8 +9089,7 @@ TYPE="1"
 ></LI
 ><LI
 ><P
->Select "Add" in the bottom right corner.
-        text</P
+>Select "Add" in the bottom right corner.</P
 ></LI
 ><LI
 ><P
@@ -9412,12 +9099,6 @@ TYPE="1"
         milestone appears. This is because milestones often do not 
         occur in alphanumeric order For example, "Future" might be
         after "Release 1.2". Select "Add".</P
-></LI
-><LI
-><P
->From the Edit product screen, you can enter the URL of a 
-        page which gives information about your milestones and what
-        they mean. </P
 ></LI
 ></OL
 ></DIV
@@ -9832,11 +9513,8 @@ NAME="flags-edit"
 >3.8.5.1. Editing a Flag</A
 ></H4
 ><P
->&#13;         To edit a flag's properties, just click on the <SPAN
-CLASS="QUOTE"
->"Edit"</SPAN
->
-         link next to the flag's description. That will take you to the same
+>&#13;         To edit a flag's properties, just click the flag's name.
+         That will take you to the same
          form as described below (<A
 HREF="#flags-create"
 >Section 3.8.5.2</A
@@ -10528,10 +10206,16 @@ NAME="delete-custom-fields"
 >3.10.3. Deleting Custom Fields</A
 ></H3
 ><P
->&#13;        It is only possible to delete obsolete Custom Fields 
-        if the field has never been used in the database.
-        To remove a field which already has content,
-        mark it as obsolete.
+>&#13;        Only custom fields which are marked as obsolete, and which never
+        have been used, can be deleted completely (else the integrity
+        of the bug history would be compromised). For custom fields marked
+        as obsolete, a "Delete" link will appear in the <SPAN
+CLASS="QUOTE"
+>"Action"</SPAN
+>
+        column. If the custom field has been used in the past, the deletion
+        will be rejected. But marking the field as obsolete is sufficient
+        to hide it from the user interface entirely.
       </P
 ></DIV
 ></DIV
@@ -10754,7 +10438,7 @@ NAME="groups"
 ></H2
 ><P
 >&#13;    Groups allow for separating bugs into logical divisions.
-    Groups are typically used to
+    Groups are typically used
     to isolate bugs that should only be seen by certain people. For
     example, a company might create a different group for each one of its customers
     or partners. Group permissions could be set so that each partner or customer would
@@ -11180,7 +10864,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2173"
+NAME="AEN2118"
 >3.15.4. Assigning Group Controls to Products</A
 ></H3
 ><P
@@ -11819,9 +11503,9 @@ NAME="myaccount"
     Bugzilla for the URL you should use to access it. If you're
     test-driving Bugzilla, use this URL: 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-3.4-branch/"
+HREF="http://landfill.bugzilla.org/bugzilla-3.6-branch/"
 TARGET="_top"
->http://landfill.bugzilla.org/bugzilla-3.4-branch/</A
+>http://landfill.bugzilla.org/bugzilla-3.6-branch/</A
 >.
     </P
 ><P
@@ -11971,7 +11655,7 @@ NAME="bug_page"
 >The core of Bugzilla is the screen which displays a particular
     bug. It's a good place to explain some Bugzilla concepts. 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-3.4-branch/show_bug.cgi?id=1"
+HREF="http://landfill.bugzilla.org/bugzilla-3.6-branch/show_bug.cgi?id=1"
 TARGET="_top"
 >&#13;    Bug 1 on Landfill</A
 >
@@ -12341,13 +12025,18 @@ NAME="lifecycle"
 >5.4. Life Cycle of a Bug</A
 ></H2
 ><P
->&#13;      The life cycle, also known as work flow, of a bug is currently hardcoded
-      into Bugzilla. <A
+>&#13;      The life cycle of a bug, also known as workflow, is customizable to match
+      the needs of your organization, see <A
+HREF="#bug_status_workflow"
+>Section 3.12</A
+>.
+      <A
 HREF="#lifecycle-image"
 >Figure 5-1</A
-> contains a graphical
-      representation of this life cycle. If you wish to customize this image for
-      your site, the <A
+> contains a graphical representation of
+      the default workflow using the default bug statuses. If you wish to
+      customize this image for your site, the
+      <A
 HREF="../images/bzLifecycle.xml"
 TARGET="_top"
 >diagram file</A
@@ -12389,9 +12078,9 @@ NAME="query"
     any bug report, comment, or patch currently in the Bugzilla system. You
     can play with it here: 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-3.4-branch/query.cgi"
+HREF="http://landfill.bugzilla.org/bugzilla-3.6-branch/query.cgi"
 TARGET="_top"
->http://landfill.bugzilla.org/bugzilla-3.4-branch/query.cgi</A
+>http://landfill.bugzilla.org/bugzilla-3.6-branch/query.cgi</A
 >.</P
 ><P
 >The Search page has controls for selecting different possible
@@ -12513,7 +12202,7 @@ NAME="negation"
 >&#13;          At first glance, negation seems redundant. Rather than
           searching for
           <A
-NAME="AEN2500"
+NAME="AEN2446"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12524,7 +12213,7 @@ CLASS="BLOCKQUOTE"
 >
           one could search for 
           <A
-NAME="AEN2502"
+NAME="AEN2448"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12535,7 +12224,7 @@ CLASS="BLOCKQUOTE"
 >
           However, the search 
           <A
-NAME="AEN2504"
+NAME="AEN2450"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12547,7 +12236,7 @@ CLASS="BLOCKQUOTE"
           would find every bug where anyone on the CC list did not contain 
           "@mozilla.org" while
           <A
-NAME="AEN2506"
+NAME="AEN2452"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12561,7 +12250,7 @@ CLASS="BLOCKQUOTE"
           complex expressions to be built using terms OR'd together and then
           negated. Negation permits queries such as
           <A
-NAME="AEN2508"
+NAME="AEN2454"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12574,7 +12263,7 @@ CLASS="BLOCKQUOTE"
           to find bugs that are neither 
           in the update product or in the documentation component or
           <A
-NAME="AEN2510"
+NAME="AEN2456"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12602,7 +12291,7 @@ NAME="multiplecharts"
           a bug that has two different people cc'd on it, then you need 
           to use two boolean charts. A search for
           <A
-NAME="AEN2515"
+NAME="AEN2461"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12617,7 +12306,7 @@ CLASS="BLOCKQUOTE"
           containing "foo@" and someone else containing "@mozilla.org",
           then you would need two boolean charts.
           <A
-NAME="AEN2517"
+NAME="AEN2463"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12884,7 +12573,7 @@ NAME="fillingbugs"
 >Years of bug writing experience has been distilled for your
       reading pleasure into the 
       <A
-HREF="http://landfill.bugzilla.org/bugzilla-3.4-branch/page.cgi?id=bug-writing.html"
+HREF="http://landfill.bugzilla.org/bugzilla-3.6-branch/page.cgi?id=bug-writing.html"
 TARGET="_top"
 >&#13;      Bug Writing Guidelines</A
 >. 
@@ -12936,7 +12625,7 @@ VALIGN="TOP"
 >&#13;              If you want to file a test bug to see how Bugzilla works,
               you can do it on one of our test installations on
               <A
-HREF="http://landfill.bugzilla.org/bugzilla-3.4-branch/"
+HREF="http://landfill.bugzilla.org/bugzilla-3.6-branch/"
 TARGET="_top"
 >Landfill</A
 >.
@@ -13323,7 +13012,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2653"
+NAME="AEN2599"
 >5.8.1. Autolinkification</A
 ></H3
 ><P
@@ -14198,7 +13887,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN2850"
+NAME="AEN2796"
 >5.11.2.1. Creating Charts</A
 ></H4
 ><P
@@ -14667,7 +14356,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2910"
+NAME="AEN2856"
 >5.13.4. Saving Your Changes</A
 ></H3
 ><P
@@ -14720,8 +14409,32 @@ CLASS="section"
 ><H2
 CLASS="section"
 ><A
+NAME="extensions"
+>6.1. Bugzilla Extensions</A
+></H2
+><P
+>&#13;      One of the best ways to customize Bugzilla is by writing a Bugzilla
+      Extension. Bugzilla Extensions let you modify both the code and
+      UI of Bugzilla in a way that can be distributed to other Bugzilla
+      users and ported forward to future versions of Bugzilla with minimal
+      effort.
+    </P
+><P
+>&#13;      See the <A
+HREF="api/Bugzilla/Extension.html"
+TARGET="_top"
+>Bugzilla Extension
+      documentation</A
+> for information on how to write an Extension.
+    </P
+></DIV
+><DIV
+CLASS="section"
+><HR><H2
+CLASS="section"
+><A
 NAME="cust-skins"
->6.1. Custom Skins</A
+>6.2. Custom Skins</A
 ></H2
 ><P
 >&#13;      Bugzilla allows you to have multiple skins. These are custom CSS and possibly
@@ -14772,7 +14485,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="cust-templates"
->6.2. Template Customization</A
+>6.3. Template Customization</A
 ></H2
 ><P
 >&#13;      Administrators can configure the look and feel of Bugzilla without
@@ -14785,7 +14498,7 @@ NAME="cust-templates"
       determined by the user's browser. More information is available in
       <A
 HREF="#template-http-accept"
->Section 6.2.6</A
+>Section 6.3.6</A
 >.
     </P
 ><DIV
@@ -14794,7 +14507,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-directory"
->6.2.1. Template Directory Structure</A
+>6.3.1. Template Directory Structure</A
 ></H3
 ><P
 >&#13;        The template directory structure starts with top level directory 
@@ -14866,7 +14579,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-method"
->6.2.2. Choosing a Customization Method</A
+>6.3.2. Choosing a Customization Method</A
 ></H3
 ><P
 >&#13;        If you want to edit Bugzilla's templates, the first decision
@@ -15066,7 +14779,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-edit"
->6.2.3. How To Edit Templates</A
+>6.3.3. How To Edit Templates</A
 ></H3
 ><DIV
 CLASS="note"
@@ -15154,7 +14867,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-formats"
->6.2.4. Template Formats and Types</A
+>6.3.4. Template Formats and Types</A
 ></H3
 ><P
 >&#13;        Some CGI's have the ability to use more than one template. For example,
@@ -15262,7 +14975,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-specific"
->6.2.5. Particular Templates</A
+>6.3.5. Particular Templates</A
 ></H3
 ><P
 >&#13;        There are a few templates you may be particularly interested in
@@ -15530,7 +15243,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="template-http-accept"
->6.2.6. Configuring Bugzilla to Detect the User's Language</A
+>6.3.6. Configuring Bugzilla to Detect the User's Language</A
 ></H3
 ><P
 >Bugzilla honours the user's Accept: HTTP header. You can install
@@ -15544,397 +15257,6 @@ TARGET="_top"
       for submitting new languages are also available from that location.
       </P
 ></DIV
-></DIV
-><DIV
-CLASS="section"
-><HR><H2
-CLASS="section"
-><A
-NAME="cust-hooks"
->6.3. The Bugzilla Extension Mechanism</A
-></H2
-><DIV
-CLASS="warning"
-><P
-></P
-><TABLE
-CLASS="warning"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/warning.gif"
-HSPACE="5"
-ALT="Warning"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->&#13;        Note that the below paths are inconsistent and confusing. They will
-        likely be changed in Bugzilla 4.0.
-      </P
-></TD
-></TR
-></TABLE
-></DIV
-><P
->&#13;      Extensions are a way for extensions to Bugzilla to insert code
-      into the standard Bugzilla templates and source files
-      without modifying these files themselves.  The extension mechanism 
-      defines a consistent API for extending the standard templates and source files 
-      in a way that cleanly separates standard code from extension code.  
-      Hooks reduce merge conflicts and make it easier to write extensions that work 
-      across multiple versions of Bugzilla, making upgrading a Bugzilla installation 
-      with installed extensions easier. Furthermore, they make it easy to install 
-      and remove extensions as each extension is nothing more than a 
-      simple directory structure. 
-    </P
-><P
->&#13;      There are two main types of hooks: code hooks and template hooks. Code 
-      hooks allow extensions to invoke code at specific points in various 
-      source files, while template hooks allow extensions to add elements to 
-      the Bugzilla user interface. 
-    </P
-><P
->&#13;      A hook is just a named place in a standard source or template file
-      where extension source code or template files for that hook get processed. 
-      Each extension has a corresponding directory in the Bugzilla directory 
-      tree (<TT
-CLASS="filename"
->BUGZILLA_ROOT/extensions/extension_name</TT
->).  Hooking 
-      an extension source file or template to a hook is as simple as putting 
-      the extension file into extension's template or code directory. 
-      When Bugzilla processes the source file or template and reaches the hook, 
-      it will process all extension files in the hook's directory. 
-      The hooks themselves can be added into any source file or standard template 
-      upon request by extension authors.
-    </P
-><P
->&#13;      To use hooks to extend Bugzilla, first make sure there is
-      a hook at the appropriate place within the source file or template you 
-      want to extend. The exact appearance of a hook depends on if the hook 
-      is a code hook or a template hook. 
-    </P
-><P
->&#13;      Code hooks appear in Bugzilla source files as a single method call 
-      in the format <TT
-CLASS="literal"
->Bugzilla::Hook-&#62;process("<CODE
-CLASS="varname"
->name</CODE
->");</TT
->.
-      For instance, <TT
-CLASS="filename"
->enter_bug.cgi</TT
-> may invoke the hook 
-      "<CODE
-CLASS="varname"
->enter_bug-entrydefaultvars</CODE
->". Thus, a source file at 
-      <TT
-CLASS="filename"
->BUGZILLA_ROOT/extensions/EXTENSION_NAME/code/enter_bug-entrydefaultvars.pl</TT
->
-      will be automatically invoked when the code hook is reached. 
-    </P
-><P
->  
-      Template hooks appear in the standard Bugzilla templates as a 
-      single directive in the format
-      <TT
-CLASS="literal"
->[% Hook.process("<CODE
-CLASS="varname"
->name</CODE
->") %]</TT
->,
-      where <CODE
-CLASS="varname"
->name</CODE
-> is the unique name of the hook.
-    </P
-><P
->&#13;      If you aren't sure what you want to extend or just want to browse the 
-      available hooks, either use your favorite multi-file search
-      tool (e.g. <B
-CLASS="command"
->grep</B
->) to search the standard templates
-      for occurrences of <CODE
-CLASS="methodname"
->Hook.process</CODE
-> or the source 
-      files for occurrences of <CODE
-CLASS="methodname"
->Bugzilla::Hook::process</CODE
->.
-    </P
-><P
->&#13;      If there is no hook at the appropriate place within the Bugzilla 
-      source file or template you want to extend,
-      <A
-HREF="http://bugzilla.mozilla.org/enter_bug.cgi?product=Bugzilla&#38;component=User%20Interface"
-TARGET="_top"
->file
-      a bug requesting one</A
->, specifying:
-    </P
-><P
-></P
-><TABLE
-BORDER="0"
-><TBODY
-><TR
-><TD
->the source or template file for which you are 
-          requesting a hook;</TD
-></TR
-><TR
-><TD
->&#13;        where in the file you would like the hook to be placed
-        (line number/position for latest version of the file in CVS
-        or description of location);
-      </TD
-></TR
-><TR
-><TD
->the purpose of the hook;</TD
-></TR
-><TR
-><TD
->a link to information about your extension, if any.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-><P
->&#13;      The Bugzilla reviewers will promptly review each hook request,
-      name the hook, add it to the template or source file, and check 
-      the new version of the template into CVS.
-    </P
-><P
->&#13;      You may optionally attach a patch to the bug which implements the hook
-      and check it in yourself after receiving approval from a Bugzilla
-      reviewer.  The developers may suggest changes to the location of the
-      hook based on their analysis of your needs or so the hook can satisfy
-      the needs of multiple extensions, but the process of getting hooks
-      approved and checked in is not as stringent as the process for general
-      changes to Bugzilla, and any extension, whether released or still in
-      development, can have hooks added to meet their needs.
-    </P
-><P
->&#13;      After making sure the hook you need exists (or getting it added if not),
-      add your extension to the directory within the Bugzilla
-      extensions tree corresponding to the hook. 
-    </P
-><P
->&#13;      That's it!  Now, when the source file or template containing the hook
-      is processed, your extension file will be processed at the point 
-      where the hook appears.
-    </P
-><P
->&#13;      For example, let's say you have an extension named Projman that adds
-      project management capabilities to Bugzilla.  Projman has an
-      administration interface <TT
-CLASS="filename"
->edit-projects.cgi</TT
->, 
-      and you want to add a link to it into the navigation bar at the bottom
-      of every Bugzilla page for those users who are authorized
-      to administer projects.
-    </P
-><P
->&#13;      The navigation bar is generated by the template file
-      <TT
-CLASS="filename"
->useful-links.html.tmpl</TT
->, which is located in
-      the <TT
-CLASS="filename"
->global/</TT
-> subdirectory on the standard Bugzilla 
-      template path
-      <TT
-CLASS="filename"
->BUGZILLA_ROOT/template/en/default/</TT
->.
-      Looking in <TT
-CLASS="filename"
->useful-links.html.tmpl</TT
->, you find
-      the following hook at the end of the list of standard Bugzilla
-      administration links:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><FONT
-COLOR="#000000"
-><PRE
-CLASS="programlisting"
->...
-    [% ', &#60;a href="editkeywords.cgi"&#62;keywords&#60;/a&#62;' 
-       IF user.in_group('editkeywords') %]
-    [% Hook.process("edit") %]
-...</PRE
-></FONT
-></TD
-></TR
-></TABLE
-><P
->&#13;      The corresponding extension file for this hook is
-      <TT
-CLASS="filename"
->BUGZILLA_ROOT/extensions/projman/template/en/global/useful-links-edit.html.tmpl</TT
->.
-      You then create that template file and add the following constant:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><FONT
-COLOR="#000000"
-><PRE
-CLASS="programlisting"
->...[% ', &#60;a href="edit-projects.cgi"&#62;projects&#60;/a&#62;' IF user.in_group('projman_admins') %]</PRE
-></FONT
-></TD
-></TR
-></TABLE
-><P
->&#13;      Voila!  The link now appears after the other administration links in the
-      navigation bar for users in the <TT
-CLASS="literal"
->projman_admins</TT
-> group.
-    </P
-><P
->&#13;      Now, let us say your extension adds a custom "project_manager" field 
-      to enter_bug.cgi. You want to modify the CGI script to set the default 
-      project manager to be productname@company.com. Looking at 
-      <TT
-CLASS="filename"
->enter_bug.cgi</TT
->, you see the enter_bug-entrydefaultvars 
-      hook near the bottom of the file before the default form values are set. 
-      The corresponding extension source file for this hook is located at 
-      <TT
-CLASS="filename"
->BUGZILLA_ROOT/extensions/projman/code/enter_bug-entrydefaultvars.pl</TT
->.
-      You then create that file and add the following:
-    </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><FONT
-COLOR="#000000"
-><PRE
-CLASS="programlisting"
->$default{'project_manager'} = $product.'@company.com';</PRE
-></FONT
-></TD
-></TR
-></TABLE
-><P
->&#13;      This code will be invoked whenever enter_bug.cgi is executed. 
-      Assuming that the rest of the customization was completed (e.g. the 
-      custom field was added to the enter_bug template and the required hooks 
-      were used in process_bug.cgi), the new field will now have this 
-      default value. 
-    </P
-><P
->&#13;      Notes:
-    </P
-><P
-></P
-><UL
-><LI
-><P
->&#13;          If your extension includes entirely new templates in addition to
-          extensions of standard templates, it should store those new
-          templates in its
-          <TT
-CLASS="filename"
->BUGZILLA_ROOT/extensions/template/en/</TT
-> 
-          directory. Extension template directories, like the 
-          <TT
-CLASS="filename"
->default/</TT
-> and <TT
-CLASS="filename"
->custom/</TT
->
-          directories, are part of the template search path, so putting templates
-          there enables them to be found by the template processor.
-        </P
-><P
->&#13;          The template processor looks for templates first in the
-          <TT
-CLASS="filename"
->custom/</TT
-> directory (i.e. templates added by the 
-          specific installation), then in the <TT
-CLASS="filename"
->extensions/</TT
->
-          directory (i.e. templates added by extensions), and finally in the 
-          <TT
-CLASS="filename"
->default/</TT
-> directory (i.e. the standard Bugzilla 
-          templates). Thus, installation-specific templates override both 
-          default and extension templates.
-        </P
-></LI
-><LI
-><P
->&#13;          If you are looking to customize Bugzilla, you can also take advantage 
-          of template hooks. To do so, create a directory in
-          <TT
-CLASS="filename"
->BUGZILLA_ROOT/template/en/custom/hook/</TT
->
-          that corresponds to the hook you wish to use, then place your 
-          customization templates into those directories. For example, 
-          if you wanted to use the hook "end" in 
-          <TT
-CLASS="filename"
->global/useful-links.html.tmpl</TT
->, you would 
-          create the directory <TT
-CLASS="filename"
->BUGZILLA_ROOT/template/en/custom/hook/
-          global/useful-links.html.tmpl/end/</TT
-> and add your customization 
-          template to this directory. 
-        </P
-><P
->&#13;          Obviously this method of customizing Bugzilla only lets you add code
-          to the standard source files and templates; you cannot change the 
-          existing code. Nevertheless, for those customizations that only add 
-          code, this method can reduce conflicts when merging changes, 
-          making upgrading your customized Bugzilla installation easier.
-        </P
-></LI
-></UL
 ></DIV
 ><DIV
 CLASS="section"
@@ -16169,8 +15491,8 @@ NAME="integration"
 ></H2
 ><P
 >&#13;      Many utilities and applications can integrate with Bugzilla,
-      either on the client- or server-side. None of them is maintained
-      by the Bugzilla community, nor are they being tested during our
+      either on the client- or server-side. None of them are maintained
+      by the Bugzilla community, nor are they tested during our
       QA tests, so use them at your own risk. They are listed at
       <A
 HREF="https://wiki.mozilla.org/Bugzilla:Addons"
@@ -16533,7 +15855,7 @@ NAME="trbl-relogin-everyone-share"
 >Example A-1. Examples of urlbase/cookiepath pairs for sharing login cookies</B
 ></P
 ><A
-NAME="AEN3216"
+NAME="AEN3098"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -16574,7 +15896,7 @@ NAME="trbl-relogin-everyone-restrict"
 >Example A-2. Examples of urlbase/cookiepath pairs to restrict the login cookie</B
 ></P
 ><A
-NAME="AEN3223"
+NAME="AEN3105"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -16616,47 +15938,8 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="trbl-relogin-some"
->A.7. Some users are constantly being forced to relogin</A
-></H2
-><P
->First, make sure cookies are enabled in the user's browser.
-    </P
-><P
->If that doesn't fix the problem, it may be that the user's ISP
-     implements a rotating proxy server. This causes the user's effective IP
-     address (the address which the Bugzilla server perceives him coming from)
-     to change periodically. Since Bugzilla cookies are tied to a specific IP
-     address, each time the effective address changes, the user will have to
-     log in again.
-     </P
-><P
->If you are using 2.18 (or later), there is a
-     parameter called <SPAN
-CLASS="QUOTE"
->"loginnetmask"</SPAN
->, which you can use to set
-     the number of bits of the user's IP address to require to be matched when
-     authenticating the cookies. If you set this to something less than 32,
-     then the user will be given a checkbox for <SPAN
-CLASS="QUOTE"
->"Restrict this login to
-     my IP address"</SPAN
-> on the login screen, which defaults to checked. If
-     they leave the box checked, Bugzilla will behave the same as it did
-     before, requiring an exact match on their IP address to remain logged in.
-     If they uncheck the box, then only the left side of their IP address (up
-     to the number of bits you specified in the parameter) has to match to
-     remain logged in.
-     </P
-></DIV
-><DIV
-CLASS="section"
-><HR><H2
-CLASS="section"
-><A
 NAME="trbl-index"
->A.8. <TT
+>A.7. <TT
 CLASS="filename"
 >index.cgi</TT
 > doesn't show up unless specified in the URL</A
@@ -16687,7 +15970,7 @@ CLASS="section"
 CLASS="section"
 ><A
 NAME="trbl-passwd-encryption"
->A.9. checksetup.pl reports "Client does not support authentication protocol
+>A.8. checksetup.pl reports "Client does not support authentication protocol
       requested by server..."</A
 ></H2
 ><P
@@ -17275,7 +16558,7 @@ NAME="modules-manual-optional"
 >C.3. Optional Modules</A
 ></H2
 ><P
->&#13;      Chart::Base:
+>&#13;      Chart::Lines:
       <P
 CLASS="literallayout"
 ><br>
@@ -17364,24 +16647,6 @@ TARGET="_top"
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</P
 >
     </P
-><P
->&#13;      Image::Magick:
-      <P
-CLASS="literallayout"
-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPAN&nbsp;Download&nbsp;Page:&nbsp;<A
-HREF="http://search.cpan.org/dist/PerlMagick/"
-TARGET="_top"
->http://search.cpan.org/dist/PerlMagick/</A
-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Documentation:&nbsp;<A
-HREF="http://www.imagemagick.org/script/resources.php"
-TARGET="_top"
->http://www.imagemagick.org/script/resources.php</A
-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</P
->
-    </P
 ></DIV
 ></DIV
 ><DIV
@@ -17394,7 +16659,7 @@ NAME="gfdl"
 ><P
 >Version 1.1, March 2000</P
 ><A
-NAME="AEN3392"
+NAME="AEN3263"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -17857,7 +17122,7 @@ NAME="gfdl-howto"
     of the License in the document and put the following copyright and
     license notices just after the title page:</P
 ><A
-NAME="AEN3482"
+NAME="AEN3353"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -17894,7 +17159,7 @@ CLASS="glossdiv"
 ><H1
 CLASS="glossdiv"
 ><A
-NAME="AEN3487"
+NAME="AEN3358"
 >0-9, high ascii</A
 ></H1
 ><DL
@@ -18800,7 +18065,7 @@ NAME="gloss-zarro"
         Terry had the following to say:
         </P
 ><A
-NAME="AEN3731"
+NAME="AEN3602"
 ></A
 ><TABLE
 BORDER="0"

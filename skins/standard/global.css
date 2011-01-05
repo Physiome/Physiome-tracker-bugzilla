@@ -53,12 +53,24 @@
     }
 
     #header .links {
-        border-left: 1px solid silver;
-        border-right: 1px solid silver;
-        border-bottom: 1px solid silver;
+        border-left: 1px solid #747E93;
+        border-right: 1px solid #747E93;
+        border-bottom: 1px solid #747E93;
         -moz-border-radius-bottomleft: 5px;
         -moz-border-radius-bottomright: 5px;
         padding: 0.5em;
+    }
+
+    #lang_links_container {
+        float: right;
+    }
+    #lang_links_container .links {
+        border: none;
+        padding: .5em;
+    }
+
+    .lang_current {
+        font-weight: bold;
     }
 
     #message {
@@ -261,6 +273,10 @@ div#docslinks {
 /* Comments */
 /************/
 
+.bz_comment_table td {
+    vertical-align: top;
+}
+
 .bz_comment {
     margin-bottom: 2em;
 }
@@ -291,6 +307,14 @@ div#docslinks {
     float: right;
 }
 
+.bz_collapse_expand_comments {
+    padding: 0;
+    margin: 0 0 0 1em;
+    list-style-type: none;
+}
+.bz_collapse_expand_comments li {
+    margin-bottom: .5em;
+}
 .bz_collapse_comment {
     text-decoration: none;
 }
@@ -326,7 +350,7 @@ div#docslinks {
     display: none !important;
 }
 
-span.quote {
+.bz_comment_text span.quote {
     color: #65379c;
     /* Make quoted text not wrap. */
     white-space: pre;
@@ -342,6 +366,10 @@ table#flags td {
     min-width: 3em;
 }
 
+input.requestee {
+    width: 15em;
+}
+
 #error_msg {
     font-size: x-large;
 }
@@ -355,7 +383,7 @@ table#flags td {
 }
 
 dt {
-    font-weight: bolder;
+    font-weight: bold;
 }
 body > dl > dt {
     border-top: dotted gray thin;
@@ -371,7 +399,6 @@ dl dl > dt {
 /* Style of the attachment table and time tracking table */
 #attachment_table {
     border-collapse: collapse;
-    width: 40em;
     border: 1px solid #333333;
 }
 
@@ -395,22 +422,6 @@ dl dl > dt {
 .bz_attach_view_hide {
     float: right;
     padding-left: 1em;
-}
-
-table.attachment_info th {
-    text-align: right;
-    vertical-align: top;
-}
-
-table.attachment_info td {
-    text-align: left;
-    vertical-align: top;
-}
-
-/* Text displayed when the attachment is not viewable by the web browser */
-#noview {
-    text-align: left;
-    vertical-align: middle;
 }
 
 /* For bug fields */
@@ -454,6 +465,15 @@ div.user_match {
 }
 .field_value, form#Create th, form#Create td {
     vertical-align: top;
+}
+th.required:before {
+    content: "* ";
+}
+th.required:before, span.required_star {
+    color: red;
+}
+input.required, select.required, span.required_explanation {
+    background-color: #fff7cd;
 }
 
 .calendar_button {

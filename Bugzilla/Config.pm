@@ -35,6 +35,7 @@ use strict;
 use base qw(Exporter);
 use Bugzilla::Constants;
 use Bugzilla::Hook;
+use Bugzilla::Install::Filesystem qw(fix_file_permissions);
 use Data::Dumper;
 use File::Temp;
 
@@ -68,7 +69,7 @@ sub _load_params {
     }
     # This hook is also called in editparams.cgi. This call here is required
     # to make SetParam work.
-    Bugzilla::Hook::process('config-modify_panels', 
+    Bugzilla::Hook::process('config_modify_panels', 
                             { panels => \%hook_panels });
 }
 # END INIT CODE
@@ -84,7 +85,7 @@ sub param_panels {
         $param_panels->{$module} = "Bugzilla::Config::$module" unless $module eq 'Common';
     }
     # Now check for any hooked params
-    Bugzilla::Hook::process('config-add_panels', 
+    Bugzilla::Hook::process('config_add_panels', 
                             { panel_modules => $param_panels });
     return $param_panels;
 }
@@ -151,10 +152,6 @@ sub update_params {
     {
         $param->{'makeproductgroups'} = $param->{'usebuggroups'};
     }
-    if (exists $param->{'usebuggroupsentry'} 
-       && !exists $param->{'useentrygroupdefault'}) {
-        $param->{'useentrygroupdefault'} = $param->{'usebuggroupsentry'};
-    }
 
     # Modularise auth code
     if (exists $param->{'useLDAP'} && !exists $param->{'loginmethod'}) {
@@ -196,6 +193,13 @@ sub update_params {
         $param->{'mail_delivery_method'} = $translation{$method};
     }
 
+    # Convert the old "ssl" parameter to the new "ssl_redirect" parameter.
+    # Both "authenticated sessions" and "always" turn on "ssl_redirect"
+    # when upgrading.
+    if (exists $param->{'ssl'} and $param->{'ssl'} ne 'never') {
+        $param->{'ssl_redirect'} = 1;
+    }
+
     # --- DEFAULTS FOR NEW PARAMS ---
 
     _load_params unless %params;
@@ -203,7 +207,12 @@ sub update_params {
         my $name = $item->{'name'};
         unless (exists $param->{$name}) {
             print "New parameter: $name\n" unless $new_install;
-            $param->{$name} = $answer->{$name} || $item->{'default'};
+            if (exists $answer->{$name}) {
+                $param->{$name} = $answer->{$name};
+            }
+            else {
+                $param->{$name} = $item->{'default'};
+            }
         }
     }
 
@@ -212,7 +221,7 @@ sub update_params {
     # --- REMOVE OLD PARAMS ---
 
     my %oldparams;
-    # Remove any old params, put them in old-params.txt
+    # Remove any old params
     foreach my $item (keys %$param) {
         if (!grep($_ eq $item, map ($_->{'name'}, @param_list))) {
             $oldparams{$item} = $param->{$item};
@@ -220,13 +229,16 @@ sub update_params {
         }
     }
 
+    # Write any old parameters to old-params.txt
+    my $datadir = bz_locations()->{'datadir'};
+    my $old_param_file = "$datadir/old-params.txt";
     if (scalar(keys %oldparams)) {
-        my $op_file = new IO::File('old-params.txt', '>>', 0600)
-          || die "old-params.txt: $!";
+        my $op_file = new IO::File($old_param_file, '>>', 0600)
+          || die "Couldn't create $old_param_file: $!";
 
         print "The following parameters are no longer used in Bugzilla,",
               " and so have been\nmoved from your parameters file into",
-              " old-params.txt:\n";
+              " $old_param_file:\n";
 
         local $Data::Dumper::Terse  = 1;
         local $Data::Dumper::Indent = 0;
@@ -289,27 +301,11 @@ sub write_params {
     rename $tmpname, $param_file
       or die "Can't rename $tmpname to $param_file: $!";
 
-    ChmodDataFile($param_file, 0666);
+    fix_file_permissions($param_file);
 
     # And now we have to reset the params cache so that Bugzilla will re-read
     # them.
     delete Bugzilla->request_cache->{params};
-}
-
-# Some files in the data directory must be world readable if and only if
-# we don't have a webserver group. Call this function to do this.
-# This will become a private function once all the datafile handling stuff
-# moves into this package
-
-# This sub is not perldoc'd for that reason - noone should know about it
-sub ChmodDataFile {
-    my ($file, $mask) = @_;
-    my $perm = 0770;
-    if ((stat(bz_locations()->{'datadir'}))[2] & 0002) {
-        $perm = 0777;
-    }
-    $perm = $perm & $mask;
-    chmod $perm,$file;
 }
 
 sub read_param_file {

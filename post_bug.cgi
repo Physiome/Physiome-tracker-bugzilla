@@ -248,6 +248,7 @@ if (defined($cgi->upload('data')) || $cgi->param('attachurl')) {
     else {
         $vars->{'message'} = 'attachment_creation_failed';
     }
+}
     
 # Email everyone the details of the new bug 
 $vars->{'mailrecipients'} = {'changer' => $user->login};

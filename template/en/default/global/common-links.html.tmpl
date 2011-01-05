@@ -26,12 +26,11 @@
   <li><a href="enter_bug.cgi?product=cmgui&format=generalhelp">Submit question about cmgui</a></li>
   <li><a href="enter_bug.cgi?product=CellML%20Repository%20Models%20%2F%20Curation%20Issues&format=repomodel">Submit CellML repository issue</a></li>
   <li><a href="enter_bug.cgi?format=software">Submit bug report</a></li>
-  <li><span class="separator">| </span><a href="describecomponents.cgi">Browse</a></li>
   <li><a href="enter_bug.cgi">Advanced submission</a></li>
   <li><a href="query.cgi">Advanced Search</a></li>
   <li><a href="report.cgi">Reports &amp; charts</a></li>
     [%-# Work around FF bug: keep this on one line %]</form>
-  <a href="page.cgi?id=quicksearch.html" title="Quicksearch Help">[?]</a></li>
+  <li><a href="page.cgi?id=quicksearch.html" title="Help on searching">Help on searching</a></li>
 
   <li>
     [% IF user.id %]
@@ -51,7 +50,6 @@
 [% BLOCK link_to_documentation %]
     [% IF doc_section && Param('docs_urlbase') %]
       <li>
-        <span class="separator">| </span>
         <a href="[% docs_urlbase _ doc_section FILTER html %]" target="_blank">Help</a>
       </li>
     [% END %]

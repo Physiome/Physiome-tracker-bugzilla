@@ -336,22 +336,25 @@
 
 <ul id="portal-personaltools">
   [% IF user.login %]
-  [% html_username = user.login FILTER html %]
-  [% filtered_username = user.login FILTER url_quote %]
-  <li class="portalUser">
-    [% html_username %]
-  </li>
+    [% html_username = user.login FILTER html %]
+    [% filtered_username = user.login FILTER url_quote %]
+    <li class="portalUser">
+      [% html_username %]
+    </li>
+  [% END %]
   
   [% IF user.showmybugslink %]
     [% filtered_username = user.login FILTER url_quote %]
     <li><a href="[% Param('mybugstemplate').replace('%userid%', filtered_username) %]">My [% terms.Bugs %]</a></li>
   [% END %]
 
+  [% IF user.login %]
   <li>
     <a href="userprefs.cgi">
       Preferences
     </a>
   </li>
+  [% END %]
     
   [% IF user.authorizer.can_logout %]
     [% IF sudoer %]
@@ -359,35 +362,26 @@
       <a href="relogin.cgi?action=end-sudo">End sudo session</a>
     </li>
     [% END %]
-  <li>
-    <a href="index.cgi?logout=1">Log out</a>
-  </li>
-  [% END %]
+    <li>
+      <a href="index.cgi?logout=1">Log out</a>
+    </li>
   [% ELSE %]
   <li>
     [% IF cgi.request_method == "GET" AND cgi.query_string %]
       [% script_name = script_name _ "?" _ cgi.query_string %]
-      [% script_name = script_name _ "&GoAheadAndLogIn=1" IF !cgi.query_string.match("GoAheadAndLogIn") %]
-       class="bz_default_hidden"><tr><td>
-[% IF Bugzilla.languages.size > 1 %]
-  <ul class="links">
-  [% FOREACH lang = Bugzilla.languages.sort %]
-    <li>[% IF NOT loop.first %]<span class="separator"> | </span>[% END %]
-    [% IF lang == current_language %]
-      <span class="lang_current">[% lang FILTER html FILTER upper %]</span>
     [% ELSE %]
-      [% script_name = script_name _ "?GoAheadAndLogIn=1" %]
-       [%- lang FILTER html FILTER upper %]</a>
-    [% END %]    
-    <li><a href="[% script_name FILTER html %]">Log in</a></li>
+      [% script_name = script_name _ "?" %]    
+    [% END %]
+    [% script_name = script_name _ "&GoAheadAndLogIn=1" IF !cgi.query_string.match("GoAheadAndLogIn") %]
+    <a href="[% script_name FILTER html %]">Log in</a>
   </li>
+  [% END %]
+
   [% IF Param('createemailregexp')
         && user.authorizer.user_can_create_account %]
     <li><a href="createaccount.cgi">Create account</a></li>
   [% END %]
-
-  [% END %]
-</ul> 
+</ul>
 
 <div id="portal-breadcrumbs">
   <span id="breadcrumbs-you-are-here">You 
@@ -412,7 +406,6 @@ are here:</span>
 </div>
 </div>
 <div class="visualClear">&nbsp;</div>
-[% END %]
 </td></tr></table>
 
 <table id="portal-columns">

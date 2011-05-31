@@ -40,7 +40,7 @@ name="SYNOPSIS"
     my $sortkey    = $milestone-&#62;sortkey;
 
     my $milestone = Bugzilla::Milestone-&#62;create(
-        { name =&#62; $name, product =&#62; $product, sortkey =&#62; $sortkey });
+        { value =&#62; $name, product =&#62; $product, sortkey =&#62; $sortkey });
 
     $milestone-&#62;set_name($new_name);
     $milestone-&#62;set_sortkey($new_sortkey);
@@ -170,13 +170,13 @@ name="CLASS_METHODS"
 >CLASS METHODS</a></h1>
 
 <dl>
-<dt><a name="create({name_=_$name,_product_=&#62;_$product,_sortkey_=&#62;_$sortkey})&#62;"
-><code  class="code">create({name =</code> $name, product =&#62; $product, sortkey =&#62; $sortkey})&#62;</a></dt>
+<dt><a name="create({value_=_$value,_product_=&#62;_$product,_sortkey_=&#62;_$sortkey})&#62;"
+><code  class="code">create({value =</code> $value, product =&#62; $product, sortkey =&#62; $sortkey})&#62;</a></dt>
 
 <dd>
 <pre  class="code"> Description: Create a new milestone for the given product.
 
- Params:      $name    - name of the new milestone (string). This name
+ Params:      $value   - name of the new milestone (string). This name
                          must be unique within the product.
               $product - a Bugzilla::Product object.
               $sortkey - the sortkey of the new milestone (signed integer)

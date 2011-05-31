@@ -120,17 +120,6 @@ else undefined.</p>
 </dl>
 
 <dl>
-<dt><a name="has_flags"
-><code  class="code">has_flags</code></a></dt>
-
-<dd>
-<p>Returns 1 if at least one flag exists in the DB,
-else 0.
-This subroutine is mainly used to decide to display the &#34;(My )Requests&#34; link in the footer.</p>
-</dd>
-</dl>
-
-<dl>
 <dt><a name="match($criteria)"
 ><code  class="code">match($criteria)</code></a></dt>
 
@@ -171,10 +160,11 @@ This array is then passed to Flag::create().</p>
 </dl>
 
 <dl>
-<dt><a name="notify($flag,_$bug,_$attachment)"
+<dt><a name="notify($flag,_$old_flag,_$object,_$timestamp)"
 ><code  class="code">notify($flag,
-$bug,
-$attachment)</code></a></dt>
+$old_flag,
+$object,
+$timestamp)</code></a></dt>
 
 <dd>
 <p>Sends an email notification about a flag being created,

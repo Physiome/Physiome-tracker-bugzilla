@@ -31,7 +31,7 @@ name="SYNOPSIS"
 
 <pre  class="code">    use Bugzilla::Status;
 
-    my $bug_status = new Bugzilla::Status({name =&#62; &#39;ASSIGNED&#39;});
+    my $bug_status = new Bugzilla::Status({ name =&#62; &#39;IN_PROGRESS&#39; });
     my $bug_status = new Bugzilla::Status(4);
 
     my @closed_bug_statuses = closed_bug_statuses();

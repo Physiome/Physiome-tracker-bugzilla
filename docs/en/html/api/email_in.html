@@ -38,13 +38,22 @@ name="NAME"
 name="SYNOPSIS"
 >SYNOPSIS</a></h1>
 
-<pre  class="code"> ./email_in.pl [-vvv] &#60; email.txt
+<p>./email_in.pl [-vvv] [--default name=value] [--override name=value] &#60; email.txt</p>
 
- Reads an email on STDIN (the standard input).
+<p>Reads an email on STDIN (the standard input).</p>
 
-  Options:
-    --verbose (-v) - Make the script print more to STDERR.
-                     Specify multiple times to print even more.</pre>
+<p>Options:</p>
+
+<pre  class="code">   --verbose (-v)        - Make the script print more to STDERR.
+                           Specify multiple times to print even more.
+
+   --default name=value  - Specify defaults for field values, like
+                           product=TestProduct. Can be specified multiple
+                           times to specify defaults for multiple fields.
+
+   --override name=value - Override field values specified in the email,
+                           like product=TestProduct. Can be specified
+                           multiple times to override multiple fields.</pre>
 
 <h1><a class='u' href='#___top' title='click to go to top of document'
 name="DESCRIPTION"

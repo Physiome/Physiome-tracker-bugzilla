@@ -110,6 +110,13 @@ May be null.</p>
 <dd>
 <p>True or false.</p>
 
+<dt><a name="base64"
+><code  class="code">base64</code></a></dt>
+
+<dd>
+<p>A base64-encoded string.
+This is the only way to transfer binary data via the WebService.</p>
+
 <dt><a name="array"
 ><code  class="code">array</code></a></dt>
 
@@ -248,11 +255,11 @@ name="Limiting_What_Fields_Are_Returned"
 <p>These parameters allow you to limit what fields are present in the structs, to possibly improve performance or save some bandwidth.</p>
 
 <dl>
-<dt><a name="include_fields_(array)"
-><code  class="code">include_fields</code> (array)</a></dt>
+<dt><a name="include_fields"
+><code  class="code">include_fields</code></a></dt>
 
 <dd>
-<p>An array of strings, representing the (case-sensitive) names of fields. Only the fields specified in this hash will be returned, the rest will not be included.</p>
+<p><code  class="code">array</code> An array of strings, representing the (case-sensitive) names of fields in the return value. Only the fields specified in this hash will be returned, the rest will not be included.</p>
 
 <p>If you specify an empty array, then this function will return empty hashes.</p>
 
@@ -266,11 +273,11 @@ name="Limiting_What_Fields_Are_Returned"
 
 <pre  class="code">  { users =&#62; [{ id =&#62; 1, name =&#62; &#39;user@domain.com&#39; }] }</pre>
 
-<dt><a name="exclude_fields_(array)"
-><code  class="code">exclude_fields</code> (array)</a></dt>
+<dt><a name="exclude_fields"
+><code  class="code">exclude_fields</code></a></dt>
 
 <dd>
-<p>An array of strings, representing the (case-sensitive) names of fields. The fields specified will not be included in the returned hashes.</p>
+<p><code  class="code">array</code> An array of strings, representing the (case-sensitive) names of fields in the return value. The fields specified will not be included in the returned hashes.</p>
 
 <p>If you specify all the fields, then this function will return empty hashes.</p>
 

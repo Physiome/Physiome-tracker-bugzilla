@@ -101,6 +101,8 @@ sub FIELD_MAP {
                         status_whiteboard
                         cclist_accessible reporter_accessible)};
 
+    Bugzilla::Hook::process('quicksearch_map', {'map' => \%full_map} );
+
     $cache->{quicksearch_fields} = \%full_map;
 
     return $cache->{quicksearch_fields};
@@ -248,6 +250,7 @@ sub _handle_alias {
         my $is_alias = Bugzilla->dbh->selectrow_array(
             q{SELECT 1 FROM bugs WHERE alias = ?}, undef, $alias);
         if ($is_alias) {
+            $alias = url_quote($alias);
             print Bugzilla->cgi->redirect(
                 -uri => correct_urlbase() . "show_bug.cgi?id=$alias");
             exit;
@@ -275,8 +278,8 @@ sub _handle_status_and_resolution {
     elsif ($words->[0] eq 'OPEN') {
         shift @$words;
     }
-    elsif ($words->[0] =~ /^[A-Z]+(,[A-Z]+)*$/) {
-        # e.g. NEW,ASSI,REOP,FIX
+    elsif ($words->[0] =~ /^[A-Z_]+(,[_A-Z]+)*$/) {
+        # e.g. CON,IN_PR,FIX
         undef %states;
         if (matchPrefixes(\%states,
                           \%resolutions,
@@ -342,12 +345,6 @@ sub _handle_special_first_chars {
 
 sub _handle_field_names {
     my ($or_operand, $negate, $unknownFields, $ambiguous_fields) = @_;
-    
-    # votes:xx ("at least xx votes")
-    if ($or_operand =~ /^votes:([0-9]+)$/) {
-        addChart('votes', 'greaterthan', $1 - 1, $negate);
-        return 1;
-    }
     
     # Flag and requestee shortcut
     if ($or_operand =~ /^(?:flag:)?([^\?]+\?)([^\?]*)$/) {
@@ -470,19 +467,6 @@ sub _special_field_syntax {
         addChart('priority', 'anyexact', $prios, $negate);
         return 1;
     }
-
-    # Votes (votes>xx)
-    if ($word =~ m/^votes>([0-9]+)$/) {
-        addChart('votes', 'greaterthan', $1, $negate);
-        return 1;
-    }
-    
-    # Votes (votes>=xx, votes=>xx)
-    if ($word =~ m/^votes(>=|=>)([0-9]+)$/) {
-        addChart('votes', 'greaterthan', $2-1, $negate);
-        return 1;
-    }
-
     return 0;    
 }
 

@@ -44,14 +44,12 @@ name="SYNOPSIS"
     my $bug_ids         = $product-&#62;bug_ids();
     my $has_access      = $product-&#62;user_has_access($user);
     my $flag_types      = $product-&#62;flag_types();
+    my $classification  = $product-&#62;classification();
 
     my $id               = $product-&#62;id;
     my $name             = $product-&#62;name;
     my $description      = $product-&#62;description;
     my isactive          = $product-&#62;is_active;
-    my votesperuser      = $product-&#62;votes_per_user;
-    my maxvotesperbug    = $product-&#62;max_votes_per_bug;
-    my votestoconfirm    = $product-&#62;votes_to_confirm;
     my $defaultmilestone = $product-&#62;default_milestone;
     my $classificationid = $product-&#62;classification_id;
     my $allows_unconfirmed = $product-&#62;allows_unconfirmed;</pre>
@@ -98,8 +96,21 @@ name="METHODS"
               a Bugzilla::Group object and the properties of group
               relative to the product.</pre>
 
-<dt><a name="groups_mandatory_for"
-><code  class="code">groups_mandatory_for</code></a></dt>
+<dt><a name="groups_available"
+><code  class="code">groups_available</code></a></dt>
+
+<dd>
+<p>Tells you what groups are set to Default or Shown for the currently-logged-in user (taking into account both OtherControl and MemberControl). Returns an arrayref of <a href="../Bugzilla/Group.html" class="podlinkpod"
+>Bugzilla::Group</a> objects with an extra hash keys set, <code  class="code">is_default</code>, which is true if the group is set to Default for the currently-logged-in user.</p>
+
+<dt><a name="groups_mandatory"
+><code  class="code">groups_mandatory</code></a></dt>
+
+<dd>
+<p>Tells you what groups are mandatory for bugs in this product, for the currently-logged-in user. Returns an arrayref of <code  class="code">Bugzilla::Group</code> objects.</p>
+
+<dt><a name="group_is_settable"
+><code  class="code">group_is_settable</code></a></dt>
 
 <dd>
 <dl>
@@ -107,16 +118,24 @@ name="METHODS"
 ><b>Description</b></a></dt>
 
 <dd>
-<p>Tells you what groups are mandatory for bugs in this product.</p>
+<p>Tells you whether or not the currently-logged-in user can set a group on a bug (whether or not they match the MemberControl/OtherControl settings for a group in this product). Groups that are <code  class="code">Mandatory</code> for the currently-loggeed-in user are also acceptable since from Bugzilla&#39;s perspective, there&#39;s no problem with &#34;setting&#34; a Mandatory group on a bug. (In fact, the user <i>must</i> set the Mandatory group on the bug.)</p>
 
 <dt><a name="Params"
 ><b>Params</b></a></dt>
 
 <dd>
-<p><code  class="code">$user</code> - The user who you want to check.</p>
+<dl>
+<dt><a name="$group_-_Either_a_numeric_group_id_or_a_Bugzilla::Group_object."
+><code  class="code">$group</code> - Either a numeric group id or a <a href="../Bugzilla/Group.html" class="podlinkpod"
+>Bugzilla::Group</a> object.</a></dt>
+</dl>
 
-<dt><a name="Returns_An_arrayref_of_Bugzilla::Group_objects."
-><b>Returns</b> An arrayref of <code  class="code">Bugzilla::Group</code> objects.</a></dt>
+<dt><a name="Returns"
+><b>Returns</b></a></dt>
+
+<dd>
+<p><code  class="code">1</code> if the group is valid in this product, <code  class="code">0</code> otherwise.</p>
+</dd>
 </dl>
 
 <dt><a name="groups_valid"
@@ -129,8 +148,7 @@ name="METHODS"
 
 <dd>
 <p>Returns an arrayref of <a href="../Bugzilla/Group.html" class="podlinkpod"
->Bugzilla::Group</a> objects, representing groups that bugs could validly be restricted to within this product. Used mostly by <a href="../Bugzilla/Bug.html" class="podlinkpod"
->Bugzilla::Bug</a> to assure that you&#39;re adding valid groups to a bug.</p>
+>Bugzilla::Group</a> objects, representing groups that bugs could validly be restricted to within this product. Used mostly when you need the list of all possible groups that could be set in a product by anybody, disregarding whether or not the groups are active or who the currently logged-in user is.</p>
 
 <p><b>Note</b>: This doesn&#39;t check whether or not the current user can add/remove bugs to/from these groups. It just tells you that bugs <i>could be in</i> these groups, in this product.</p>
 
@@ -142,6 +160,14 @@ name="METHODS"
 ><b>Returns</b> An arrayref of <a href="../Bugzilla/Group.html" class="podlinkpod"
 >Bugzilla::Group</a> objects.</a></dt>
 </dl>
+
+<dt><a name="group_is_valid"
+><code  class="code">group_is_valid</code></a></dt>
+
+<dd>
+<p>Returns <code  class="code">1</code> if the passed-in <a href="../Bugzilla/Group.html" class="podlinkpod"
+>Bugzilla::Group</a> or group id could be set on a bug by <i>anybody</i>, in this product. Even inactive groups are considered valid. (This is a shortcut for searching <a href="#groups_valid" class="podlinkpod"
+>&#34;groups_valid&#34;</a> to find out if a group is valid in a particular product.)</p>
 
 <dt><a name="versions"
 ><code  class="code">versions</code></a></dt>
@@ -207,6 +233,16 @@ name="METHODS"
  Params:      none.
 
  Returns:     Two references to an array of flagtype objects.</pre>
+
+<dt><a name="classification()"
+><code  class="code">classification()</code></a></dt>
+
+<dd>
+<pre  class="code"> Description: Returns the classification the product belongs to.
+
+ Params:      none.
+
+ Returns:     A Bugzilla::Classification object.</pre>
 </dd>
 </dl>
 
@@ -224,18 +260,9 @@ name="SUBROUTINES"
 >&#34;components&#34;</a>, and <a href="#versions" class="podlinkpod"
 >&#34;versions&#34;</a>, which is much faster than calling those accessors on every item in the array individually.</p>
 
+<p>If the 2nd argument passed to <code  class="code">preload</code> is true, flag types for these products and their components are also preloaded.</p>
+
 <p>This function is not exported, so must be called like <code  class="code">Bugzilla::Product::preload($products)</code>.</p>
-
-<dt><a name="check_product($product_name)"
-><code  class="code">check_product($product_name)</code></a></dt>
-
-<dd>
-<pre  class="code"> Description: Checks if the product name was passed in and if is a valid
-              product.
-
- Params:      $product_name - String with a product name.
-
- Returns:     Bugzilla::Product object.</pre>
 </dd>
 </dl>
 

@@ -15,10 +15,19 @@ Bugzilla::Webservice::User</title>
   <li class='indexItem indexItem1'><a href='#NAME'>NAME</a>
   <li class='indexItem indexItem1'><a href='#DESCRIPTION'>DESCRIPTION</a>
   <li class='indexItem indexItem1'><a href='#METHODS'>METHODS</a>
+  <li class='indexItem indexItem1'><a href='#Logging_In_and_Out'>Logging In and Out</a>
   <ul   class='indexList indexList2'>
-    <li class='indexItem indexItem2'><a href='#Logging_In_and_Out'>Logging In and Out</a>
-    <li class='indexItem indexItem2'><a href='#Account_Creation'>Account Creation</a>
-    <li class='indexItem indexItem2'><a href='#User_Info'>User Info</a>
+    <li class='indexItem indexItem2'><a href='#login'>login</a>
+    <li class='indexItem indexItem2'><a href='#logout'>logout</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#Account_Creation'>Account Creation</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#offer_account_by_email'>offer_account_by_email</a>
+    <li class='indexItem indexItem2'><a href='#create'>create</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#User_Info'>User Info</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#get'>get</a>
   </ul>
 </ul>
 </div>
@@ -45,15 +54,14 @@ and what <b>STABLE</b>,
 <b>UNSTABLE</b>,
 and <b>EXPERIMENTAL</b> mean.</p>
 
-<h2><a class='u' href='#___top' title='click to go to top of document'
+<h1><a class='u' href='#___top' title='click to go to top of document'
 name="Logging_In_and_Out"
->Logging In and Out</a></h2>
+>Logging In and Out</a></h1>
 
-<dl>
-<dt><a name="login"
-><code  class="code">login</code></a></dt>
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="login"
+>login</a></h2>
 
-<dd>
 <p><b>STABLE</b></p>
 
 <dl>
@@ -137,10 +145,10 @@ but the user is asked to change his password.</p>
 </dd>
 </dl>
 
-<dt><a name="logout"
-><code  class="code">logout</code></a></dt>
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="logout"
+>logout</a></h2>
 
-<dd>
 <p><b>STABLE</b></p>
 
 <dl>
@@ -162,18 +170,15 @@ Does nothing if there is no user logged in.</p>
 <dt><a name="Errors_(none)"
 ><b>Errors</b> (none)</a></dt>
 </dl>
-</dd>
-</dl>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="Account_Creation"
+>Account Creation</a></h1>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
-name="Account_Creation"
->Account Creation</a></h2>
+name="offer_account_by_email"
+>offer_account_by_email</a></h2>
 
-<dl>
-<dt><a name="offer_account_by_email"
-><code  class="code">offer_account_by_email</code></a></dt>
-
-<dd>
 <p><b>STABLE</b></p>
 
 <dl>
@@ -223,10 +228,10 @@ Account creation may be entirely disabled.</p>
 </dd>
 </dl>
 
-<dt><a name="create"
-><code  class="code">create</code></a></dt>
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="create"
+>create</a></h2>
 
-<dd>
 <p><b>STABLE</b></p>
 
 <dl>
@@ -305,18 +310,15 @@ this means the password is under three characters.)</p>
 </dl>
 </dd>
 </dl>
-</dd>
-</dl>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="User_Info"
+>User Info</a></h1>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
-name="User_Info"
->User Info</a></h2>
+name="get"
+>get</a></h2>
 
-<dl>
-<dt><a name="get"
-><code  class="code">get</code></a></dt>
-
-<dd>
 <p><b>STABLE</b></p>
 
 <dl>
@@ -356,10 +358,12 @@ If they try,
 they will get an error.
 Logged-in users will get an error if they specify the id of a user they cannot see.</p>
 
-<dt><a name="names_(array)_-_An_array_of_login_names_(strings)."
-><code  class="code">names</code> (array) - An array of login names (strings).</a></dt>
+<dt><a name="names_(array)"
+><code  class="code">names</code> (array)</a></dt>
 
 <dd>
+<p>An array of login names (strings).</p>
+
 <dt><a name="match_(array)"
 ><code  class="code">match</code> (array)</a></dt>
 
@@ -379,6 +383,28 @@ which defaults to 1000 but can be changed by the Bugzilla administrator.</p>
 and an error will be thrown if they try.
 (This is to make it harder for spammers to harvest email addresses from Bugzilla,
 and also to enforce the user visibility restrictions that are implemented on some Bugzillas.)</p>
+
+<dt><a name="group_ids_(array)"
+><code  class="code">group_ids</code> (array)</a></dt>
+
+<dd>
+<dt><a name="groups_(array)"
+><code  class="code">groups</code> (array)</a></dt>
+
+<dd>
+<p><code  class="code">group_ids</code> is an array of numeric ids for groups that a user can be in.
+<code  class="code">groups</code> is an array of names of groups that a user can be in.
+If these are specified,
+they limit the return value to users who are in <i>any</i> of the groups specified.</p>
+
+<dt><a name="include_disabled_(boolean)"
+><code  class="code">include_disabled</code> (boolean)</a></dt>
+
+<dd>
+<p>By default,
+when using the <code  class="code">match</code> parameter,
+disabled users are excluded from the returned results unless their full username is identical to the match string.
+Setting <code  class="code">include_disabled</code> to <code  class="code">true</code> will include disabled users in the returned results even if their username doesn&#39;t fully match the input string.</p>
 </dd>
 </dl>
 
@@ -459,11 +485,11 @@ and <code  class="code">can_login</code> items.</p>
 
 <dd>
 <dl>
-<dt><a name="51_(Bad_Login_Name)"
->51 (Bad Login Name)</a></dt>
+<dt><a name="51_(Bad_Login_Name_or_Group_Name)"
+>51 (Bad Login Name or Group Name)</a></dt>
 
 <dd>
-<p>You passed an invalid login name in the &#34;names&#34; array.</p>
+<p>You passed an invalid login name in the &#34;names&#34; array or a bad group name/id in the <code  class="code">groups</code>/<code  class="code">group_ids</code> arguments.</p>
 
 <dt><a name="304_(Authorization_Required)"
 >304 (Authorization Required)</a></dt>
@@ -487,8 +513,15 @@ but you are not authorized to see one of the users you wanted to get information
 <dl>
 <dt><a name="Added_in_Bugzilla_3.4."
 >Added in Bugzilla <b>3.4</b>.</a></dt>
-</dl>
-</dd>
+
+<dd>
+<dt><a name="group_ids_and_groups_were_added_in_Bugzilla_4.0."
+><code  class="code">group_ids</code> and <code  class="code">groups</code> were added in Bugzilla <b>4.0</b>.</a></dt>
+
+<dd>
+<dt><a name="include_disabled_added_in_Bugzilla_4.0._Default_behavior_for_match_has_changed_to_only_returning_enabled_accounts."
+><code  class="code">include_disabled</code> added in Bugzilla <b>4.0</b>.
+Default behavior for <code  class="code">match</code> has changed to only returning enabled accounts.</a></dt>
 </dl>
 </dd>
 </dl>

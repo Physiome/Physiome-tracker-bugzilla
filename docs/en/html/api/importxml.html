@@ -29,15 +29,7 @@ name="NAME"
 name="SYNOPSIS"
 >SYNOPSIS</a></h1>
 
-<pre  class="code">    importxml.pl [options] [file ...]
-
- Options:
-       -? --help        brief help message
-       -v --verbose     print error and debug information. 
-                        Multiple -v increases verbosity
-       -m --sendmail    send mail to recipients with log of bugs imported
-       --attach_path    The path to the attachment files.
-                        (Required if encoding=&#34;filename&#34; is used for attachments.)</pre>
+<pre  class="code"> importxml.pl [options] [file ...]</pre>
 
 <h1><a class='u' href='#___top' title='click to go to top of document'
 name="OPTIONS"
@@ -48,19 +40,37 @@ name="OPTIONS"
 ><b>-?</b></a></dt>
 
 <dd>
-<pre  class="code">    Print a brief help message and exits.</pre>
+<p>Print a brief help message and exit.</p>
 
 <dt><a name="-v"
 ><b>-v</b></a></dt>
 
 <dd>
-<pre  class="code">    Print error and debug information. Mulltiple -v increases verbosity</pre>
+<p>Print error and debug information. Mulltiple -v increases verbosity</p>
 
-<dt><a name="-m"
-><b>-m</b></a></dt>
+<dt><a name="-m_--sendmail"
+><b>-m</b> <b>--sendmail</b></a></dt>
 
 <dd>
-<pre  class="code">    Send mail to exporter with a log of bugs imported and any errors.</pre>
+<p>Send mail to exporter with a log of bugs imported and any errors.</p>
+
+<dt><a name="--attach_path"
+><b>--attach_path</b></a></dt>
+
+<dd>
+<p>The path to the attachment files. (Required if encoding=&#34;filename&#34; is used for attachments.)</p>
+
+<dt><a name="--product=name"
+><b>--product=name</b></a></dt>
+
+<dd>
+<p>The product to put the bug in if the product specified in the XML doesn&#39;t exist.</p>
+
+<dt><a name="--component=name"
+><b>--component=name</b></a></dt>
+
+<dd>
+<p>The component to put the bug in if the component specified in the XML doesn&#39;t exist.</p>
 </dd>
 </dl>
 

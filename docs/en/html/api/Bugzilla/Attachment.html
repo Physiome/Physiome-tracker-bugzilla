@@ -232,15 +232,15 @@ name="Class_Methods"
 
 <p>Returns: 1 on success, 0 otherwise.</p>
 
-<dt><a name="validate_obsolete($bug)"
-><code  class="code">validate_obsolete($bug)</code></a></dt>
+<dt><a name="validate_obsolete($bug,_$attach_ids)"
+><code  class="code">validate_obsolete($bug, $attach_ids)</code></a></dt>
 
 <dd>
 <p>Description: validates if attachments the user wants to mark as obsolete really belong to the given bug and are not already obsolete. Moreover, a user cannot mark an attachment as obsolete if he cannot view it (due to restrictions on it).</p>
 
-<p>Params: $bug - The bug object obsolete attachments should belong to.</p>
+<p>Params: $bug - The bug object obsolete attachments should belong to. $attach_ids - The list of attachments to mark as obsolete.</p>
 
-<p>Returns: 1 on success. Else an error is thrown.</p>
+<p>Returns: The list of attachment objects to mark as obsolete. Else an error is thrown.</p>
 
 <dt><a name="create"
 ><code  class="code">create</code></a></dt>

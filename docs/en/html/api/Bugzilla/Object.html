@@ -72,6 +72,8 @@ name="CONSTANTS"
 <dd>
 <p>The names of the columns that you want to read out of the database and into this object. This should be an array.</p>
 
+<p><i>Note</i>: Though normally you will never need to access this constant&#39;s data directly in your subclass, if you do, you should access it by calling the <code  class="code">_get_db_columns</code> method instead of accessing the constant directly. (The only exception to this rule is calling <code  class="code">SUPER::DB_COLUMNS</code> from within your own <code  class="code">DB_COLUMNS</code> subroutine in a subclass.)</p>
+
 <dt><a name="NAME_FIELD"
 ><code  class="code">NAME_FIELD</code></a></dt>
 
@@ -90,12 +92,6 @@ name="CONSTANTS"
 <dd>
 <p>The order that <code  class="code">new_from_list</code> and <code  class="code">get_all</code> should return objects in. This should be the name of a database column. Defaults to <a href="#NAME_FIELD" class="podlinkpod"
 >&#34;NAME_FIELD&#34;</a>.</p>
-
-<dt><a name="REQUIRED_CREATE_FIELDS"
-><code  class="code">REQUIRED_CREATE_FIELDS</code></a></dt>
-
-<dd>
-<p>The list of fields that <b>must</b> be specified when the user calls <code  class="code">create()</code>. This should be an array.</p>
 
 <dt><a name="VALIDATORS"
 ><code  class="code">VALIDATORS</code></a></dt>
@@ -134,6 +130,18 @@ name="CONSTANTS"
 <p><a href="../Bugzilla/Bug.html" class="podlinkpod"
 >Bugzilla::Bug</a> has good examples in its code of when to use this.</p>
 
+<dt><a name="VALIDATOR_DEPENDENCIES"
+><code  class="code">VALIDATOR_DEPENDENCIES</code></a></dt>
+
+<dd>
+<p>During <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a> and <a href="#set_all" class="podlinkpod"
+>&#34;set_all&#34;</a>, validators are normally called in a somewhat-random order. If you need one field to be validated and set before another field, this constant is how you do it, by saying that one field &#34;depends&#34; on the value of other fields.</p>
+
+<p>This is a hashref, where the keys are field names and the values are arrayrefs of field names. You specify what fields a field depends on using the arrayrefs. So, for example, to say that a <code  class="code">component</code> field depends on the <code  class="code">product</code> field being set, you would do:</p>
+
+<pre  class="code"> component =&#62; [&#39;product&#39;]</pre>
+
 <dt><a name="UPDATE_COLUMNS"
 ><code  class="code">UPDATE_COLUMNS</code></a></dt>
 
@@ -141,6 +149,38 @@ name="CONSTANTS"
 <p>A list of columns to update when <a href="#update" class="podlinkpod"
 >&#34;update&#34;</a> is called. If a field can&#39;t be changed, it shouldn&#39;t be listed here. (For example, the <a href="#ID_FIELD" class="podlinkpod"
 >&#34;ID_FIELD&#34;</a> usually can&#39;t be updated.)</p>
+
+<dt><a name="REQUIRED_FIELD_MAP"
+><code  class="code">REQUIRED_FIELD_MAP</code></a></dt>
+
+<dd>
+<p>This is a hashref that maps database column names to <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a> argument names. You only need to specify values for fields where the argument passed to <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a> has a different name in the database than it does in the <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a> arguments. (For example, <a href="../Bugzilla/Bug.html#create" class="podlinkpod"
+>&#34;create&#34; in Bugzilla::Bug</a> takes a <code  class="code">product</code> argument, but the column name in the <code  class="code">bugs</code> table is <code  class="code">product_id</code>.)</p>
+
+<dt><a name="EXTRA_REQUIRED_FIELDS"
+><code  class="code">EXTRA_REQUIRED_FIELDS</code></a></dt>
+
+<dd>
+<p>Normally, Bugzilla::Object automatically figures out which fields are required for <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a>. It then <i>always</i> runs those fields&#39; validators, even if those fields weren&#39;t passed as arguments to <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a>. That way, any default values or required checks can be done for those fields by the validators.</p>
+
+<p><a href="#create" class="podlinkpod"
+>&#34;create&#34;</a> figures out which fields are required by looking for database columns in the <a href="#DB_TABLE" class="podlinkpod"
+>&#34;DB_TABLE&#34;</a> that are NOT NULL and have no DEFAULT set. However, there are some fields that this check doesn&#39;t work for:</p>
+
+<ul>
+<li>Fields that have database defaults (or are marked NULL in the database) but actually have different defaults specified by validators. (For example, the qa_contact field in the <code  class="code">bugs</code> table can be NULL, so it won&#39;t be caught as being required. However, in reality it defaults to the component&#39;s initial_qa_contact.)</li>
+
+<li>Fields that have defaults that should be set by validators, but are actually stored in a table different from <a href="#DB_TABLE" class="podlinkpod"
+>&#34;DB_TABLE&#34;</a> (like the &#34;cc&#34; field for bugs, which defaults to the &#34;initialcc&#34; of the Component, but won&#39;t be caught as a normal required field because it&#39;s in a separate table.)</li>
+</ul>
+
+<p>Any field matching the above criteria needs to have its name listed in this constant. For an example of use, see the code of <a href="../Bugzilla/Bug.html" class="podlinkpod"
+>Bugzilla::Bug</a>.</p>
 
 <dt><a name="NUMERIC_COLUMNS"
 ><code  class="code">NUMERIC_COLUMNS</code></a></dt>
@@ -312,15 +352,12 @@ name="Database_Manipulation"
 <dd>
 <p>Description: Creates a new item in the database. Throws a User Error if any of the passed-in params are invalid.</p>
 
-<p>Params: <code  class="code">$params</code> - hashref - A value to put in each database field for this object. Certain values must be set (the ones specified in <a href="#REQUIRED_CREATE_FIELDS" class="podlinkpod"
->&#34;REQUIRED_CREATE_FIELDS&#34;</a>), and the function will throw a Code Error if you don&#39;t set them.</p>
+<p>Params: <code  class="code">$params</code> - hashref - A value to put in each database field for this object.</p>
 
 <p>Returns: The Object just created in the database.</p>
 
 <p>Notes: In order for this function to work in your subclass, your subclass&#39;s <a href="#ID_FIELD" class="podlinkpod"
->&#34;ID_FIELD&#34;</a> must be of <code  class="code">SERIAL</code> type in the database. Your subclass also must define <a href="#REQUIRED_CREATE_FIELDS" class="podlinkpod"
->&#34;REQUIRED_CREATE_FIELDS&#34;</a> and <a href="#VALIDATORS" class="podlinkpod"
->&#34;VALIDATORS&#34;</a>.</p>
+>&#34;ID_FIELD&#34;</a> must be of <code  class="code">SERIAL</code> type in the database.</p>
 
 <pre  class="code">             Subclass Implementors: This function basically just
              calls L&#60;/check_required_create_fields&#62;, then
@@ -339,8 +376,9 @@ name="Database_Manipulation"
 
 <dd>
 <p>Part of <a href="#create" class="podlinkpod"
->&#34;create&#34;</a>. Throws an error if any of the <a href="#REQUIRED_CREATE_FIELDS" class="podlinkpod"
->&#34;REQUIRED_CREATE_FIELDS&#34;</a> have not been specified in <code  class="code">$params</code></p>
+>&#34;create&#34;</a>. Modifies the incoming <code  class="code">$params</code> argument so that any field that does not have a database default will be checked later by <a href="#run_create_validators" class="podlinkpod"
+>&#34;run_create_validators&#34;</a>, even if that field wasn&#39;t specified as an argument to <a href="#create" class="podlinkpod"
+>&#34;create&#34;</a>.</p>
 
 <dt><a name="Params"
 ><b>Params</b></a></dt>

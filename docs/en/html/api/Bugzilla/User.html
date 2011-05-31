@@ -273,6 +273,12 @@ name="Other_Methods"
 <dd>
 <p>Returns a string containing a comma-separated list of numeric group ids. If the user is not a member of any groups, returns &#34;-1&#34;. This is most often used within an SQL IN() function.</p>
 
+<dt><a name="groups_in_sql"
+><code  class="code">groups_in_sql</code></a></dt>
+
+<dd>
+<p>This returns an <code  class="code">IN</code> clause for SQL, containing either all of the groups the user is in, or <code  class="code">-1</code> if the user is in no groups. This takes one argument--the name of the SQL field that should be on the left-hand-side of the <code  class="code">IN</code> statement, which defaults to <code  class="code">group_id</code> if not specified.</p>
+
 <dt><a name="in_group($group_name,_$product_id)"
 ><code  class="code">in_group($group_name, $product_id)</code></a></dt>
 

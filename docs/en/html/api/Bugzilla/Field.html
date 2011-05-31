@@ -177,6 +177,29 @@ name="Instance_Properties"
 </dl>
 
 <dl>
+<dt><a name="is_abnormal"
+><code  class="code">is_abnormal</code></a></dt>
+
+<dd>
+<p>Most fields that have a <code  class="code">SELECT</code> <a href="#type" class="podlinkpod"
+>&#34;type&#34;</a> have a certain schema for the table that stores their values, the table has the same name as the field, and the field&#39;s legal values can be edited via <em  class="code">editvalues.cgi</em>.</p>
+
+<p>However, some fields do not follow that pattern. Those fields are considered &#34;abnormal&#34;.</p>
+
+<p>This method returns <code  class="code">1</code> if the field is &#34;abnormal&#34;, <code  class="code">0</code> otherwise.</p>
+</dd>
+</dl>
+
+<dl>
+<dt><a name="is_timetracking"
+><code  class="code">is_timetracking</code></a></dt>
+
+<dd>
+<p>True if this is a time-tracking field that should only be shown to users in the <code  class="code">timetrackinggroup</code>.</p>
+</dd>
+</dl>
+
+<dl>
 <dt><a name="visibility_field"
 ><code  class="code">visibility_field</code></a></dt>
 
@@ -227,6 +250,43 @@ name="Instance_Properties"
 </dd>
 </dl>
 
+<dl>
+<dt><a name="is_visible_on_bug"
+><code  class="code">is_visible_on_bug</code></a></dt>
+
+<dd>
+<p>See <a href="../Bugzilla/Field/ChoiceInterface.html" class="podlinkpod"
+>Bugzilla::Field::ChoiceInterface</a>.</p>
+</dd>
+</dl>
+
+<dl>
+<dt><a name="is_relationship"
+><code  class="code">is_relationship</code></a></dt>
+
+<dd>
+<p>Applies only to fields of type FIELD_TYPE_BUG_ID. Checks to see if a reverse relationship description has been set. This is the canonical condition to enable reverse link display, dependency tree display, and similar functionality.</p>
+</dd>
+</dl>
+
+<dl>
+<dt><a name="reverse_desc"
+><code  class="code">reverse_desc</code></a></dt>
+
+<dd>
+<p>Applies only to fields of type FIELD_TYPE_BUG_ID. Describes the reverse relationship of this field. For example, if a BUG_ID field is called &#34;Is a duplicate of&#34;, the reverse description would be &#34;Duplicates of this bug&#34;.</p>
+</dd>
+</dl>
+
+<dl>
+<dt><a name="is_mandatory"
+><code  class="code">is_mandatory</code></a></dt>
+
+<dd>
+<p>a boolean specifying whether or not the field is mandatory;</p>
+</dd>
+</dl>
+
 <h2><a class='u' href='#___top' title='click to go to top of document'
 name="Instance_Mutators"
 >Instance Mutators</a></h2>
@@ -262,6 +322,10 @@ name="Instance_Mutators"
 ><code  class="code">set_buglist</code></a></dt>
 
 <dd>
+<dt><a name="set_reverse_desc"
+><code  class="code">set_reverse_desc</code></a></dt>
+
+<dd>
 <dt><a name="set_visibility_field"
 ><code  class="code">set_visibility_field</code></a></dt>
 
@@ -272,6 +336,10 @@ name="Instance_Mutators"
 <dd>
 <dt><a name="set_value_field"
 ><code  class="code">set_value_field</code></a></dt>
+
+<dd>
+<dt><a name="set_is_mandatory"
+><code  class="code">set_is_mandatory</code></a></dt>
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
@@ -329,6 +397,8 @@ name="Class_Methods"
 
 <dd>
 <p><code  class="code">obsolete</code> - boolean - Whether this field is obsolete. Defaults to 0.</p>
+
+<p><code  class="code">is_mandatory</code> - boolean - Whether this field is mandatory. Defaults to 0.</p>
 </dd>
 </dl>
 </dd>

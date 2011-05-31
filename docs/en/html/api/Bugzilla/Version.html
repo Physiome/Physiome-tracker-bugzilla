@@ -38,7 +38,7 @@ name="SYNOPSIS"
     my $product = $version-&#62;product;
 
     my $version = Bugzilla::Version-&#62;create(
-        { name =&#62; $name, product =&#62; $product });
+        { value =&#62; $name, product =&#62; $product });
 
     $version-&#62;set_name($new_name);
     $version-&#62;update();

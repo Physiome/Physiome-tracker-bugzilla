@@ -28,37 +28,48 @@ Bugzilla::Hook</title>
     <li class='indexItem indexItem2'><a href='#bug_end_of_create'>bug_end_of_create</a>
     <li class='indexItem indexItem2'><a href='#bug_end_of_create_validators'>bug_end_of_create_validators</a>
     <li class='indexItem indexItem2'><a href='#bug_end_of_update'>bug_end_of_update</a>
+    <li class='indexItem indexItem2'><a href='#bug_check_can_change_field'>bug_check_can_change_field</a>
     <li class='indexItem indexItem2'><a href='#bug_fields'>bug_fields</a>
     <li class='indexItem indexItem2'><a href='#bug_format_comment'>bug_format_comment</a>
     <li class='indexItem indexItem2'><a href='#buglist_columns'>buglist_columns</a>
+    <li class='indexItem indexItem2'><a href='#search_operator_field_override'>search_operator_field_override</a>
     <li class='indexItem indexItem2'><a href='#bugmail_recipients'>bugmail_recipients</a>
-    <li class='indexItem indexItem2'><a href='#colchange_columns'>colchange_columns</a>
+    <li class='indexItem indexItem2'><a href='#bugmail_relationships'>bugmail_relationships</a>
     <li class='indexItem indexItem2'><a href='#config_add_panels'>config_add_panels</a>
     <li class='indexItem indexItem2'><a href='#config_modify_panels'>config_modify_panels</a>
+    <li class='indexItem indexItem2'><a href='#email_in_before_parse'>email_in_before_parse</a>
+    <li class='indexItem indexItem2'><a href='#email_in_after_parse'>email_in_after_parse</a>
     <li class='indexItem indexItem2'><a href='#enter_bug_entrydefaultvars'>enter_bug_entrydefaultvars</a>
     <li class='indexItem indexItem2'><a href='#flag_end_of_update'>flag_end_of_update</a>
     <li class='indexItem indexItem2'><a href='#group_before_delete'>group_before_delete</a>
     <li class='indexItem indexItem2'><a href='#group_end_of_create'>group_end_of_create</a>
     <li class='indexItem indexItem2'><a href='#group_end_of_update'>group_end_of_update</a>
     <li class='indexItem indexItem2'><a href='#install_before_final_checks'>install_before_final_checks</a>
+    <li class='indexItem indexItem2'><a href='#install_filesystem'>install_filesystem</a>
     <li class='indexItem indexItem2'><a href='#install_update_db'>install_update_db</a>
     <li class='indexItem indexItem2'><a href='#db_schema_abstract_schema'>db_schema_abstract_schema</a>
     <li class='indexItem indexItem2'><a href='#mailer_before_send'>mailer_before_send</a>
     <li class='indexItem indexItem2'><a href='#object_before_create'>object_before_create</a>
     <li class='indexItem indexItem2'><a href='#object_before_delete'>object_before_delete</a>
     <li class='indexItem indexItem2'><a href='#object_before_set'>object_before_set</a>
+    <li class='indexItem indexItem2'><a href='#object_columns'>object_columns</a>
     <li class='indexItem indexItem2'><a href='#object_end_of_create'>object_end_of_create</a>
     <li class='indexItem indexItem2'><a href='#object_end_of_create_validators'>object_end_of_create_validators</a>
     <li class='indexItem indexItem2'><a href='#object_end_of_set'>object_end_of_set</a>
     <li class='indexItem indexItem2'><a href='#object_end_of_set_all'>object_end_of_set_all</a>
     <li class='indexItem indexItem2'><a href='#object_end_of_update'>object_end_of_update</a>
+    <li class='indexItem indexItem2'><a href='#object_update_columns'>object_update_columns</a>
+    <li class='indexItem indexItem2'><a href='#object_validators'>object_validators</a>
     <li class='indexItem indexItem2'><a href='#page_before_template'>page_before_template</a>
+    <li class='indexItem indexItem2'><a href='#post_bug_after_creation'>post_bug_after_creation</a>
     <li class='indexItem indexItem2'><a href='#product_confirm_delete'>product_confirm_delete</a>
-    <li class='indexItem indexItem2'><a href='#sanitycheck_check'>sanitycheck_check</a>
     <li class='indexItem indexItem2'><a href='#product_end_of_create'>product_end_of_create</a>
+    <li class='indexItem indexItem2'><a href='#quicksearch_map'>quicksearch_map</a>
+    <li class='indexItem indexItem2'><a href='#sanitycheck_check'>sanitycheck_check</a>
     <li class='indexItem indexItem2'><a href='#sanitycheck_repair'>sanitycheck_repair</a>
     <li class='indexItem indexItem2'><a href='#template_before_create'>template_before_create</a>
     <li class='indexItem indexItem2'><a href='#template_before_process'>template_before_process</a>
+    <li class='indexItem indexItem2'><a href='#user_preferences'>user_preferences</a>
     <li class='indexItem indexItem2'><a href='#webservice'>webservice</a>
     <li class='indexItem indexItem2'><a href='#webservice_error_codes'>webservice_error_codes</a>
   </ul>
@@ -203,6 +214,9 @@ name="auth_verify_methods"
 name="bug_columns"
 >bug_columns</a></h2>
 
+<p><b>DEPRECATED</b> Use <a href="#object_columns" class="podlinkpod"
+>&#34;object_columns&#34;</a> instead.</p>
+
 <p>This allows you to add new fields that will show up in every <a href="../Bugzilla/Bug.html" class="podlinkpod"
 >Bugzilla::Bug</a> object. Note that you will also need to use the <a href="#bug_fields" class="podlinkpod"
 >&#34;bug_fields&#34;</a> hook in conjunction with this hook to make this work.</p>
@@ -283,6 +297,81 @@ name="bug_end_of_update"
 
 <dd>
 <p>The hash of changed fields. <code  class="code">$changes-&#62;{field} = [old, new]</code></p>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="bug_check_can_change_field"
+>bug_check_can_change_field</a></h2>
+
+<p>This hook controls what fields users are allowed to change. You can add code here for site-specific policy changes and other customizations.</p>
+
+<p>This hook is only executed if the field&#39;s new and old values differ.</p>
+
+<p>Any denies take priority over any allows. So, if another extension denies a change but yours allows the change, the other extension&#39;s deny will override your extension&#39;s allow.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="bug"
+><code  class="code">bug</code></a></dt>
+
+<dd>
+<p><a href="../Bugzilla/Bug.html" class="podlinkpod"
+>Bugzilla::Bug</a> - The current bug object that this field is changing on.</p>
+
+<dt><a name="field"
+><code  class="code">field</code></a></dt>
+
+<dd>
+<p>The name (from the <code  class="code">fielddefs</code> table) of the field that we are checking.</p>
+
+<dt><a name="new_value"
+><code  class="code">new_value</code></a></dt>
+
+<dd>
+<p>The new value that the field is being changed to.</p>
+
+<dt><a name="old_value"
+><code  class="code">old_value</code></a></dt>
+
+<dd>
+<p>The old value that the field is being changed from.</p>
+
+<dt><a name="priv_results"
+><code  class="code">priv_results</code></a></dt>
+
+<dd>
+<p><code  class="code">array</code> - This is how you explicitly allow or deny a change. You should only push something into this array if you want to explicitly allow or explicitly deny the change, and thus skip all other permission checks that would otherwise happen after this hook is called. If you don&#39;t care about the field change, then don&#39;t push anything into the array.</p>
+
+<p>The pushed value should be a choice from the following constants:</p>
+
+<dl>
+<dt><a name="PRIVILEGES_REQUIRED_NONE"
+><code  class="code">PRIVILEGES_REQUIRED_NONE</code></a></dt>
+
+<dd>
+<p>No privileges required. This explicitly <b>allows</b> a change.</p>
+
+<dt><a name="PRIVILEGES_REQUIRED_REPORTER"
+><code  class="code">PRIVILEGES_REQUIRED_REPORTER</code></a></dt>
+
+<dd>
+<p>User is not the reporter, assignee or an empowered user, so <b>deny</b>.</p>
+
+<dt><a name="PRIVILEGES_REQUIRED_ASSIGNEE"
+><code  class="code">PRIVILEGES_REQUIRED_ASSIGNEE</code></a></dt>
+
+<dd>
+<p>User is not the assignee or an empowered user, so <b>deny</b>.</p>
+
+<dt><a name="PRIVILEGES_REQUIRED_EMPOWERED"
+><code  class="code">PRIVILEGES_REQUIRED_EMPOWERED</code></a></dt>
+
+<dd>
+<p>User is not a sufficiently empowered user, so <b>deny</b>.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 
@@ -384,6 +473,31 @@ name="buglist_columns"
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
+name="search_operator_field_override"
+>search_operator_field_override</a></h2>
+
+<p>This allows you to modify <a href="../Bugzilla/Search.html#OPERATOR_FIELD_OVERRIDE" class="podlinkpod"
+>&#34;OPERATOR_FIELD_OVERRIDE&#34; in Bugzilla::Search</a>, which determines the search functions for fields. It allows you to specify custom search functionality for certain fields.</p>
+
+<p>See <a href="../Bugzilla/Search.html#OPERATOR_FIELD_OVERRIDE" class="podlinkpod"
+>&#34;OPERATOR_FIELD_OVERRIDE&#34; in Bugzilla::Search</a> for reference and see the code in the example extension.</p>
+
+<p>Note that the interface to this hook is <b>UNSTABLE</b> and it may change in the future.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="operators_-_See_&#34;OPERATOR_FIELD_OVERRIDE&#34;_in_Bugzilla::Search_to_get_an_idea_of_the_structure."
+><code  class="code">operators</code> - See <a href="../Bugzilla/Search.html#OPERATOR_FIELD_OVERRIDE" class="podlinkpod"
+>&#34;OPERATOR_FIELD_OVERRIDE&#34; in Bugzilla::Search</a> to get an idea of the structure.</a></dt>
+
+<dd>
+<dt><a name="search_-_The_Bugzilla::Search_object."
+><code  class="code">search</code> - The <a href="../Bugzilla/Search.html" class="podlinkpod"
+>Bugzilla::Search</a> object.</a></dt>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
 name="bugmail_recipients"
 >bugmail_recipients</a></h2>
 
@@ -415,21 +529,35 @@ name="bugmail_recipients"
 <pre  class="code"> $recipients-&#62;{123}-&#62;{+REL_CC} = 1</pre>
 
 <p>(We use <code  class="code">+</code> in front of <code  class="code">REL_CC</code> so that Perl interprets it as a constant instead of as a string.)</p>
+
+<dt><a name="diffs"
+><code  class="code">diffs</code></a></dt>
+
+<dd>
+<p>This is a list of hashes, each hash representing a change to the bug. Each hash has the following members: <code  class="code">field_name</code>, <code  class="code">bug_when</code>, <code  class="code">old</code>, <code  class="code">new</code> and <code  class="code">who</code> (a <a href="../Bugzilla/User.html" class="podlinkpod"
+>Bugzilla::User</a>). If appropriate, there will also be <code  class="code">attach_id</code> or <code  class="code">comment_id</code>; if either is present, there will be <code  class="code">isprivate</code>. See <code  class="code">_get_diffs</code> in <em  class="code">Bugzilla/BugMail.pm</em> to see exactly how it is populated. Warning: the format and existence of the &#34;diffs&#34; parameter is subject to change in future releases of Bugzilla.</p>
 </dd>
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
-name="colchange_columns"
->colchange_columns</a></h2>
+name="bugmail_relationships"
+>bugmail_relationships</a></h2>
 
-<p>This happens in <em  class="code">colchange.cgi</em> right after the list of possible display columns have been defined and gives you the opportunity to add additional display columns to the list of selectable columns.</p>
+<p>There are various sorts of &#34;relationships&#34; that a user can have to a bug, such as Assignee, CC, etc. If you want to add a new type of relationship, you should use this hook.</p>
 
 <p>Params:</p>
 
 <dl>
-<dt><a 
-><code  class="code">columns</code> - An arrayref containing an array of column IDs. Any IDs added by this hook must have been defined in the the <a href="#buglist_columns" class="podlinkpod"
->&#34;buglist_columns&#34;</a> hook.</a></dt>
+<dt><a name="relationships"
+><code  class="code">relationships</code></a></dt>
+
+<dd>
+<p>A hashref, where the keys are numbers and the values are strings.</p>
+
+<p>The keys represent a numeric identifier for the relationship. The numeric identifier should be a negative number between -1 and -127. The number must be unique across all extensions. (Negative numbers are used so as not to conflict with relationship identifiers in Bugzilla itself.)</p>
+
+<p>The value is the &#34;name&#34; of this relationship that will show up in email headers in bugmails. The &#34;name&#34; should be short and should contain no spaces.</p>
+</dd>
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
@@ -469,6 +597,34 @@ name="config_modify_panels"
 <p>Adding new keys to <code  class="code">panels</code> will have no effect. You should use <a href="#config_add_panels" class="podlinkpod"
 >&#34;config_add_panels&#34;</a> if you want to add new panels.</p>
 </dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="email_in_before_parse"
+>email_in_before_parse</a></h2>
+
+<p>This happens right after an inbound email is converted into an Email::MIME object, but before we start parsing the email to extract field data. This means the email has already been decoded for you. It gives you a chance to interact with the email itself before <a href="../email_in.html" class="podlinkpod"
+>email_in</a> starts parsing its content.</p>
+
+<dl>
+<dt><a name="mail_-_An_Email::MIME_object._The_decoded_incoming_email."
+><code  class="code">mail</code> - An Email::MIME object. The decoded incoming email.</a></dt>
+
+<dd>
+<dt><a name="fields_-_A_hashref._The_hash_which_will_contain_extracted_data."
+><code  class="code">fields</code> - A hashref. The hash which will contain extracted data.</a></dt>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="email_in_after_parse"
+>email_in_after_parse</a></h2>
+
+<p>This happens after all the data has been extracted from the email, but before the reporter is validated, during <a href="../email_in.html" class="podlinkpod"
+>email_in</a>. This lets you do things after the normal parsing of the email, such as sanitizing field data, changing the user account being used to file a bug, etc.</p>
+
+<dl>
+<dt><a name="fields_-_A_hashref._The_hash_containing_the_extracted_field_data."
+><code  class="code">fields</code> - A hashref. The hash containing the extracted field data.</a></dt>
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
@@ -586,6 +742,97 @@ name="install_before_final_checks"
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
+name="install_filesystem"
+>install_filesystem</a></h2>
+
+<p>Allows for additional files and directories to be added to the list of files and directories already managed by checksetup.pl. You will be able to also set the permissions for the files and directories using this hook. You are also able to set or change permissions for current files and directories using this hook. You are also able to create appropriate htaccess files for the any directories to secure its contents. For examples see <a href="../FILESYSTEM.html" class="podlinkpod"
+>FILESYSTEM</a> in <a href="../Bugzilla/Install/Filesystem.html" class="podlinkpod"
+>Bugzilla::Install::Filesystem</a>.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="files"
+><code  class="code">files</code></a></dt>
+
+<dd>
+<p>Hash reference of files that are already present when your extension was installed but need to have specific permissions set. Each file key points to another hash reference containing the following settings.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="perms_-_Permissions_to_be_set_on_the_file."
+><code  class="code">perms</code> - Permissions to be set on the file.</a></dt>
+</dl>
+
+<dt><a name="create_dirs"
+><code  class="code">create_dirs</code></a></dt>
+
+<dd>
+<p>Hash reference containing the name of each directory that will be created, pointing at its default permissions.</p>
+
+<dt><a name="non_recurse_dirs"
+><code  class="code">non_recurse_dirs</code></a></dt>
+
+<dd>
+<p>Hash reference containing directories that we want to set the perms on, but not recurse through. These are directories not created in checksetup.pl. Each directory key&#39;s value is the permissions to be set on the directory.</p>
+
+<dt><a name="recurse_dirs"
+><code  class="code">recurse_dirs</code></a></dt>
+
+<dd>
+<p>Hash reference of directories that will have permissions set for each item inside each of the directories, including the directory itself. Each directory key points to another hash reference containing the following settings.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="files_-_Permissions_to_be_set_on_any_files_beneath_the_directory."
+><code  class="code">files</code> - Permissions to be set on any files beneath the directory.</a></dt>
+
+<dd>
+<dt><a name="dirs_-_Permissions_to_be_set_on_the_directory_itself_and_any_directories_beneath_it."
+><code  class="code">dirs</code> - Permissions to be set on the directory itself and any directories beneath it.</a></dt>
+</dl>
+
+<dt><a name="create_files"
+><code  class="code">create_files</code></a></dt>
+
+<dd>
+<p>Hash reference of additional files to be created. Each file key points to another hash reference containing the following settings.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="perms_-_The_permissions_to_be_set_on_the_file_itself."
+><code  class="code">perms</code> - The permissions to be set on the file itself.</a></dt>
+
+<dd>
+<dt><a name="contents_-_The_contents_to_be_added_to_the_file_or_leave_blank_for_an_empty_file."
+><code  class="code">contents</code> - The contents to be added to the file or leave blank for an empty file.</a></dt>
+</dl>
+
+<dt><a name="htaccess"
+><code  class="code">htaccess</code></a></dt>
+
+<dd>
+<p>Hash reference containing htaccess files to be created. You can set the permissions for the htaccess as well as the contents of the file. Each file key points to another hash reference containing the following settings.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="perms_-_Permissions_to_be_set_on_the_htaccess_file."
+><code  class="code">perms</code> - Permissions to be set on the htaccess file.</a></dt>
+
+<dd>
+<dt><a 
+><code  class="code">contents</code> - Contents of the htaccess file. It can be set manually or use <a href="../HT_DEFAULT_DENY.html" class="podlinkpod"
+>HT_DEFAULT_DENY</a> defined in <a href="../Bugzilla/Install/Filesystem.html" class="podlinkpod"
+>Bugzilla::Install::Filesystem</a> to deny all by default.</a></dt>
+</dl>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
 name="install_update_db"
 >install_update_db</a></h2>
 
@@ -693,6 +940,38 @@ name="object_before_set"
 
 <dd>
 <p>The value being set on the object.</p>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="object_columns"
+>object_columns</a></h2>
+
+<p>This hook allows you to add new &#34;fields&#34; to existing Bugzilla objects, that correspond to columns in their tables.</p>
+
+<p>For example, if you added an <code  class="code">example</code> column to the &#34;bugs&#34; table, you would have to also add an <code  class="code">example</code> field to the <code  class="code">Bugzilla::Bug</code> object in order to access that data via Bug objects.</p>
+
+<p>Don&#39;t do anything slow inside this hook--it&#39;s called several times on every page of Bugzilla.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="class"
+><code  class="code">class</code></a></dt>
+
+<dd>
+<p>The name of the class that this hook is being called on. You can check this like <code  class="code">if ($class-&#62;isa(&#39;Some::Class&#39;))</code> in your code, to add new fields only for certain classes.</p>
+
+<dt><a name="columns"
+><code  class="code">columns</code></a></dt>
+
+<dd>
+<p>An arrayref. Add the string names of columns to this array to add new values to objects.</p>
+
+<p>For example, if you add an <code  class="code">example</code> column to a particular table (using <a href="#install_update_db" class="podlinkpod"
+>&#34;install_update_db&#34;</a>), and then push the string <code  class="code">example</code> into this array for the object that uses that table, then you can access the information in that column via <code  class="code">$object-&#62;{example}</code> on all objects of that type.</p>
+
+<p>This arrayref does not contain the standard column names--you cannot modify or remove standard object columns using this hook.</p>
 </dd>
 </dl>
 
@@ -829,6 +1108,59 @@ name="object_end_of_update"
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
+name="object_update_columns"
+>object_update_columns</a></h2>
+
+<p>If you&#39;ve added fields to bugs via <a href="#object_columns" class="podlinkpod"
+>&#34;object_columns&#34;</a>, then this hook allows you to say which of those columns should be updated in the database when <a href="../Bugzilla/Object.html#update" class="podlinkpod"
+>&#34;update&#34; in Bugzilla::Object</a> is called on the object.</p>
+
+<p>If you don&#39;t use this hook, then your custom columns won&#39;t be modified in the database by Bugzilla.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="object"
+><code  class="code">object</code></a></dt>
+
+<dd>
+<p>The object that is about to be updated. You should check this like <code  class="code">if ($object-&#62;isa(&#39;Some::Class&#39;))</code> in your code, to modify the &#34;update columns&#34; only for certain classes.</p>
+
+<dt><a name="columns"
+><code  class="code">columns</code></a></dt>
+
+<dd>
+<p>An arrayref. Add the string names of columns to this array to allow that column to be updated when <code  class="code">update()</code> is called on the object.</p>
+
+<p>This arrayref does not contain the standard column names--you cannot stop standard columns from being updated by using this hook.</p>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="object_validators"
+>object_validators</a></h2>
+
+<p>Allows you to add new items to <a href="../Bugzilla/Object.html#VALIDATORS" class="podlinkpod"
+>&#34;VALIDATORS&#34; in Bugzilla::Object</a> for particular classes.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="class"
+><code  class="code">class</code></a></dt>
+
+<dd>
+<p>The name of the class that <code  class="code">VALIDATORS</code> was called on. You can check this like <code  class="code">if ($class-&#62;isa(&#39;Some::Class&#39;))</code> in your code, to add validators only for certain classes.</p>
+
+<dt><a name="validators"
+><code  class="code">validators</code></a></dt>
+
+<dd>
+<p>A hashref, where the keys are database columns and the values are subroutine references. You can add new validators or modify existing ones. If you modify an existing one, you should remember to call the original validator inside of your modified validator. (This way, several extensions can all modify the same validator.)</p>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
 name="page_before_template"
 >page_before_template</a></h2>
 
@@ -858,6 +1190,22 @@ name="page_before_template"
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
+name="post_bug_after_creation"
+>post_bug_after_creation</a></h2>
+
+<p><b>DEPRECATED</b> (Use <a href="#bug_end_of_create" class="podlinkpod"
+>&#34;bug_end_of_create&#34;</a> instead.)</p>
+
+<p>This happens after a bug is created and before bug mail is sent during <code  class="code">post_bug.cgi</code>. Note that this only happens during <code  class="code">post_bug.cgi</code>, it doesn&#39;t happen during any of the other methods of creating a bug.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="vars_-_The_template_vars_hashref."
+><code  class="code">vars</code> - The template vars hashref.</a></dt>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
 name="product_confirm_delete"
 >product_confirm_delete</a></h2>
 
@@ -874,6 +1222,35 @@ name="product_confirm_delete"
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
+name="product_end_of_create"
+>product_end_of_create</a></h2>
+
+<p>Called right after a new product has been created, allowing additional changes to be made to the new product&#39;s attributes. This occurs inside of a database transaction, so if the hook throws an error, all previous changes will be rolled back, including the creation of the new product. (However, note that such rollbacks should not normally be used, as some databases that Bugzilla supports have very bad rollback performance. If you want to validate input and throw errors before the Product is created, use <a href="#object_end_of_create_validators" class="podlinkpod"
+>&#34;object_end_of_create_validators&#34;</a> instead, or add a validator using <a href="#object_validators" class="podlinkpod"
+>&#34;object_validators&#34;</a>.)</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="product_-_The_new_Bugzilla::Product_object_that_was_just_created."
+><code  class="code">product</code> - The new <a href="../Bugzilla/Product.html" class="podlinkpod"
+>Bugzilla::Product</a> object that was just created.</a></dt>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="quicksearch_map"
+>quicksearch_map</a></h2>
+
+<p>This hook allows you to alter the Quicksearch syntax to include e.g. special searches for custom fields you have.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a 
+><code  class="code">map</code> - a hash where the key is the name you want to use in Quicksearch, and the value is the name from the <code  class="code">fielddefs</code> table that you want it to map to. You can modify existing mappings or add new ones.</a></dt>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
 name="sanitycheck_check"
 >sanitycheck_check</a></h2>
 
@@ -884,21 +1261,6 @@ name="sanitycheck_check"
 <dl>
 <dt><a name="status_-_a_CODEREF_that_allows_status_messages_to_be_displayed_to_the_user._(sanitycheck.cgi&#39;s_Status)"
 ><code  class="code">status</code> - a CODEREF that allows status messages to be displayed to the user. (<em  class="code">sanitycheck.cgi</em>&#39;s <code  class="code">Status</code>)</a></dt>
-</dl>
-
-<h2><a class='u' href='#___top' title='click to go to top of document'
-name="product_end_of_create"
->product_end_of_create</a></h2>
-
-<p>Called right after a new product has been created, allowing additional changes to be made to the new product&#39;s attributes. This occurs inside of a database transaction, so if the hook throws an error, all previous changes will be rolled back, including the creation of the new product. (However, note that such rollbacks should not normally be used, as some databases that Bugzilla supports have very bad rollback performance. If you want to validate input and throw errors before the Product is created, use <a href="#object_end_of_create_validators" class="podlinkpod"
->&#34;object_end_of_create_validators&#34;</a> instead.)</p>
-
-<p>Params:</p>
-
-<dl>
-<dt><a name="product_-_The_new_Bugzilla::Product_object_that_was_just_created."
-><code  class="code">product</code> - The new <a href="../Bugzilla/Product.html" class="podlinkpod"
->Bugzilla::Product</a> object that was just created.</a></dt>
 </dl>
 
 <h2><a class='u' href='#___top' title='click to go to top of document'
@@ -969,6 +1331,41 @@ name="template_before_process"
 <dd>
 <p>A <a href="../Template/Context.html" class="podlinkpod"
 >Template::Context</a> object. Usually you will not have to use this, but if you need information about the template itself (other than just its name), you can get it from here.</p>
+</dd>
+</dl>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="user_preferences"
+>user_preferences</a></h2>
+
+<p>This hook allows you to add additional panels to the User Preferences page, and validate data displayed and returned from these panels. It works in combination with the <code  class="code">tabs</code> hook available in the <em  class="code">template/en/default/account/prefs/prefs.html.tmpl</em> template. To make it work, you must define two templates in your extension: <em  class="code">extensions/Foo/template/en/default/hook/account/prefs/prefs-tabs.html.tmpl</em> contains a list of additional panels to include. <em  class="code">extensions/Foo/template/en/default/account/prefs/bar.html.tmpl</em> contains the content of the panel itself. See the <code  class="code">Example</code> extension to see how things work.</p>
+
+<p>Params:</p>
+
+<dl>
+<dt><a name="current_tab"
+><code  class="code">current_tab</code></a></dt>
+
+<dd>
+<p>The name of the current panel being viewed by the user. You should always make sure that the name of the panel matches what you expect it to be. Else you could be interacting with the panel of another extension.</p>
+
+<dt><a name="save_changes"
+><code  class="code">save_changes</code></a></dt>
+
+<dd>
+<p>A boolean which is true when data should be validated and the DB updated accordingly. This means the user clicked the &#34;Submit Changes&#34; button.</p>
+
+<dt><a name="handled"
+><code  class="code">handled</code></a></dt>
+
+<dd>
+<p>This is a <b>reference</b> to a scalar, not a scalar. (So you would set it like <code  class="code">$$handled = 1</code>, not like <code  class="code">$handled = 1</code>.) Set this to a true value to let Bugzilla know that the passed-in panel is valid and that you have handled it. (Otherwise, Bugzilla will throw an error that the panel is invalid.) Don&#39;t set this to true if you didn&#39;t handle the panel listed in <code  class="code">current_tab</code>.</p>
+
+<dt><a name="vars"
+><code  class="code">vars</code></a></dt>
+
+<dd>
+<p>You can add as many new key/value pairs as you want to this hashref. It will be passed to the template.</p>
 </dd>
 </dl>
 

@@ -1,9 +1,9 @@
 
-The Bugzilla Guide - 3.6.3 Release
+The Bugzilla Guide - 4.0.1 Release
 
 The Bugzilla Team
 
-   2010-11-02
+   2011-04-27
 
    This is the documentation for Bugzilla, a bug-tracking system from
    mozilla.org. Bugzilla is an enterprise-class piece of software that tracks
@@ -135,7 +135,7 @@ Chapter 1. About This Guide
 
 1.1. Copyright Information
 
-   This document is copyright (c) 2000-2010 by the various Bugzilla
+   This document is copyright (c) 2000-2011 by the various Bugzilla
    contributors who wrote it.
 
      Permission is granted to copy, distribute and/or modify this document
@@ -172,7 +172,7 @@ Chapter 1. About This Guide
 
 1.3. New Versions
 
-   This is the 3.6.3 version of The Bugzilla Guide. It is so named to match the
+   This is the 4.0.1 version of The Bugzilla Guide. It is so named to match the
    current version of Bugzilla.
 
    The latest version of this guide can always be found at
@@ -344,8 +344,8 @@ Chapter 2. Installing Bugzilla
    MySQL from source yourself, and set it as an option to configure.
 
    If you install from something other than a packaging/installation system,
-   such as .rpm (Redhat Package), .deb (Debian Package), .exe (Windows
-   Executable), or .msi (Microsoft Installer), make sure the MySQL server is
+   such as .rpm (RPM Package Manager), .deb (Debian Package), .exe (Windows
+   Executable), or .msi (Windows Installer), make sure the MySQL server is
    started when the machine boots.
      _________________________________________________________________
 
@@ -358,9 +358,9 @@ Chapter 2. Installing Bugzilla
    http://www.postgresql.org/. You need PostgreSQL version 8.00.0000 or higher.
 
    If you install from something other than a packaging/installation system,
-   such as .rpm (Redhat Package), .deb (Debian Package), .exe (Windows
-   Executable), or .msi (Microsoft Installer), make sure the PostgreSQL server
-   is started when the machine boots.
+   such as .rpm (RPM Package Manager), .deb (Debian Package), .exe (Windows
+   Executable), or .msi (Windows Installer), make sure the PostgreSQL server is
+   started when the machine boots.
      _________________________________________________________________
 
 2.1.2.3. Oracle
@@ -374,8 +374,8 @@ Chapter 2. Installing Bugzilla
    http://www.oracle.com/. You need Oracle version 10.02.0 or higher.
 
    If you install from something other than a packaging/installation system,
-   such as .rpm (Redhat Package), .deb (Debian Package), .exe (Windows
-   Executable), or .msi (Microsoft Installer), make sure the Oracle server is
+   such as .rpm (RPM Package Manager), .deb (Debian Package), .exe (Windows
+   Executable), or .msi (Windows Installer), make sure the Oracle server is
    started when the machine boots.
      _________________________________________________________________
 
@@ -463,7 +463,7 @@ Chapter 2. Installing Bugzilla
 
    Required Perl modules:
 
-    1. CGI (3.21)
+    1. CGI (3.51)
     2. Date::Format (2.21)
     3. DateTime (0.28)
     4. DateTime::TimeZone (0.71)
@@ -473,11 +473,9 @@ Chapter 2. Installing Bugzilla
     8. DBD::Oracle (1.19) if using Oracle
     9. Digest::SHA (any)
    10. Email::Send (2.00)
-   11. Email::MIME (1.861)
-   12. Email::MIME::Encodings (1.313)
-   13. Email::MIME::Modifier (1.442)
-   14. Template (2.22)
-   15. URI (any)
+   11. Email::MIME (1.904)
+   12. Template (2.22)
+   13. URI (any)
 
    Optional Perl modules:
 
@@ -493,7 +491,7 @@ Chapter 2. Installing Bugzilla
    10. Net::LDAP (any) for LDAP Authentication
    11. Authen::SASL (any) for SASL Authentication
    12. Authen::Radius (any) for RADIUS Authentication
-   13. SOAP::Lite (0.710.06) for the web service interface
+   13. SOAP::Lite (0.712) for the web service interface
    14. JSON::RPC (any) for the JSON-RPC interface
    15. Test::Taint (any) for the web service interface
    16. HTML::Parser (3.40) for More HTML in Product/Group Descriptions
@@ -726,11 +724,16 @@ max_allowed_packet=4M
     bash# su - postgres
 
    As the postgres user, you then need to create a new user:
-    bash$ createuser -U postgres -dAP bugs
+    bash$ createuser -U postgres -dRSP bugs
 
    When asked for a password, provide the password which will be set as
-   $db_pass in localconfig. The created user will have the ability to create
-   databases and will not be able to create new users.
+   $db_pass in localconfig. The created user will not be a superuser (-S) and
+   will not be able to create new users (-R). He will only have the ability to
+   create databases (-d).
+
+   Note
+
+   If your are running PostgreSQL 8.0, you must replace -dRSP by -dAP.
      _________________________________________________________________
 
 2.2.2.3.2. Configure PostgreSQL
@@ -850,7 +853,7 @@ max_allowed_packet=4M
     AddHandler cgi-script .cgi
     Options +Indexes +ExecCGI
     DirectoryIndex index.cgi
-    AllowOverride Limit
+    AllowOverride Limit FileInfo Indexes
     </Directory>
 
 
@@ -909,7 +912,7 @@ max_allowed_packet=4M
    You should also ensure that you have disabled KeepAlive support in your
    Apache install when utilizing Bugzilla under mod_perl
 
-    PerlSwitches -I/var/www/html/bugzilla -I/var/www/html/bugzilla/lib -w -T
+    PerlSwitches -w -T
     PerlConfigRequire /var/www/html/bugzilla/mod_perl.pl
 
 
@@ -1048,7 +1051,7 @@ c:\perl\bin\perl.exe -xc:\bugzilla -wT "%s" %s
 
    What good are bugs if they're not annoying? To help make them more so you
    can set up Bugzilla's automatic whining system to complain at engineers
-   which leave their bugs in the NEW or REOPENED state without triaging them.
+   which leave their bugs in the CONFIRMED state without triaging them.
 
    This can be done by adding the following command as a daily crontab entry,
    in the same manner as explained above for bug graphs. This example runs it
@@ -1250,13 +1253,8 @@ ppm repository add theory58S http://theoryx5.uwinnipeg.ca/ppms/
 
    In Mac OS X 10.3 and later, Postfix is used as the built-in email server.
    Postfix provides an executable that mimics sendmail enough to fool Bugzilla,
-   as long as Bugzilla can find it.
-
-   As of version 2.20, Bugzilla will be able to find the fake sendmail
-   executable without any assistance. However, you will have to turn on the
-   sendmailnow parameter before you do anything that would result in email
-   being sent. For more information, see the description of the sendmailnow
-   parameter in Section 3.1.
+   as long as Bugzilla can find it. Bugzilla is able to find the fake sendmail
+   executable without any assistance.
      _________________________________________________________________
 
 2.5.2.2. Libraries & Perl Modules on Mac OS X
@@ -1264,12 +1262,12 @@ ppm repository add theory58S http://theoryx5.uwinnipeg.ca/ppms/
    Apple does not include the GD library with Mac OS X. Bugzilla needs this for
    bug graphs.
 
-   You can use DarwinPorts (http://darwinports.com/) or Fink
+   You can use MacPorts (http://www.macports.org/) or Fink
    (http://sourceforge.net/projects/fink/), both of which are similar in nature
    to the CPAN installer, but install common unix programs.
 
-   Follow the instructions for setting up DarwinPorts or Fink. Once you have
-   one installed, you'll want to use it to install the gd2 package.
+   Follow the instructions for setting up MacPorts or Fink. Once you have one
+   installed, you'll want to use it to install the gd2 package.
 
    Fink will prompt you for a number of dependencies, type 'y' and hit enter to
    install all of the dependencies and then watch it work. You will then be
@@ -1284,7 +1282,7 @@ ppm repository add theory58S http://theoryx5.uwinnipeg.ca/ppms/
    Perl module config script asks where your libgd is, be sure to tell it
    /sw/lib.
 
-   Also available via DarwinPorts and Fink is expat. After installing the expat
+   Also available via MacPorts and Fink is expat. After installing the expat
    package, you will be able to install XML::Parser using CPAN. If you use
    fink, there is one caveat. Unlike recent versions of the GD module,
    XML::Parser doesn't prompt for the location of the required libraries. When
@@ -2166,17 +2164,9 @@ Chapter 3. Administering Bugzilla
           mail to be from a valid email address, therefore it is recommended to
           choose a valid email address here.
 
-   sendmailnow
-          When Bugzilla is using Sendmail older than 8.12, turning this option
-          off will improve performance by not waiting for Sendmail to actually
-          send mail. If Sendmail 8.12 or later is being used, there is nothing
-          to gain by turning this off. If another MTA is being used, such as
-          Postfix, then this option *must* be turned on (even if you are using
-          the fake sendmail executable that Postfix provides).
-
    whinedays
-          Set this to the number of days you want to let bugs go in the NEW or
-          REOPENED state before notifying people they have untouched new bugs.
+          Set this to the number of days you want to let bugs go in the
+          CONFIRMED state before notifying people they have untouched new bugs.
           If you do not plan to use this feature, simply do not set up the
           whining cron job described in the installation instructions, or set
           this value to "0" (never whine).
@@ -2463,7 +2453,7 @@ Chapter 3. Administering Bugzilla
    Many of Bugzilla's settings are configurable on a per-product basis. The
    number of "votes" available to users is set per-product, as is the number of
    votes required to move a bug automatically from the UNCONFIRMED status to
-   the NEW status.
+   the CONFIRMED status.
 
    When creating or editing products the following options are available:
 
@@ -3212,8 +3202,8 @@ ReadOnly: ENTRY, NA/NA, CANEDIT
    bugs, to indicate that they'd like them fixed. This allows developers to
    gauge user need for a particular enhancement or bugfix. By allowing bugs
    with a certain number of votes to automatically move from "UNCONFIRMED" to
-   "NEW", users of the bug system can help high-priority bugs garner attention
-   so they don't sit for a long time awaiting triage.
+   "CONFIRMED", users of the bug system can help high-priority bugs garner
+   attention so they don't sit for a long time awaiting triage.
 
    To modify Voting settings:
 
@@ -3225,7 +3215,7 @@ ReadOnly: ENTRY, NA/NA, CANEDIT
        make any sense.
     4. Number of votes a bug in this product needs to automatically get out of
        the UNCONFIRMED state: Setting this field to "0" disables the automatic
-       move of bugs from UNCONFIRMED to NEW.
+       move of bugs from UNCONFIRMED to CONFIRMED.
     5. Once you have adjusted the values to your preference, click "Update".
      _________________________________________________________________
 
@@ -3604,7 +3594,7 @@ Chapter 5. Using Bugzilla
    If you want to use Bugzilla, first you need to create an account. Consult
    with the administrator responsible for your installation of Bugzilla for the
    URL you should use to access it. If you're test-driving Bugzilla, use this
-   URL: http://landfill.bugzilla.org/bugzilla-3.6-branch/.
+   URL: http://landfill.bugzilla.org/bugzilla-4.0-branch/.
 
     1. On the home page index.cgi, click the "Open a new Bugzilla account"
        link, or the "New Account" link available in the footer of pages. Now
@@ -3749,7 +3739,7 @@ Chapter 5. Using Bugzilla
 
    The Bugzilla Search page is the interface where you can find any bug report,
    comment, or patch currently in the Bugzilla system. You can play with it
-   here: http://landfill.bugzilla.org/bugzilla-3.6-branch/query.cgi.
+   here: http://landfill.bugzilla.org/bugzilla-4.0-branch/query.cgi.
 
    The Search page has controls for selecting different possible values for all
    of the fields in a bug, as described above. For some fields, multiple values
@@ -5940,8 +5930,7 @@ M
           system. The Email::Send Perl module, which Bugzilla uses to send
           email, can be configured to use many different underlying
           implementations for actually sending the mail using the
-          mail_delivery_method parameter. Implementations other than sendmail
-          require that the sendmailnow param be set to on.
+          mail_delivery_method parameter.
 
    MySQL
           MySQL is currently the required RDBMS for Bugzilla. MySQL can be

@@ -231,6 +231,58 @@ sub quoteUrls {
                ("\0\0" . ($count-1) . "\0\0")
               ~egmxi;
 
+    $text =~ s~\b(revision\s*\#?\s*P?(\d+))
+              ~($things[$count++] = "<a\ href\=\"http://svnviewer\." .
+                "bioeng\.auckland\.ac\.nz/projects/physiome/changeset/" .
+                "$2\">$1</a>") &&
+                ("\0\0" . ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(revision\s*\#?\s*C(\d+))
+              ~($things[$count++] = "<a\ href\=\"http://svnviewer\." .
+                "bioeng\.auckland\.ac\.nz/projects/cmiss/changeset/" .
+                "$2\">$1</a>") &&
+                ("\0\0" . ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(revision\s*\#?\s*O(\d+))
+              ~($things[$count++] = "<a\ href\=\"http://svnviewer\." .
+                "bioeng\.auckland\.ac\.nz/projects/opencmiss/changeset/" .
+                "$2\">$1</a>") &&
+                ("\0\0" . ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+CA\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"http://cellml-api.hg.sourceforge.net/hgweb/cellml-api/cellml-api/rev/$2\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+OC\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"http://cellml-opencell.hg.sourceforge.net/hgweb/cellml-opencell/cellml-opencell/rev/$2\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+CB\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"http://cellml-api.hg.sourceforge.net/hgweb/cellml-api/cellml-build/changeset/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+PT\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"https://bitbucket.org/a1kmm/physiome-tracker/changeset/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+FM\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"http://fieldml.hg.sourceforge.net:8000/hgroot/fieldml/fieldml/changeset/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(revision\W+OCM\W*\#?\W*([0-9]+))
+              ~($things[$count++] = "<a\ href=\"http://opencmiss.svn.sourceforge.net/viewvc/opencmiss?view=revision&revision=$2\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+
     # Current bug ID this comment belongs to
     my $current_bugurl = $bug ? ("show_bug.cgi?id=" . $bug->id) : "";
 
@@ -247,6 +299,7 @@ sub quoteUrls {
                (defined($2) ? get_bug_link($2, $1, { comment_num => $3 }) :
                               "<a href=\"$current_bugurl#c$4\">$1</a>")
               ~egox;
+
 
     # Old duplicate markers. These don't use $bug_word because they are old
     # and were never customizable.

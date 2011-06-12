@@ -255,18 +255,11 @@ if (defined($cgi->upload('data')) || $cgi->param('attachurl')) {
     }
 }
     
-# Email everyone the details of the new bug 
-$vars->{'mailrecipients'} = {'changer' => $user->login};
-if ((scalar @selected_groups) == 0) {
-  $vars->{'mailrecipients'}{'cc'} = [];
-  push @{$vars->{'mailrecipients'}{'cc'}}, @cclist_once;
-
 # Set bug flags.
 my ($flags, $new_flags) = Bugzilla::Flag->extract_flags_from_cgi($bug, undef, $vars,
                                                              SKIP_REQUESTEE_ON_ERROR);
 $bug->set_flags($flags, $new_flags);
 $bug->update($timestamp);
-}
 
 $vars->{'id'} = $id;
 $vars->{'bug'} = $bug;

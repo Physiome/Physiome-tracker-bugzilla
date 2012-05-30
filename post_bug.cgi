@@ -156,13 +156,6 @@ delete_token($token);
 my $timestamp = $dbh->selectrow_array(
     'SELECT creation_ts FROM bugs WHERE bug_id = ?', undef, $id);
 
-foreach my $user_id (@{$bug->{cc}}) {
-  $user_id = user_id_to_login($user_id);
-  if ($user_id =~ /^sendonce\-(.*)/) {
-    push @cclist_once, $1;
-  }
-}
-
 # Set Version cookie, but only if the user actually selected
 # a version on the page.
 if (defined $cgi->param('version')) {

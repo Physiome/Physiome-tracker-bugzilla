@@ -20,89 +20,29 @@
   #%]
 
 [% DEFAULT qs_suffix = "" %]
-[% USE Bugzilla %]
-
-<ul class="links">
-  <li><a href="./">Home</a></li>
-  <li><span class="separator">| </span><a href="enter_bug.cgi">New</a></li>
-  <li><span class="separator">| </span><a href="describecomponents.cgi">Browse</a></li>
-  <li><span class="separator">| </span><a href="query.cgi">Search</a></li>
-
-  <li class="form">
-    <span class="separator">| </span>
-    <form action="buglist.cgi" method="get"
-        onsubmit="if (this.quicksearch.value == '')
-                  { alert('Please enter one or more search terms first.');
-                    return false; } return true;">
-    <input class="txt" type="text" id="quicksearch[% qs_suffix FILTER html %]" name="quicksearch" 
-           title="Quick Search" value="[% quicksearch FILTER html %]">
-    <input class="btn" type="submit" value="Search" 
-           id="find[% qs_suffix FILTER html %]">
+<ul class="visualNoMarker">
+  <li><a href="./">Main page</a></li>
+  <li><a href="enter_bug.cgi?product=CellML general usage&format=generalhelp">Submit question about CellML</a></li>
+  <li><a href="enter_bug.cgi?product=cmgui&format=generalhelp">Submit question about cmgui</a></li>
+  <li><a href="enter_bug.cgi?product=CellML%20Repository%20Models%20%2F%20Curation%20Issues&format=repomodel">Submit CellML repository issue</a></li>
+  <li><a href="enter_bug.cgi?format=software">Submit bug report</a></li>
+  <li><a href="enter_bug.cgi">Advanced submission</a></li>
+  <li><a href="query.cgi">Advanced Search</a></li>
+  <li><a href="report.cgi">Reports &amp; charts</a></li>
     [%-# Work around FF bug: keep this on one line %]</form>
-  <a href="page.cgi?id=quicksearch.html" title="Quicksearch Help">[?]</a></li>
-
-  <li><span class="separator">| </span><a href="report.cgi">Reports</a></li>
+  <li><a href="page.cgi?id=quicksearch.html" title="Help on searching">Help on searching</a></li>
 
   <li>
-    [% IF Param('shutdownhtml') || Bugzilla.has_flags %]
-      <span class="separator">| </span>
-      [% IF user.id %]
+    [% IF user.id %]
         <a href="request.cgi?requester=[% user.login FILTER uri %]&amp;requestee=
                  [% user.login FILTER uri %]&amp;do_union=1&amp;group=type&amp;action=queue">My Requests</a>
-      [% ELSE %]
-        <a href="request.cgi">Requests</a>
-      [% END %]
+    [% ELSE %]
+      <a href="request.cgi">Requests</a>
     [% END %]
-  [%-# Work around FF bug: keep this on one line %]</li>
+  </li>
 
-  [% IF user.login %]
-    <li><span class="separator">| </span><a href="userprefs.cgi">Preferences</a></li>
-    [% IF user.in_group('tweakparams') || user.in_group('editusers') || user.can_bless
-          || (Param('useclassification') && user.in_group('editclassifications'))
-          || user.in_group('editcomponents') || user.in_group('admin') || user.in_group('creategroups')
-          || user.in_group('editkeywords') || user.in_group('bz_canusewhines')
-          || user.get_products_by_permission("editcomponents").size %]
-      <li><span class="separator">| </span><a href="admin.cgi">Administration</a></li>
-    [% END %]
-
-    [% PROCESS link_to_documentation %]
-
-    <li>
-      <span class="separator">| </span>
-      [% IF user.authorizer.can_logout %]
-        <a href="index.cgi?logout=1">Log&nbsp;out</a>
-      [% ELSE %]
-        Logged&nbsp;in&nbsp;as
-      [% END %]
-      [% IF sudoer %]
-        [%+ sudoer.login FILTER html %] (<b>impersonating
-        [%+ user.login FILTER html %]</b>
-        <a href="relogin.cgi?action=end-sudo">end session</a>)
-      [% ELSE %]
-        [%+ user.login FILTER html %]
-      [% END %]
-    [%-# Work around FF bug: keep this on one line %]</li>
-  [% ELSE %]
-  
-    [% PROCESS link_to_documentation %]
-    
-    [% IF Param('createemailregexp')
-          && user.authorizer.user_can_create_account %]
-      <li id="new_account_container[% qs_suffix FILTER html %]">
-        <span class="separator">| </span>
-        <a href="createaccount.cgi">New&nbsp;Account</a>
-      </li>
-    [% END %]
-
-    [%# Only display one login form when we're on a LOGIN_REQUIRED page. That
-      # way, we're guaranteed that the user will use the form that has 
-      # hidden_fields in it (the center form) instead of this one. Also, it's
-      # less confusing to have one form (as opposed to  three) when you're 
-      # required to log in.
-      #%]
-    [% IF user.authorizer.can_login && !Bugzilla.page_requires_login %]
-      [% PROCESS "account/auth/login-small.html.tmpl" %]
-    [% END %]
+  [% IF user.id && Param('usevotes') %]
+    <li><a href="votes.cgi?action=show_user">My Votes</a></li>
   [% END %]
 </ul>
 
@@ -110,7 +50,6 @@
 [% BLOCK link_to_documentation %]
     [% IF doc_section && Param('docs_urlbase') %]
       <li>
-        <span class="separator">| </span>
         <a href="[% docs_urlbase _ doc_section FILTER html %]" target="_blank">Help</a>
       </li>
     [% END %]

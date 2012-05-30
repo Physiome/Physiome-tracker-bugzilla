@@ -669,6 +669,8 @@ sub create {
         $sth_cc->execute($bug->bug_id, $user_id);
     }
 
+    $bug->{cc} = $cc_ids;
+
     # Add in keywords
     my $sth_keyword = $dbh->prepare(
         'INSERT INTO keywords (bug_id, keywordid) VALUES (?, ?)');

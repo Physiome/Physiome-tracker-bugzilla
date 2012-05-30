@@ -34,19 +34,20 @@ use base qw(Exporter);
 @Bugzilla::Util::EXPORT = qw(trick_taint detaint_natural
                              detaint_signed
                              html_quote url_quote xml_quote
-                             css_class_quote html_light_quote url_decode
-                             i_am_cgi correct_urlbase remote_ip
+                             css_class_quote html_light_quote
+                             i_am_cgi correct_urlbase remote_ip validate_ip
                              do_ssl_redirect_if_required use_attachbase
                              diff_arrays on_main_db
                              trim wrap_hard wrap_comment find_wrap_point
-                             format_time format_time_decimal validate_date
-                             validate_time datetime_from
+                             format_time validate_date validate_time datetime_from
                              file_mod_time is_7bit_clean
                              bz_crypt generate_random_password
                              validate_email_syntax clean_text
-                             get_text template_var disable_utf8);
+                             get_text template_var disable_utf8
+                             detect_encoding);
 
 use Bugzilla::Constants;
+use Bugzilla::RNG qw(irand);
 
 use Date::Parse;
 use Date::Format;
@@ -55,9 +56,11 @@ use DateTime::TimeZone;
 use Digest;
 use Email::Address;
 use List::Util qw(first);
-use Scalar::Util qw(tainted);
+use Scalar::Util qw(tainted blessed);
 use Template::Filters;
 use Text::Wrap;
+use Encode qw(encode decode resolve_alias);
+use Encode::Guess;
 
 sub trick_taint {
     require Carp;
@@ -240,17 +243,6 @@ sub xml_quote {
     return $var;
 }
 
-# This function must not be relied upon to return a valid string to pass to
-# the DB or the user in UTF-8 situations. The only thing you  can rely upon
-# it for is that if you url_decode a string, it will url_encode back to the 
-# exact same thing.
-sub url_decode {
-    my ($todecode) = (@_);
-    $todecode =~ tr/+/ /;       # pluses become spaces
-    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
-    return $todecode;
-}
-
 sub i_am_cgi {
     # I use SERVER_SOFTWARE because it's required to be
     # defined for all requests in the CGI spec.
@@ -293,10 +285,101 @@ sub correct_urlbase {
 sub remote_ip {
     my $ip = $ENV{'REMOTE_ADDR'} || '127.0.0.1';
     my @proxies = split(/[\s,]+/, Bugzilla->params->{'inbound_proxies'});
-    if (first { $_ eq $ip } @proxies) {
-        $ip = $ENV{'HTTP_X_FORWARDED_FOR'} if $ENV{'HTTP_X_FORWARDED_FOR'};
+
+    # If the IP address is one of our trusted proxies, then we look at
+    # the X-Forwarded-For header to determine the real remote IP address.
+    if ($ENV{'HTTP_X_FORWARDED_FOR'} && first { $_ eq $ip } @proxies) {
+        my @ips = split(/[\s,]+/, $ENV{'HTTP_X_FORWARDED_FOR'});
+        # This header can contain several IP addresses. We want the
+        # IP address of the machine which connected to our proxies as
+        # all other IP addresses may be fake or internal ones.
+        # Note that this may block a whole external proxy, but we have
+        # no way to determine if this proxy is malicious or trustable.
+        foreach my $remote_ip (reverse @ips) {
+            if (!first { $_ eq $remote_ip } @proxies) {
+                # Keep the original IP address if the remote IP is invalid.
+                $ip = validate_ip($remote_ip) || $ip;
+                last;
+            }
+        }
     }
     return $ip;
+}
+
+sub validate_ip {
+    my $ip = shift;
+    return is_ipv4($ip) || is_ipv6($ip);
+}
+
+# Copied from Data::Validate::IP::is_ipv4().
+sub is_ipv4 {
+    my $ip = shift;
+    return unless defined $ip;
+
+    my @octets = $ip =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    return unless scalar(@octets) == 4;
+
+    foreach my $octet (@octets) {
+        return unless ($octet >= 0 && $octet <= 255 && $octet !~ /^0\d{1,2}$/);
+    }
+
+    # The IP address is valid and can now be detainted.
+    return join('.', @octets);
+}
+
+# Copied from Data::Validate::IP::is_ipv6().
+sub is_ipv6 {
+    my $ip = shift;
+    return unless defined $ip;
+
+    # If there is a :: then there must be only one :: and the length
+    # can be variable. Without it, the length must be 8 groups.
+    my @chunks = split(':', $ip);
+
+    # Need to check if the last chunk is an IPv4 address, if it is we
+    # pop it off and exempt it from the normal IPv6 checking and stick
+    # it back on at the end. If there is only one chunk and it's an IPv4
+    # address, then it isn't an IPv6 address.
+    my $ipv4;
+    my $expected_chunks = 8;
+    if (@chunks > 1 && is_ipv4($chunks[$#chunks])) {
+        $ipv4 = pop(@chunks);
+        $expected_chunks--;
+    }
+
+    my $empty = 0;
+    # Workaround to handle trailing :: being valid.
+    if ($ip =~ /[0-9a-f]{1,4}::$/) {
+        $empty++;
+    # Single trailing ':' is invalid.
+    } elsif ($ip =~ /:$/) {
+        return;
+    }
+
+    foreach my $chunk (@chunks) {
+        return unless $chunk =~ /^[0-9a-f]{0,4}$/i;
+        $empty++ if $chunk eq '';
+    }
+    # More than one :: block is bad, but if it starts with :: it will
+    # look like two, so we need an exception.
+    if ($empty == 2 && $ip =~ /^::/) {
+        # This is ok
+    } elsif ($empty > 1) {
+        return;
+    }
+
+    push(@chunks, $ipv4) if $ipv4;
+    # Need 8 chunks, or we need an empty section that could be filled
+    # to represent the missing '0' sections.
+    return unless (@chunks == $expected_chunks || @chunks < $expected_chunks && $empty);
+
+    my $ipv6 = join(':', @chunks);
+    # The IP address is valid and can now be detainted.
+    trick_taint($ipv6);
+
+    # Need to handle the exception of trailing :: being valid.
+    return "${ipv6}::" if $ip =~ /::$/;
+    return $ipv6;
 }
 
 sub use_attachbase {
@@ -307,25 +390,40 @@ sub use_attachbase {
 }
 
 sub diff_arrays {
-    my ($old_ref, $new_ref) = @_;
+    my ($old_ref, $new_ref, $attrib) = @_;
+    $attrib ||= 'name';
 
+    my (%counts, %pos);
+    # We are going to alter the old array.
     my @old = @$old_ref;
-    my @new = @$new_ref;
+    my $i = 0;
 
-    # For each pair of (old, new) entries:
-    # If they're equal, set them to empty. When done, @old contains entries
-    # that were removed; @new contains ones that got added.
-    foreach my $oldv (@old) {
-        foreach my $newv (@new) {
-            next if ($newv eq '');
-            if ($oldv eq $newv) {
-                $newv = $oldv = '';
-            }
+    # $counts{foo}-- means old, $counts{foo}++ means new.
+    # If $counts{foo} becomes positive, then we are adding new items,
+    # else we simply cancel one old existing item. Remaining items
+    # in the old list have been removed.
+    foreach (@old) {
+        next unless defined $_;
+        my $value = blessed($_) ? $_->$attrib : $_;
+        $counts{$value}--;
+        push @{$pos{$value}}, $i++;
+    }
+    my @added;
+    foreach (@$new_ref) {
+        next unless defined $_;
+        my $value = blessed($_) ? $_->$attrib : $_;
+        if (++$counts{$value} > 0) {
+            # Ignore empty strings, but objects having an empty string
+            # as attribute are fine.
+            push(@added, $_) unless ($value eq '' && !blessed($_));
+        }
+        else {
+            my $old_pos = shift @{$pos{$value}};
+            $old[$old_pos] = undef;
         }
     }
-
-    my @removed = grep { $_ ne '' } @old;
-    my @added = grep { $_ ne '' } @new;
+    # Ignore canceled items as well as empty strings.
+    my @removed = grep { defined $_ && $_ ne '' } @old;
     return (\@removed, \@added);
 }
 
@@ -475,18 +573,6 @@ sub datetime_from {
     return $dt;
 }
 
-sub format_time_decimal {
-    my ($time) = (@_);
-
-    my $newtime = sprintf("%.2f", $time);
-
-    if ($newtime =~ /0\Z/) {
-        $newtime = sprintf("%.1f", $time);
-    }
-
-    return $newtime;
-}
-
 sub file_mod_time {
     my ($filename) = (@_);
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
@@ -556,54 +642,13 @@ sub bz_crypt {
 # strength of the string in bits.
 sub generate_random_password {
     my $size = shift || 10; # default to 10 chars if nothing specified
-    my $rand;
-    if (Bugzilla->feature('rand_security')) {
-        $rand = \&Math::Random::Secure::irand;
-    }
-    else {
-        # For details on why this block works the way it does, see bug 619594.
-        # (Note that we don't do this if Math::Random::Secure is installed,
-        # because we don't need to.)
-        my $counter = 0;
-        $rand = sub {
-            # If we regenerate the seed every 5 characters, our seed is roughly
-            # as strong (in terms of bit size) as our randomly-generated
-            # string itself.
-            _do_srand() if ($counter % 5) == 0;
-            $counter++;
-            return int(rand $_[0]);
-        };
-    }
-    return join("", map{ ('0'..'9','a'..'z','A'..'Z')[$rand->(62)] } 
-                       (1..$size));
-}
-
-sub _do_srand {
-    # On Windows, calling srand over and over in the same process produces
-    # very bad results. We need a stronger seed.
-    if (ON_WINDOWS) {
-        require Win32;
-        # GuidGen generates random data via Windows's CryptGenRandom
-        # interface, which is documented as being cryptographically secure.
-        my $guid = Win32::GuidGen();
-        # GUIDs look like:
-        # {09531CF1-D0C7-4860-840C-1C8C8735E2AD}
-        $guid =~ s/[-{}]+//g;
-        # Get a 32-bit integer using the first eight hex digits.
-        my $seed = hex(substr($guid, 0, 8));
-        srand($seed);
-        return;
-    }
-
-    # On *nix-like platforms, this uses /dev/urandom, so the seed changes
-    # enough on every invocation.
-    srand();
+    return join("", map{ ('0'..'9','a'..'z','A'..'Z')[irand 62] } (1..$size));
 }
 
 sub validate_email_syntax {
     my ($addr) = @_;
     my $match = Bugzilla->params->{'emailregexp'};
-    my $ret = ($addr =~ /$match/ && $addr !~ /[\\\(\)<>&,;:"\[\] \t\r\n]/);
+    my $ret = ($addr =~ /$match/ && $addr !~ /[\\\(\)<>&,;:"\[\] \t\r\n\P{ASCII}]/);
     if ($ret) {
         # We assume these checks to suffice to consider the address untainted.
         trick_taint($_[0]);
@@ -699,10 +744,76 @@ sub template_var {
     return $vars{$name};
 }
 
+sub display_value {
+    my ($field, $value) = @_;
+    my $value_descs = template_var('value_descs');
+    if (defined $value_descs->{$field}->{$value}) {
+        return $value_descs->{$field}->{$value};
+    }
+    return $value;
+}
+
 sub disable_utf8 {
     if (Bugzilla->params->{'utf8'}) {
         binmode STDOUT, ':bytes'; # Turn off UTF8 encoding.
     }
+}
+
+use constant UTF8_ACCIDENTAL => qw(shiftjis big5-eten euc-kr euc-jp);
+
+sub detect_encoding {
+    my $data = shift;
+
+    if (!Bugzilla->feature('detect_charset')) {
+        require Bugzilla::Error;
+        Bugzilla::Error::ThrowCodeError('feature_disabled',
+            { feature => 'detect_charset' });
+    }
+
+    require Encode::Detect::Detector;
+    import Encode::Detect::Detector 'detect';
+
+    my $encoding = detect($data);
+    $encoding = resolve_alias($encoding) if $encoding;
+
+    # Encode::Detect is bad at detecting certain charsets, but Encode::Guess
+    # is better at them. Here's the details:
+
+    # shiftjis, big5-eten, euc-kr, and euc-jp: (Encode::Detect
+    # tends to accidentally mis-detect UTF-8 strings as being
+    # these encodings.)
+    if ($encoding && grep($_ eq $encoding, UTF8_ACCIDENTAL)) {
+        $encoding = undef;
+        my $decoder = guess_encoding($data, UTF8_ACCIDENTAL);
+        $encoding = $decoder->name if ref $decoder;
+    }
+
+    # Encode::Detect sometimes mis-detects various ISO encodings as iso-8859-8,
+    # but Encode::Guess can usually tell which one it is.
+    if ($encoding && $encoding eq 'iso-8859-8') {
+        my $decoded_as = _guess_iso($data, 'iso-8859-8', 
+            # These are ordered this way because it gives the most 
+            # accurate results.
+            qw(iso-8859-7 iso-8859-2));
+        $encoding = $decoded_as if $decoded_as;
+    }
+
+    return $encoding;
+}
+
+# A helper for detect_encoding.
+sub _guess_iso {
+    my ($data, $versus, @isos) = (shift, shift, shift);
+
+    my $encoding;
+    foreach my $iso (@isos) {
+        my $decoder = guess_encoding($data, ($iso, $versus));
+        if (ref $decoder) {
+            $encoding = $decoder->name if ref $decoder;
+            last;
+        }
+    }
+    return $encoding;
 }
 
 1;
@@ -727,9 +838,6 @@ Bugzilla::Util - Generic utility functions for bugzilla
   url_quote($var);
   xml_quote($var);
   email_filter($var);
-
-  # Functions for decoding
-  $rv = url_decode($var);
 
   # Functions that tell you about your environment
   my $is_cgi   = i_am_cgi();
@@ -842,10 +950,6 @@ This is similar to C<html_quote>, except that ' is escaped to &apos;. This
 is kept separate from html_quote partly for compatibility with previous code
 (for &apos;) and partly for future handling of non-ASCII characters.
 
-=item C<url_decode($val)>
-
-Converts the %xx encoding from the given URL back to its original form.
-
 =item C<email_filter>
 
 Removes the hostname from email addresses in the string, if the user
@@ -870,6 +974,17 @@ in a command-line script.
 
 Returns either the C<sslbase> or C<urlbase> parameter, depending on the
 current setting for the C<ssl_redirect> parameter.
+
+=item C<remote_ip()>
+
+Returns the IP address of the remote client. If Bugzilla is behind
+a trusted proxy, it will get the remote IP address by looking at the
+X-Forwarded-For header.
+
+=item C<validate_ip($ip)>
+
+Returns the sanitized IP address if it is a valid IPv4 or IPv6 address,
+else returns undef.
 
 =item C<use_attachbase()>
 
@@ -935,6 +1050,12 @@ ASCII 10 (LineFeed) and ASCII 13 (Carrage Return).
 
 Disable utf8 on STDOUT (and display raw data instead).
 
+=item C<detect_encoding($str)>
+
+Guesses what encoding a given data is encoded in, returning the canonical name
+of the detected encoding (which may be different from the MIME charset 
+specification).
+
 =item C<clean_text($str)>
 Returns the parameter "cleaned" by exchanging non-printable characters with spaces.
 Specifically characters (ASCII 0 through 31) and (ASCII 127) will become ASCII 32 (Space).
@@ -990,11 +1111,6 @@ is used, as defined in his preferences.
 
 This routine is mainly called from templates to filter dates, see
 "FILTER time" in L<Bugzilla::Template>.
-
-=item C<format_time_decimal($time)>
-
-Returns a number with 2 digit precision, unless the last digit is a 0. Then it 
-returns only 1 digit precision.
 
 =item C<datetime_from($time, $timezone)>
 

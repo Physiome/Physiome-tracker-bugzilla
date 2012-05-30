@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl -w
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -88,7 +88,7 @@ foreach my $email (sort (keys %bugs)) {
     $vars->{'bugs'} = \@bugs;
 
     my $msg;
-    my $template = Bugzilla->template_inner($user->settings->{'lang'}->{'value'});
+    my $template = Bugzilla->template_inner($user->setting('lang'));
     $template->process("email/whine.txt.tmpl", $vars, \$msg)
       or die($template->error());
 

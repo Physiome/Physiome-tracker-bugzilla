@@ -30,8 +30,9 @@
     table#filtering th { text-align: right; }
   "
   onload="var f = document.request_form; selectProduct(f.product, f.component, null, null, 'Any');"
-  javascript_urls=["js/productform.js"]
+  javascript_urls=["js/productform.js", "js/field.js"]
   style_urls = ['skins/standard/buglist.css']
+  yui = ['autocomplete']
 %]
 
 <script type="text/javascript">
@@ -200,7 +201,10 @@ to some group are shown by default.
     <tr>
       [% FOREACH column = display_columns %]
         [% NEXT IF column == group_field || excluded_columns.contains(column) %]
-        <td>[% PROCESS "display_$column" %]</td>
+        <td>
+          [% PROCESS "display_$column" %]
+          [% Hook.process('after_column') %]
+        </td>
       [% END %]
     </tr>
   [% END %]

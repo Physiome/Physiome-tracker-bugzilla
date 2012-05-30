@@ -290,6 +290,15 @@ sub quoteUrls {
                ("\0\0". ($count-1) . "\0\0")
               ~egmix;
 
+    $text =~ s~\b(changeset\W+CAG\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"https://github.com/cellmlapi/cellml-api/commit/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+CBG\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"https://github.com/cellmlapi/cellml-build/commit/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
 
     # Current bug ID this comment belongs to
     my $current_bugurl = $bug ? ("show_bug.cgi?id=" . $bug->id) : "";

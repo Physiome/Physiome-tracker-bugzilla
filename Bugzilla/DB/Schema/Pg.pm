@@ -100,9 +100,11 @@ sub get_rename_column_ddl {
     my @sql = ("ALTER TABLE $table RENAME COLUMN $old_name TO $new_name");
     my $def = $self->get_column_abstract($table, $old_name);
     if ($def->{TYPE} =~ /SERIAL/i) {
-        # We have to rename the series also.
-        push(@sql, "ALTER SEQUENCE ${table}_${old_name}_seq 
-                         RENAME TO ${table}_${new_name}_seq");
+        # We have to rename the series also, and fix the default of the series.
+        push(@sql, "ALTER TABLE ${table}_${old_name}_seq 
+                      RENAME TO ${table}_${new_name}_seq");
+        push(@sql, "ALTER TABLE $table ALTER COLUMN $new_name 
+                    SET DEFAULT NEXTVAL('${table}_${new_name}_seq')");
     }
     return @sql;
 }
@@ -114,30 +116,7 @@ sub get_rename_table_sql {
         # is case-insensitive and will return an error about a duplicate name
         return ();
     }
-
-    my @sql = ("ALTER TABLE $old_name RENAME TO $new_name");
-
-    # If there's a SERIAL column on this table, we also need to rename the
-    # sequence.
-    # If there is a PRIMARY KEY, we need to rename it too.
-    my @columns = $self->get_table_columns($old_name);
-    foreach my $column (@columns) {
-        my $def = $self->get_column_abstract($old_name, $column);
-        if ($def->{TYPE} =~ /SERIAL/i) {
-            my $old_seq = "${old_name}_${column}_seq";
-            my $new_seq = "${new_name}_${column}_seq";
-            push(@sql, "ALTER SEQUENCE $old_seq RENAME TO $new_seq");
-            push(@sql, "ALTER TABLE $new_name ALTER COLUMN $column
-                             SET DEFAULT NEXTVAL('$new_seq')");
-        }
-        if ($def->{PRIMARYKEY}) {
-            my $old_pk = "${old_name}_pkey";
-            my $new_pk = "${new_name}_pkey";
-            push(@sql, "ALTER INDEX $old_pk RENAME to $new_pk");
-        }
-    }
-
-    return @sql;
+    return ("ALTER TABLE $old_name RENAME TO $new_name");
 }
 
 sub get_set_serial_sql {
@@ -169,8 +148,7 @@ sub _get_alter_type_sql {
                               TYPE $type");
 
     if ($new_def->{TYPE} =~ /serial/i && $old_def->{TYPE} !~ /serial/i) {
-        push(@statements, "CREATE SEQUENCE ${table}_${column}_seq
-                                  OWNED BY $table.$column");
+        push(@statements, "CREATE SEQUENCE ${table}_${column}_seq");
         push(@statements, "SELECT setval('${table}_${column}_seq',
                                          MAX($table.$column))
                              FROM $table");
@@ -183,9 +161,10 @@ sub _get_alter_type_sql {
     if ($old_def->{TYPE} =~ /serial/i && $new_def->{TYPE} !~ /serial/i) {
         push(@statements, "ALTER TABLE $table ALTER COLUMN $column 
                            DROP DEFAULT");
-        push(@statements, "ALTER SEQUENCE ${table}_${column}_seq 
-                           OWNED BY NONE");
-        push(@statements, "DROP SEQUENCE ${table}_${column}_seq");
+        # XXX Pg actually won't let us drop the sequence, even though it's
+        #     no longer in use. So we harmlessly leave behind a sequence
+        #     that does nothing.
+        #push(@statements, "DROP SEQUENCE ${table}_${column}_seq");
     }
 
     return @statements;

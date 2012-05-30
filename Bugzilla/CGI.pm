@@ -23,7 +23,6 @@
 
 package Bugzilla::CGI;
 use strict;
-use base qw(CGI);
 
 use Bugzilla::Constants;
 use Bugzilla::Error;
@@ -38,35 +37,33 @@ BEGIN {
         # isn't Windows friendly (Bug 248988)
         $ENV{'TMPDIR'} = $ENV{'TEMP'} || $ENV{'TMP'} || "$ENV{'WINDIR'}\\TEMP";
     }
-    *AUTOLOAD = \&CGI::AUTOLOAD;
 }
 
-sub _init_bz_cgi_globals {
-    my $invocant = shift;
-    # We need to disable output buffering - see bug 179174
-    $| = 1;
+use CGI qw(-no_xhtml -oldstyle_urls :private_tempfiles
+           :unique_headers SERVER_PUSH);
+use base qw(CGI);
 
-    # Ignore SIGTERM and SIGPIPE - this prevents DB corruption. If the user closes
-    # their browser window while a script is running, the web server sends these
-    # signals, and we don't want to die half way through a write.
-    $SIG{TERM} = 'IGNORE';
-    $SIG{PIPE} = 'IGNORE';
+# We need to disable output buffering - see bug 179174
+$| = 1;
 
-    # We don't precompile any functions here, that's done specially in
-    # mod_perl code.
-    $invocant->_setup_symbols(qw(:no_xhtml :oldstyle_urls :private_tempfiles
-                                 :unique_headers));
-}
+# Ignore SIGTERM and SIGPIPE - this prevents DB corruption. If the user closes
+# their browser window while a script is running, the web server sends these
+# signals, and we don't want to die half way through a write.
+$::SIG{TERM} = 'IGNORE';
+$::SIG{PIPE} = 'IGNORE';
 
-BEGIN { __PACKAGE__->_init_bz_cgi_globals() if i_am_cgi(); }
+# CGI.pm uses AUTOLOAD, but explicitly defines a DESTROY sub.
+# We need to do so, too, otherwise perl dies when the object is destroyed
+# and we don't have a DESTROY method (because CGI.pm's AUTOLOAD will |die|
+# on getting an unknown sub to try to call)
+sub DESTROY {
+    my $self = shift;
+    $self->SUPER::DESTROY(@_);
+};
 
 sub new {
     my ($invocant, @args) = @_;
     my $class = ref($invocant) || $invocant;
-
-    # Under mod_perl, CGI's global variables get reset on each request,
-    # so we need to set them up again every time.
-    $class->_init_bz_cgi_globals() if $ENV{MOD_PERL};
 
     my $self = $class->SUPER::new(@args);
 
@@ -114,6 +111,7 @@ sub new {
 sub canonicalise_query {
     my ($self, @exclude) = @_;
 
+    $self->convert_old_params();
     # Reconstruct the URL by concatenating the sorted param=value pairs
     my @parameters;
     foreach my $key (sort($self->param())) {
@@ -138,6 +136,17 @@ sub canonicalise_query {
     return join("&", @parameters);
 }
 
+sub convert_old_params {
+    my $self = shift;
+
+    # bugidtype is now bug_id_type.
+    if ($self->param('bugidtype')) {
+        my $value = $self->param('bugidtype') eq 'exclude' ? 'nowords' : 'anyexact';
+        $self->param('bug_id_type', $value);
+        $self->delete('bugidtype');
+    }
+}
+
 sub clean_search_url {
     my $self = shift;
     # Delete any empty URL parameter.
@@ -149,18 +158,9 @@ sub clean_search_url {
             $self->delete("${param}_type");
         }
 
-        # Custom Search stuff is empty if it's "noop". We also keep around
-        # the old Boolean Chart syntax for backwards-compatibility.
-        if (($param =~ /\d-\d-\d/ || $param =~ /^[[:alpha:]]\d+$/)
-            && defined $self->param($param) && $self->param($param) eq 'noop')
-        {
-            $self->delete($param);
-        }
-        
-        # Any "join" for custom search that's an AND can be removed, because
-        # that's the default.
-        if (($param =~ /^j\d+$/ || $param eq 'j_top')
-            && $self->param($param) eq 'AND')
+        # Boolean Chart stuff is empty if it's "noop"
+        if ($param =~ /\d-\d-\d/ && defined $self->param($param)
+            && $self->param($param) eq 'noop')
         {
             $self->delete($param);
         }
@@ -425,6 +425,7 @@ sub redirect_search_url {
         # with no list id, and we could get a URL with a list_id that isn't
         # ours.
         my $list_id = $self->param('list_id');
+        my $last_search;
         if ($list_id) {
             # If we have a valid list_id, no need to redirect or clean.
             return if Bugzilla::Search::Recent->check_quietly(
@@ -439,9 +440,7 @@ sub redirect_search_url {
 
     $self->clean_search_url();
 
-    # Make sure we still have params still after cleaning otherwise we 
-    # do not want to store a list_id for an empty search.
-    if ($user->id && $self->param) {
+    if ($user->id) {
         # Insert a placeholder Bugzilla::Search::Recent, so that we know what
         # the id of the resulting search will be. This is then pulled out
         # of the Referer header when viewing show_bug.cgi to know what

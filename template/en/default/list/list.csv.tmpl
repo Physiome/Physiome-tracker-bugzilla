@@ -17,23 +17,15 @@
   #
   # Contributor(s): Myk Melez <myk@mozilla.org>
   #                 Gervase Markham <gerv@gerv.net>
-  #                 miketosh
   #%]
 
 [% PROCESS "global/field-descs.none.tmpl" %]
 
 [% colsepchar = user.settings.csv_colsepchar.value %]
 
-[% IF human %]
-  [% field_descs.bug_id FILTER csv %]
-  [% FOREACH column = displaycolumns %]
-    [% colsepchar %][% field_descs.$column FILTER csv %]
-  [% END %]
-[% ELSE %]
-  bug_id
-  [% FOREACH column = displaycolumns %]
-    [% colsepchar %][% column FILTER csv %]
-  [% END %]
+bug_id
+[% FOREACH column = displaycolumns %]
+  [% colsepchar %][% column FILTER csv %]
 [% END %]
 
 [% FOREACH bug = bugs %]

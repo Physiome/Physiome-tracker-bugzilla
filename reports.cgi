@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -18,15 +18,22 @@
 # Copyright (C) 1998 Netscape Communications Corporation. All
 # Rights Reserved.
 #
-# Contributor(s): Harrison Page <harrison@netscape.com>
-#                 Terry Weissman <terry@mozilla.org>
-#                 Dawn Endico <endico@mozilla.org>
-#                 Bryce Nesbitt <bryce@nextbus.com>
-#                 Joe Robins <jmrobins@tgix.com>
-#                 Gervase Markham <gerv@gerv.net>
-#                 Adam Spiers <adam@spiers.net>
-#                 Myk Melez <myk@mozilla.org>
-#                 Frédéric Buclin <LpSolit@gmail.com>
+# Contributor(s): Harrison Page <harrison@netscape.com>,
+# Terry Weissman <terry@mozilla.org>,
+# Dawn Endico <endico@mozilla.org>
+# Bryce Nesbitt <bryce@nextbus.COM>,
+# Joe Robins <jmrobins@tgix.com>,
+# Gervase Markham <gerv@gerv.net> and Adam Spiers <adam@spiers.net>
+#    Added ability to chart any combination of resolutions/statuses.
+#    Derive the choice of resolutions/statuses from the -All- data file
+#    Removed hardcoded order of resolutions/statuses when reading from
+#    daily stats file, so now works independently of collectstats.pl
+#    version
+#    Added image caching by date and datasets
+# Myk Melez <myk@mozilla.org>:
+#    Implemented form field validation and reorganized code.
+# Frédéric Buclin <LpSolit@gmail.com>:
+#    Templatization.
 
 use strict;
 
@@ -117,11 +124,12 @@ else {
     if (Bugzilla->params->{'utf8'}) {
         utf8::encode($image_file) if utf8::is_utf8($image_file);
     }
-    $image_file = md5_hex($image_file) . '.png';
+    my $type = chart_image_type();
+    $image_file = md5_hex($image_file) . ".$type";
     trick_taint($image_file);
 
     if (! -e "$graph_dir/$image_file") {
-        generate_chart($dir, "$graph_dir/$image_file", $product, \@datasets);
+        generate_chart($dir, "$graph_dir/$image_file", $type, $product, \@datasets);
     }
 
     $vars->{'url_image'} = "$graph_url/$image_file";
@@ -153,8 +161,17 @@ sub get_data {
     return @datasets;
 }
 
+sub chart_image_type {
+    # what chart type should we be generating?
+    my $testimg = Chart::Lines->new(2,2);
+    my $type = $testimg->can('gif') ? "gif" : "png";
+
+    undef $testimg;
+    return $type;
+}
+
 sub generate_chart {
-    my ($dir, $image_file, $product, $datasets) = @_;
+    my ($dir, $image_file, $type, $product, $datasets) = @_;
     $product = $product ? $product->name : '-All-';
     my $data_file = $product;
     $data_file =~ s/\//-/gs;
@@ -243,5 +260,5 @@ sub generate_chart {
         );
     
     $img->set (%settings);
-    $img->png($image_file, [ @data{('DATE', @labels)} ]);
+    $img->$type($image_file, [ @data{('DATE', @labels)} ]);
 }

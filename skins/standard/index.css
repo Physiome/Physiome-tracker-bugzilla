@@ -26,6 +26,7 @@
        easier on customizers. */
     .intro, .outro {
         text-align: center;
+        width: 20em;
     }
 
     /* Hide from NN4 */
@@ -46,48 +47,39 @@
 
     #welcome-admin a
     {
-        font-weight: bold;
-    }
-
-    .bz_common_actions {
-        text-align: center;
-    }
-    .bz_common_actions ul {
-        list-style-type: none;
-        padding: 0;
-    }
-    .bz_common_actions ul li {
-        display: inline;
-        vertical-align: top;
-    }
-    .bz_common_actions ul li a {
-        display: inline-block;
-        height: 170px;
-        width: 145px;
-        margin: 0 2ex 2em 0;
-    }
-    .bz_common_actions ul li a span {
-        position: relative;
-        top: 90%;
-        font-weight: bold;
-    }
-    .bz_common_actions a,
-    .bz_common_actions a:visited,
-    .bz_common_actions a:hover {
-        text-decoration: none;
-    }
-    #enter_bug { background: url(index/file-a-bug.png)     no-repeat; }
-    #query     { background: url(index/search.png)  no-repeat; }
-    #account   { 
-      background: url(index/new-account.png) no-repeat; 
-      margin-right: 0;
+        list-style: none;
     }
     
+    .bz_common_actions {
+        display: block;
+        height: 170px;
+        width: 145px;
+        float: left;
+        margin: 0 2ex 2em 0;
+        text-align: center;
+    }
+    .bz_common_actions span {
+        position: relative;
+        top: 95%;
+        font-weight: bold;
+    }
+    .bz_common_actions,
+    .bz_common_actions:visited,
+    .bz_common_actions:hover
+    {
+        text-decoration: none;
+    }
+    
+      margin-right: 0;
+    }
     #quicksearchForm
     {
-        clear: both;
-        text-align: center;
-        margin-bottom: 2em;
+        width: 250px;
+        height: 200px;
+
+        margin-top: 2.3em;
+        margin-right: 2.3em;
+        float: right;
     }
     
     #quicksearchForm #quicksearch_main

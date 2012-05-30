@@ -57,10 +57,10 @@
   <tr>
     <td>
       <dl>
-        <dt class="unconfirmed">
+        <dt>
           [% display_value("bug_status", "UNCONFIRMED") FILTER html %]
         </dt>
-        <dd class="unconfirmed">
+        <dd>
           This [% terms.bug %] has recently been added to the database. 
           Nobody has confirmed that this [% terms.bug %] is valid. Users
           who have the "canconfirm" permission set may confirm
@@ -70,10 +70,10 @@
           <b>[% display_value("bug_status", "RESOLVED") FILTER html %]</b>.
         </dd>
 
-        <dt class="confirmed">
+        <dt>
           [% display_value("bug_status", "CONFIRMED") FILTER html %]
         </dt>
-        <dd class="confirmed">
+        <dd>
           This [% terms.bug %] is valid and has recently been filed.
           [%+ terms.Bugs %] in this state become 
           <b>[% display_value("bug_status", "IN_PROGRESS") FILTER html %]</b>
@@ -81,10 +81,10 @@
           <b>[% display_value("bug_status", "RESOLVED") FILTER html %]</b>.
         </dd>
 
-        <dt class="in_progress">
+        <dt>
           [% display_value("bug_status", "IN_PROGRESS") FILTER html %]
         </dt>
-        <dd class="in_progress">
+        <dd>
           This [% terms.bug %] is not yet resolved, but is assigned to the
           proper person who is working on the [% terms.bug %]. From here,
           [%+ terms.bugs %] can be given to another person and become
@@ -92,8 +92,6 @@
           resolved and become 
           <b>[% display_value("bug_status", "RESOLVED") FILTER html %]</b>.
         </dd>
-        
-        [% Hook.process('open-status') %]
       </dl>
     </td>
 
@@ -110,58 +108,56 @@
   <tr>
     <td>
       <dl>
-        <dt class="resolved">
+        <dt>
           [% display_value("bug_status", "RESOLVED") FILTER html %]
         </dt>
-        <dd class="resolved">
+        <dd>
           A resolution has been performed, and it is awaiting verification by
           QA. From here [% terms.bugs %] are either reopened and given some
           open status, or are verified by QA and marked
           <b>[% display_value("bug_status", "VERIFIED") FILTER html %]</b>.
         </dd>
 
-        <dt class="verified">
+        <dt>
           [% display_value("bug_status", "VERIFIED") FILTER html %]
         </dt>
-        <dd class="verified">
+        <dd>
           QA has looked at the [% terms.bug %] and the resolution and
           agrees that the appropriate resolution has been taken. This is
           the final status for [% terms.bugs %].
         </dd>
-        
-        [% Hook.process('closed-status') %]
       </dl>
     </td>
 
     <td>
       <dl>
-        <dt class="fixed">
+        <dt>
           [% display_value("resolution", "FIXED") FILTER html %]
         </dt>
-        <dd class="fixed">
+        <dd>
           A fix for this [% terms.bug %] is checked into the tree and 
           tested.
         </dd>
 
-        <dt class="invalid">
+        <dt>
           [% display_value("resolution", "INVALID") FILTER html %]
         </dt>
-        <dd class="invalid">
+        <dd>
           The problem described is not [% terms.abug %].
         </dd>
 
-        <dt class="wontfix">
+        <dt>
           [% display_value("resolution", "WONTFIX") FILTER html %]
         </dt>
-        <dd class="wontfix">
+        <dd>
           The problem described is [% terms.abug %] which will never be 
           fixed.
         </dd>
 
-        <dt class="duplicate">
+        <dt>
          [% display_value("resolution", "DUPLICATE") FILTER html %]
         </dt>
-        <dd class="duplicate">
+        <dd>
           The problem is a duplicate of an existing [% terms.bug %].
           When [% terms.abug %] is marked as a
           <b>[% display_value("resolution", "DUPLICATE") FILTER html %]</b>,
@@ -169,17 +165,15 @@
           next to the resolution.
         </dd>
 
-        <dt class="worksforme">
+        <dt>
           [% display_value("resolution", "WORKSFORME") FILTER html %]
         </dt>
-        <dd class="worksforme">
+        <dd>
           All attempts at reproducing this [% terms.bug %] were futile, 
           and reading the code produces no clues as to why the described
           behavior would occur. If more information appears later,
           the [% terms.bug %] can be reopened.
         </dd>
-        
-        [% Hook.process('resolution') %]
       </dl>
     </td>
   </tr>
@@ -187,6 +181,23 @@
 </table>
 
 <h2>Other Fields</h2>
+    <td>Request for feature</td>
+  </tr>
+
+  <tr>
+    <th>Question</th>
+
+    <td>No change required - just a question</td>
+
+<h2><a name="priority">Priority</a></h2>
+This field describes the importance and order in which [% terms.abug %]
+should be fixed. This field is utilized by the
+people assigned to resolve your issue to prioritize their work to be done. The
+available priorities range from <b>Highest Priority</b> (most important) to 
+<b>Lowest Priority</b> (least important). 
+
+
+[% PROCESS "bug/field-help.none.tmpl" %]
 
 [% SET field_help_map = {} %]
 [% FOREACH field = bug_fields.keys %]

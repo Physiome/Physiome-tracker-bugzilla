@@ -104,14 +104,14 @@ sub fields {
     }
 
     if (!defined $params->{ids} and !defined $params->{names}) {
-        @fields = @{ Bugzilla->fields({ obsolete => 0 }) };
+        @fields = Bugzilla->get_fields({ obsolete => 0 });
     }
 
     my @fields_out;
     foreach my $field (@fields) {
-        my $visibility_field = $field->visibility_field
+        my $visibility_field = $field->visibility_field 
                                ? $field->visibility_field->name : undef;
-        my $vis_values = $field->visibility_values;
+        my $vis_value = $field->visibility_value; 
         my $value_field = $field->value_field
                           ? $field->value_field->name : undef;
 
@@ -136,8 +136,10 @@ sub fields {
            is_mandatory      => $self->type('boolean', $field->is_mandatory),
            is_on_bug_entry   => $self->type('boolean', $field->enter_bug),
            visibility_field  => $self->type('string', $visibility_field),
-           visibility_values =>
-              [ map { $self->type('string', $_->name) } @$vis_values ],
+           visibility_values => [
+               defined $vis_value ? $self->type('string', $vis_value->name)
+                                  : ()
+           ],
         );
         if ($has_values) {
            $field_data{value_field} = $self->type('string', $value_field);
@@ -175,9 +177,8 @@ sub _legal_field_values {
             my $product_name = $value->product->name;
             if ($user->can_see_product($product_name)) {
                 push(@result, {
-                    name     => $self->type('string', $value->name),
-                    sort_key => $self->type('int', $sortkey),
-                    sortkey  => $self->type('int', $sortkey), # deprecated
+                    name    => $self->type('string', $value->name),
+                    sortkey => $self->type('int', $sortkey),
                     visibility_values => [$self->type('string', $product_name)],
                 });
             }
@@ -201,10 +202,9 @@ sub _legal_field_values {
             }
 
             push (@result, {
-               name     => $self->type('string', $status->name),
-               is_open  => $self->type('boolean', $status->is_open),
-               sort_key => $self->type('int', $status->sortkey),
-               sortkey  => $self->type('int', $status->sortkey), # deprecated
+               name          => $self->type('string', $status->name),
+               is_open       => $self->type('boolean', $status->is_open),
+               sortkey       => $self->type('int', $status->sortkey),
                can_change_to => \@can_change_to,
                visibility_values => [],
             });
@@ -216,9 +216,8 @@ sub _legal_field_values {
         foreach my $value (@values) {
             my $vis_val = $value->visibility_value;
             push(@result, {
-                name     => $self->type('string', $value->name),
-                sort_key => $self->type('int'   , $value->sortkey),
-                sortkey  => $self->type('int'   , $value->sortkey), # deprecated
+                name              => $self->type('string', $value->name),
+                sortkey           => $self->type('int'   , $value->sortkey),
                 visibility_values => [
                     defined $vis_val ? $self->type('string', $vis_val->name) 
                                      : ()
@@ -441,6 +440,7 @@ sub search {
 
     my $bugs = Bugzilla::Bug->match(\%match_params);
     my $visible = Bugzilla->user->visible_bugs($bugs);
+
     my @hashes = map { $self->_bug_to_hash($_, $params) } @$visible;
     return { bugs => \@hashes };
 }
@@ -579,8 +579,8 @@ sub legal_values {
     my $field = Bugzilla::Bug::FIELD_MAP->{$params->{field}} 
                 || $params->{field};
 
-    my @global_selects =
-        @{ Bugzilla->fields({ is_select => 1, is_abnormal => 0 }) };
+    my @global_selects = grep { !$_->is_abnormal }
+                         Bugzilla->get_fields({ is_select => 1 });
 
     my $values;
     if (grep($_->name eq $field, @global_selects)) {
@@ -639,18 +639,16 @@ sub add_attachment {
 
     my @created;
     $dbh->bz_start_transaction();
-    my $timestamp = $dbh->selectrow_array('SELECT LOCALTIMESTAMP(0)');
-
     foreach my $bug (@bugs) {
         my $attachment = Bugzilla::Attachment->create({
             bug         => $bug,
-            creation_ts => $timestamp,
             data        => $params->{data},
             description => $params->{summary},
             filename    => $params->{file_name},
             mimetype    => $params->{content_type},
             ispatch     => $params->{is_patch},
             isprivate   => $params->{is_private},
+            isurl       => $params->{is_url},
         });
         my $comment = $params->{comment} || '';
         $attachment->bug->add_comment($comment, 
@@ -659,7 +657,7 @@ sub add_attachment {
               extra_data => $attachment->id });
         push(@created, $attachment);
     }
-    $_->bug->update($timestamp) foreach @created;
+    $_->bug->update($_->attached) foreach @created;
     $dbh->bz_commit_transaction();
 
     $_->send_changes() foreach @bugs;
@@ -880,8 +878,7 @@ sub _bug_to_hash {
         $item{'qa_contact'} = $self->type('string', $qa_login);
     }
     if (filter_wants $params, 'see_also') {
-        my @see_also = map { $self->type('string', $_->name) }
-                       @{ $bug->see_also };
+        my @see_also = map { $self->type('string', $_) } @{ $bug->see_also };
         $item{'see_also'} = \@see_also;
     }
 
@@ -946,6 +943,7 @@ sub _attachment_to_hash {
         content_type     => $self->type('string', $attach->contenttype),
         is_private       => $self->type('int', $attach->isprivate),
         is_obsolete      => $self->type('int', $attach->isobsolete),
+        is_url           => $self->type('int', $attach->isurl),
         is_patch         => $self->type('int', $attach->ispatch),
     };
 
@@ -1024,7 +1022,7 @@ containing the following keys:
 
 =item C<id>
 
-C<int> An integer id uniquely identifying this field in this installation only.
+C<int> An integer id uniquely idenfifying this field in this installation only.
 
 =item C<type>
 
@@ -1116,14 +1114,10 @@ Each hash has the following keys:
 C<string> The actual value--this is what you would specify for this
 field in L</create>, etc.
 
-=item C<sort_key>
+=item C<sortkey>
 
 C<int> Values, when displayed in a list, are sorted first by this integer
 and then secondly by their name.
-
-=item C<sortkey>
-
-B<DEPRECATED> - Use C<sort_key> instead.
 
 =item C<visibility_values>
 
@@ -1180,8 +1174,6 @@ You specified an invalid field name or id.
 =item Added in Bugzilla B<3.6>.
 
 =item The C<is_mandatory> return value was added in Bugzilla B<4.0>.
-
-=item C<sortkey> was renamed to C<sort_key> in Bugzilla B<4.2>.
 
 =back
 
@@ -1274,14 +1266,19 @@ value looks like this:
 
  {
      bugs => {
-         1345 => [
-             { (attachment) },
-             { (attachment) }
-         ],
-         9874 => [
-             { (attachment) },
-             { (attachment) }
-         ],
+         1345 => {
+             attachments => [
+                 { (attachment) },
+                 { (attachment) }
+             ]
+         },
+         9874 => {
+             attachments => [
+                 { (attachment) },
+                 { (attachment) }
+             ]
+
+         },
      },
 
      attachments => {
@@ -1292,8 +1289,9 @@ value looks like this:
 
 The attachments of any bugs that you specified in the C<ids> argument in
 input are returned in C<bugs> on output. C<bugs> is a hash that has integer
-bug IDs for keys and the values are arrayrefs that contain hashes as attachments.
-(Fields for attachments are described below.)
+bug IDs for keys and contains a single key, C<attachments>. That key points
+to an arrayref that contains attachments as a hash. (Fields for attachments
+are described below.)
 
 For any attachments that you specified directly in C<attachment_ids>, they
 are returned in C<attachments> on output. This is a hash where the attachment
@@ -1349,6 +1347,13 @@ group called the "insidergroup"), False otherwise.
 
 C<boolean> True if the attachment is obsolete, False otherwise.
 
+=item C<is_url>
+
+C<boolean> True if the attachment is a URL instead of actual data,
+False otherwise. Note that such attachments only happen when the 
+Bugzilla installation has at some point had the C<allow_attach_url>
+parameter enabled.
+
 =item C<is_patch>
 
 C<boolean> True if the attachment is a patch, False otherwise.
@@ -1391,9 +1396,6 @@ C<creator>.
 C<summary>.
 
 =item The C<data> return value was added in Bugzilla B<4.0>.
-
-=item In Bugzilla B<4.2>, the C<is_url> return value was removed
-(this attribute no longer exists for attachments).
 
 =back
 
@@ -2060,9 +2062,6 @@ May not be an array.
 
 C<string> The login name of the user who created the bug.
 
-You can also pass this argument with the name C<reporter>, for
-backwards compatibility with older Bugzillas.
-
 =item C<id>
 
 C<int> The numeric id of the bug.
@@ -2098,6 +2097,13 @@ C<string> The Priority field on a bug.
 =item C<product>
 
 C<string> The name of the Product that the bug is in.
+
+=item C<creator>
+
+C<string> The login name of the user who reported the bug.
+
+You can also pass this argument with the name C<reporter>, for
+backwards compatibility with older Bugzillas.
 
 =item C<resolution>
 
@@ -2269,8 +2275,9 @@ is private, otherwise it is assumed to be public.
 =item C<groups> (array) - An array of group names to put this
 bug into. You can see valid group names on the Permissions
 tab of the Preferences screen, or, if you are an administrator,
-in the Groups control panel.
-If you don't specify this argument, then the bug will be added into
+in the Groups control panel. Note that invalid group names or
+groups that the bug can't be restricted to are silently ignored. If
+you don't specify this argument, then a bug will be added into
 all the groups that are set as being "Default" for this product. (If
 you want to avoid that, you should specify C<groups> as an empty array.)
 
@@ -2331,11 +2338,6 @@ You didn't specify a summary for the bug.
 You specified values in the C<blocks> or C<depends_on> fields
 that would cause a circular dependency between bugs.
 
-=item 120 (Group Restriction Denied)
-
-You tried to restrict the bug to a group which does not exist, or which
-you cannot use with this product.
-
 =item 504 (Invalid User)
 
 Either the QA Contact, Assignee, or CC lists have some invalid user
@@ -2352,9 +2354,7 @@ B<Required>, due to a bug in Bugzilla.
 
 =item The C<groups> argument was added in Bugzilla B<4.0>. Before
 Bugzilla 4.0, bugs were only added into Mandatory groups by this
-method. Since Bugzilla B<4.0.2>, passing an illegal group name will
-throw an error. In Bugzilla 4.0 and 4.0.1, illegal group names were
-silently ignored.
+method.
 
 =item The C<comment_is_private> argument was added in Bugzilla B<4.0>.
 Before Bugzilla 4.0, you had to use the undocumented C<commentprivacy>
@@ -2427,6 +2427,13 @@ to the "insidergroup"), False if the attachment should be public.
 
 Defaults to False if not specified.
 
+=item C<is_url>
+
+C<boolean> True if the attachment is just a URL, pointing to data elsewhere.
+If so, the C<data> item should just contain the URL.
+
+Defaults to False if not specified.
+
 =back
 
 =item B<Returns>
@@ -2450,6 +2457,11 @@ You tried to attach a file that was larger than Bugzilla will accept.
 You specified a C<content_type> argument that was blank, not a valid
 MIME type, or not a MIME type that Bugzilla accepts for attachments.
 
+=item 602 (Illegal URL)
+
+You specified C<is_url> as True, but the data that you attempted
+to attach was not a valid URL.
+
 =item 603 (File Name Not Specified)
 
 You did not specify a valid for the C<file_name> argument.
@@ -2458,19 +2470,14 @@ You did not specify a valid for the C<file_name> argument.
 
 You did not specify a value for the C<summary> argument.
 
+=item 605 (URL Attaching Disabled)
+
+You attempted to attach a URL, setting C<is_url> to True,
+but this Bugzilla does not support attaching URLs.
+
 =item 606 (Empty Data)
 
 You set the "data" field to an empty string.
-
-=back
-
-=item B<History>
-
-=over
-
-=item Added in Bugzilla B<4.0>.
-
-=item The C<is_url> parameter was removed in Bugzilla B<4.2>.
 
 =back
 
@@ -2491,7 +2498,7 @@ This allows you to add a comment to a bug in Bugzilla.
 
 =over
 
-=item C<id> (int or string) B<Required> - The id or alias of the bug to append a 
+=item C<id> (int) B<Required> - The id or alias of the bug to append a 
 comment to.
 
 =item C<comment> (string) B<Required> - The comment to append to the bug.

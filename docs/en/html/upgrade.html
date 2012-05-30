@@ -7,7 +7,7 @@
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REL="HOME"
-TITLE="The Bugzilla Guide - 4.2.1 
+TITLE="The Bugzilla Guide - 4.0.1 
     Release"
 HREF="index.html"><LINK
 REL="UP"
@@ -38,7 +38,7 @@ CELLSPACING="0"
 ><TH
 COLSPAN="3"
 ALIGN="center"
->The Bugzilla Guide - 4.2.1 
+>The Bugzilla Guide - 4.0.1 
     Release</TH
 ></TR
 ><TR
@@ -80,17 +80,13 @@ NAME="upgrade"
 ></H1
 ><P
 >Upgrading to new Bugzilla releases is very simple. There is
-      a script named <TT
-CLASS="filename"
->checksetup.pl</TT
-> included with
-      Bugzilla that will automatically do all of the database migration
-      for you.</P
+      a script included with Bugzilla that will automatically
+      do all of the database migration for you.</P
 ><P
 >The following sections explain how to upgrade from one
       version of Bugzilla to another. Whether you are upgrading
-      from one bug-fix version to another (such as 4.2 to 4.2.1)
-      or from one major version to another (such as from 4.0 to 4.2),
+      from one bug-fix version to another (such as 3.0.1 to 3.0.2)
+      or from one major version to another (such as from 3.0 to 3.2),
       the instructions are always the same.</P
 ><DIV
 CLASS="note"
@@ -114,7 +110,7 @@ ALIGN="LEFT"
 VALIGN="TOP"
 ><P
 >&#13;        Any examples in the following sections are written as though the
-        user were updating to version 4.2.1, but the procedures are the
+        user were updating to version 2.22.1, but the procedures are the
         same no matter what version you're updating to. Also, in the
         examples, the user's Bugzilla installation is found at
         <TT
@@ -268,15 +264,15 @@ NAME="upgrade-files"
 CLASS="variablelist"
 ><DL
 ><DT
->Bzr (<A
-HREF="upgrade.html#upgrade-bzr"
+>CVS (<A
+HREF="upgrade.html#upgrade-cvs"
 >Section 2.7.2.2</A
 >)</DT
 ><DD
 ><P
->&#13;              If you have <B
+>&#13;              If have <B
 CLASS="command"
->bzr</B
+>cvs</B
 > installed on your machine
               and you have Internet access, this is the easiest way to
               upgrade, particularly if you have made modifications
@@ -304,11 +300,11 @@ HREF="upgrade.html#upgrade-patches"
 ><P
 >&#13;              If you have made modifications to your Bugzilla, and
               you don't have Internet access or you don't want to use
-              bzr, then this is the best way to upgrade.
+              cvs, then this is the best way to upgrade.
             </P
 ><P
->&#13;              You can only do minor upgrades (such as 4.2 to 4.2.1 or
-              4.2.1 to 4.2.2) with patches.
+>&#13;              You can only do minor upgrades (such as 3.0 to 3.0.1 or
+              3.0.1 to 3.0.2) with patches.
             </P
 ></DD
 ></DL
@@ -334,8 +330,8 @@ HREF="cust-templates.html#template-method"
 ><P
 >&#13;          The larger the jump you are trying to make, the more difficult it
           is going to be to upgrade if you have made local customizations.
-          Upgrading from 4.2 to 4.2.1 should be fairly painless even if
-          you are heavily customized, but going from 2.18 to 4.2 is going
+          Upgrading from 3.0 to 3.0.1 should be fairly painless even if
+          you are heavily customized, but going from 2.18 to 3.0 is going
           to mean a fair bit of work re-writing your local changes to use
           the new files, logic, templates, etc. If you have done no local
           changes at all, however, then upgrading should be approximately
@@ -348,58 +344,19 @@ CLASS="section"
 ><H3
 CLASS="section"
 ><A
-NAME="upgrade-bzr"
->2.7.2.2. Upgrading using Bzr</A
+NAME="upgrade-cvs"
+>2.7.2.2. Upgrading using CVS</A
 ></H3
 ><P
->&#13;          This requires that you have bzr installed (most Unix machines do),
-          and requires that you are able to access
-          <A
-HREF="http://bzr.mozilla.org/bugzilla/"
-TARGET="_top"
->bzr.mozilla.org</A
->,
-          which may not be an option if you don't have Internet access.
+>&#13;          This requires that you have cvs installed (most Unix machines do),
+          and requires that you are able to access cvs-mirror.mozilla.org
+          on port 2401, which may not be an option if you are behind a
+          highly restrictive firewall or don't have Internet access.
         </P
 ><P
 >&#13;          The following shows the sequence of commands needed to update a
-          Bugzilla installation via Bzr, and a typical series of results.
-          These commands assume that you already have Bugzilla installed
-          using Bzr.
+          Bugzilla installation via CVS, and a typical series of results.
         </P
-><DIV
-CLASS="warning"
-><P
-></P
-><TABLE
-CLASS="warning"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/warning.gif"
-HSPACE="5"
-ALT="Warning"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->&#13;            If your installation is still using CVS, you must first convert
-            it to Bzr. A very detailed step by step documentation can be
-            found on <A
-HREF="https://wiki.mozilla.org/Bugzilla:Moving_From_CVS_To_Bazaar"
-TARGET="_top"
->wiki.mozilla.org</A
->.
-          </P
-></TD
-></TR
-></TABLE
-></DIV
 ><TABLE
 BORDER="0"
 BGCOLOR="#E0E0E0"
@@ -416,21 +373,23 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->bzr switch 4.2</B
-> (only run this command when not yet running 4.2)
+>cvs login</B
+>
+Logging in to :pserver:anonymous@cvs-mirror.mozilla.org:2401/cvsroot
+CVS password: <EM
+>('anonymous', or just leave it blank)</EM
+>
 bash$ <B
 CLASS="command"
->bzr up -r tag:bugzilla-4.2.1</B
+>cvs -q update -r BUGZILLA-2_22_1 -dP</B
 >
-+N  extensions/MoreBugUrl/
-+N  extensions/MoreBugUrl/Config.pm
-+N  extensions/MoreBugUrl/Extension.pm
-...
- M  Bugzilla/Attachment.pm
- M  Bugzilla/Attachment/PatchReader.pm
- M  Bugzilla/Bug.pm
-...
-All changes applied successfully.
+P checksetup.pl
+P collectstats.pl
+P docs/rel_notes.txt
+P template/en/default/list/quips.html.tmpl
+<EM
+>(etc.)</EM
+>
         </PRE
 ></FONT
 ></TD
@@ -459,12 +418,15 @@ VALIGN="TOP"
 ><P
 >&#13;            If a line in the output from <B
 CLASS="command"
->bzr up</B
-> mentions
-            a conflict, then that represents a file with local changes that
-            Bzr was unable to properly merge. You need to resolve these
-            conflicts manually before Bugzilla (or at least the portion using
-            that file) will be usable.
+>cvs update</B
+> begins
+            with a <SAMP
+CLASS="computeroutput"
+>C</SAMP
+>, then that represents a
+            file with local changes that CVS was unable to properly merge. You
+            need to resolve these conflicts manually before Bugzilla (or at
+            least the portion using that file) will be usable.
           </P
 ></TD
 ></TR
@@ -480,7 +442,7 @@ NAME="upgrade-tarball"
 >2.7.2.3. Upgrading using the tarball</A
 ></H3
 ><P
->&#13;          If you are unable (or unwilling) to use Bzr, another option that's
+>&#13;          If you are unable (or unwilling) to use CVS, another option that's
           always available is to obtain the latest tarball from the <A
 HREF="http://www.bugzilla.org/download/"
 TARGET="_top"
@@ -515,23 +477,23 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-4.2.1.tar.gz</B
+>wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-2.22.1.tar.gz</B
 >
 <EM
 >(Output omitted)</EM
 >
 bash$ <B
 CLASS="command"
->tar xzvf bugzilla-4.2.1.tar.gz</B
+>tar xzvf bugzilla-2.22.1.tar.gz</B
 >
-bugzilla-4.2.1/
-bugzilla-4.2.1/colchange.cgi
+bugzilla-2.22.1/
+bugzilla-2.22.1/.cvsignore
 <EM
 >(Output truncated)</EM
 >
 bash$ <B
 CLASS="command"
->cd bugzilla-4.2.1</B
+>cd bugzilla-2.22.1</B
 >
 bash$ <B
 CLASS="command"
@@ -551,7 +513,7 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->mv bugzilla-4.2.1 bugzilla</B
+>mv bugzilla-2.22.1 bugzilla</B
 >
         </PRE
 ></FONT
@@ -590,39 +552,6 @@ CLASS="command"
 ></TR
 ></TABLE
 ></DIV
-><DIV
-CLASS="caution"
-><P
-></P
-><TABLE
-CLASS="caution"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/caution.gif"
-HSPACE="5"
-ALT="Caution"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->&#13;            If you have some extensions installed, you will have to copy them
-            to the new bugzilla directory too. Extensions are located in
-            <TT
-CLASS="filename"
->bugzilla/extensions/</TT
->. Only copy those you
-            installed, not those managed by the Bugzilla team.
-          </P
-></TD
-></TR
-></TABLE
-></DIV
 ><P
 >&#13;          This upgrade method will give you a clean install of Bugzilla.
           That's fine if you don't have any local customizations that you
@@ -644,8 +573,8 @@ NAME="upgrade-patches"
         </P
 ><P
 >&#13;          If you are doing a bug-fix upgrade&#8212;that is, one where only the 
-          last number of the revision changes, such as from 4.2 to
-          4.2.1&#8212;then you have the option of obtaining and applying a
+          last number of the revision changes, such as from 2.22 to
+          2.22.1&#8212;then you have the option of obtaining and applying a
           patch file from the <A
 HREF="http://www.bugzilla.org/download/"
 TARGET="_top"
@@ -673,21 +602,21 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-4.2-to-4.2.1.diff.gz</B
+>wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-2.22-to-2.22.1.diff.gz</B
 >
 <EM
 >(Output omitted)</EM
 >
 bash$ <B
 CLASS="command"
->gunzip bugzilla-4.2-to-4.2.1.diff.gz</B
+>gunzip bugzilla-2.22-to-2.22.1.diff.gz</B
 >
 bash$ <B
 CLASS="command"
->patch -p1 &#60; bugzilla-4.2-to-4.2.1.diff</B
+>patch -p1 &#60; bugzilla-2.22-to-2.22.1.diff</B
 >
-patching file Bugzilla/Constants.pm
-patching file enter_bug.cgi
+patching file checksetup.pl
+patching file collectstats.pl
 <EM
 >(etc.)</EM
 >
@@ -720,11 +649,11 @@ VALIGN="TOP"
 >&#13;            Be aware that upgrading from a patch file does not change the
             entries in your <TT
 CLASS="filename"
->.bzr</TT
+>CVS</TT
 > directory.
-            This could make it more difficult to upgrade using Bzr
+            This could make it more difficult to upgrade using CVS
             (<A
-HREF="upgrade.html#upgrade-bzr"
+HREF="upgrade.html#upgrade-cvs"
 >Section 2.7.2.2</A
 >) in the future.
           </P
@@ -864,7 +793,7 @@ ALT="Caution"></TD
 ALIGN="LEFT"
 VALIGN="TOP"
 ><P
->&#13;              If this is a major upgrade (say, 3.6 to 4.2 or similar),
+>&#13;              If this is a major upgrade (say, 2.22 to 3.0 or similar),
               running <B
 CLASS="command"
 >checksetup.pl</B

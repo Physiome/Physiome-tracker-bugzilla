@@ -32,8 +32,7 @@ BEGIN { *esc = \&Pod::Simple::HTML::esc }
 # in the contents file, even though its HTML POD will still exist.
 use constant FILE_TRANSLATION => {
     Files      => ['importxml', 'contrib', 'checksetup', 'email_in', 
-                   'install-module', 'sanitycheck', 'jobqueue', 'migrate',
-                   'collectstats'],
+                   'install-module', 'sanitycheck', 'jobqueue', 'migrate'],
     Modules    => ['bugzilla'],
     Extensions => ['extensions'],
 };

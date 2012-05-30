@@ -42,6 +42,7 @@
 
 <h2>[% h2 FILTER html %]</h2>
 
+<p>Choose the area of the Physiome project to which this relates:</p>
 <table>
 
 [% FOREACH c = classifications %]
@@ -55,9 +56,9 @@
   [% FOREACH p = c.products %]
     <tr>
       <th align="right" valign="top">
-        <a href="[% target %]?product=[% p.name FILTER uri -%]
-              [%- IF cloned_bug_id %]&amp;cloned_bug_id=[% cloned_bug_id FILTER uri %][% END -%] 
-              [%- IF format %]&amp;format=[% format FILTER uri %][% END %]">
+        <a href="[% target %]?product=[% p.name FILTER url_quote -%]
+              [%- IF cloned_bug_id %]&amp;cloned_bug_id=[% cloned_bug_id FILTER url_quote %][% END -%] 
+              [%- IF format %]&amp;format=[% format FILTER url_quote %][% END %]">
         [% p.name FILTER html FILTER no_break %]</a>:&nbsp;
       </th>
 

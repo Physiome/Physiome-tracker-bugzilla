@@ -211,19 +211,13 @@ function updateCalendarFromField(date_field) {
     }
 }
 
-function setupEditLink(id) {
-    var link_container = 'container_showhide_' + id;
-    var input_container = 'container_' + id;
-    var link = 'showhide_' + id;
-    hideEditableField(link_container, input_container, link);
-}
 
-/* Hide input/select fields and show the text with (edit) next to it */
-function hideEditableField( container, input, action, field_id, original_value, new_value ) {
+/* Hide input fields and show the text with (edit) next to it */  
+function hideEditableField( container, input, action, field_id, original_value ) {
     YAHOO.util.Dom.removeClass(container, 'bz_default_hidden');
     YAHOO.util.Dom.addClass(input, 'bz_default_hidden');
     YAHOO.util.Event.addListener(action, 'click', showEditableField,
-                                 new Array(container, input, field_id, new_value));
+                                 new Array(container, input));
     if(field_id != ""){
         YAHOO.util.Event.addListener(window, 'load', checkForChangedFieldValues,
                         new Array(container, input, field_id, original_value));
@@ -231,14 +225,13 @@ function hideEditableField( container, input, action, field_id, original_value, 
 }
 
 /* showEditableField (e, ContainerInputArray)
- * Function hides the (edit) link and the text and displays the input/select field
+ * Function hides the (edit) link and the text and displays the input
  *
  * var e: the event
  * var ContainerInputArray: An array containing the (edit) and text area and the input being displayed
- * var ContainerInputArray[0]: the container that will be hidden usually shows the (edit) or (take) text
+ * var ContainerInputArray[0]: the conainer that will be hidden usually shows the (edit) text
  * var ContainerInputArray[1]: the input area and label that will be displayed
- * var ContainerInputArray[2]: the input/select field id for which the new value must be set
- * var ContainerInputArray[3]: the new value to set the input/select field to when (take) is clicked
+ *
  */
 function showEditableField (e, ContainerInputArray) {
     var inputs = new Array();
@@ -251,32 +244,13 @@ function showEditableField (e, ContainerInputArray) {
     YAHOO.util.Dom.removeClass(inputArea, 'bz_default_hidden');
     if ( inputArea.tagName.toLowerCase() == "input" ) {
         inputs.push(inputArea);
-    } else if (ContainerInputArray[2]) {
-        inputs.push(document.getElementById(ContainerInputArray[2]));
     } else {
         inputs = inputArea.getElementsByTagName('input');
     }
     if ( inputs.length > 0 ) {
-        // Change the first field's value to ContainerInputArray[2]
-        // if present before focusing.
-        var type = inputs[0].tagName.toLowerCase();
-        if (ContainerInputArray[3]) {
-            if ( type == "input" ) {
-                inputs[0].value = ContainerInputArray[3];
-            } else {
-                for (var i = 0; inputs[0].length; i++) {
-                    if ( inputs[0].options[i].value == ContainerInputArray[3] ) {
-                        inputs[0].options[i].selected = true;
-                        break;
-                    }
-                }
-            }
-        }
         // focus on the first field, this makes it easier to edit
         inputs[0].focus();
-        if ( type == "input" ) {
-            inputs[0].select();
-        }
+        inputs[0].select();
     }
     YAHOO.util.Event.preventDefault(e);
 }
@@ -493,12 +467,12 @@ function setClassification() {
  * a certain value. May only be called after the controller has already
  * been added to the DOM.
  */
-function showFieldWhen(controlled_id, controller_id, values) {
+function showFieldWhen(controlled_id, controller_id, value) {
     var controller = document.getElementById(controller_id);
     // Note that we don't get an object for "controlled" here, because it
     // might not yet exist in the DOM. We just pass along its id.
-    YAHOO.util.Event.addListener(controller, 'change',
-        handleVisControllerValueChange, [controlled_id, controller, values]);
+    YAHOO.util.Event.addListener(controller, 'change', 
+        handleVisControllerValueChange, [controlled_id, controller, value]);
 }
 
 /**
@@ -508,21 +482,13 @@ function showFieldWhen(controlled_id, controller_id, values) {
 function handleVisControllerValueChange(e, args) {
     var controlled_id = args[0];
     var controller = args[1];
-    var values = args[2];
+    var value = args[2];
 
     var label_container = 
         document.getElementById('field_label_' + controlled_id);
     var field_container =
         document.getElementById('field_container_' + controlled_id);
-    var selected = false;
-    for (var i = 0; i < values.length; i++) {
-        if (bz_valueSelected(controller, values[i])) {
-            selected = true;
-            break;
-        }
-    }
-
-    if (selected) {
+    if (bz_valueSelected(controller, value)) {
         YAHOO.util.Dom.removeClass(label_container, 'bz_hidden_field');
         YAHOO.util.Dom.removeClass(field_container, 'bz_hidden_field');
     }
@@ -560,7 +526,7 @@ function handleValControllerChange(e, args) {
             YAHOO.util.Dom.removeClass(item, 'bz_hidden_option');
             item.disabled = false;
         }
-        else if (!item.disabled && controller_item && !controller_item.selected) {
+        else if (!item.disabled) {
             YAHOO.util.Dom.addClass(item, 'bz_hidden_option');
             if (item.selected) {
                 item.selected = false;
@@ -684,6 +650,13 @@ function browserCanHideOptions(aSelect) {
 
 /* (end) option hiding code */
 
+// A convenience function to sanitize raw text for harmful HTML before outputting
+function _escapeHTML(text) {
+    return text.replace(/&/g, '&amp;').
+                replace(/</g, '&lt;').
+                replace(/>/g, '&gt;');
+}
+
 /**
  * The Autoselect
  */
@@ -709,8 +682,7 @@ YAHOO.bugzilla.userAutocomplete = {
       return stringified;
     },
     resultListFormat : function(oResultData, enteredText, sResultMatch) {
-        return ( YAHOO.lang.escapeHTML(oResultData.real_name) + " ("
-                 + YAHOO.lang.escapeHTML(oResultData.name) + ")");
+        return ( _escapeHTML(oResultData.real_name) + " (" +  _escapeHTML(oResultData.name) + ")");
     },
     debug_helper : function ( ){
         /* used to help debug any errors that might happen */

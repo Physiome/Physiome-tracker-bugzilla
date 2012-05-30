@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -96,8 +96,6 @@ sub AddLink {
     }
 }
 
-ThrowCodeError("missing_bug_id") if !defined $cgi->param('id');
-
 # The list of valid directions. Some are not proposed in the dropdrown
 # menu despite the fact that they are valid.
 my @valid_rankdirs = ('LR', 'RL', 'TB', 'BT');
@@ -110,6 +108,10 @@ if (!grep { $_ eq $rankdir } @valid_rankdirs) {
 
 my $display = $cgi->param('display') || 'tree';
 my $webdotdir = bz_locations()->{'webdotdir'};
+
+if (!defined $cgi->param('id') && $display ne 'doall') {
+    ThrowCodeError("missing_bug_id");
+}
 
 my ($fh, $filename) = File::Temp::tempfile("XXXXXXXXXX",
                                            SUFFIX => '.dot',
@@ -130,54 +132,64 @@ node [URL="${urlbase}show_bug.cgi?id=\\N", style=filled, color=lightgrey]
 
 my %baselist;
 
-foreach my $i (split('[\s,]+', $cgi->param('id'))) {
-    my $bug = Bugzilla::Bug->check($i);
-    $baselist{$bug->id} = 1;
-}
+if ($display eq 'doall') {
+    my $dependencies = $dbh->selectall_arrayref(
+                           "SELECT blocked, dependson FROM dependencies");
 
-my @stack = keys(%baselist);
+    foreach my $dependency (@$dependencies) {
+        my ($blocked, $dependson) = @$dependency;
+        AddLink($blocked, $dependson, $fh);
+    }
+} else {
+    foreach my $i (split('[\s,]+', $cgi->param('id'))) {
+        my $bug = Bugzilla::Bug->check($i);
+        $baselist{$bug->id} = 1;
+    }
 
-if ($display eq 'web') {
-    my $sth = $dbh->prepare(q{SELECT blocked, dependson
-                                FROM dependencies
-                               WHERE blocked = ? OR dependson = ?});
+    my @stack = keys(%baselist);
 
-    foreach my $id (@stack) {
-        my $dependencies = $dbh->selectall_arrayref($sth, undef, ($id, $id));
-        foreach my $dependency (@$dependencies) {
-            my ($blocked, $dependson) = @$dependency;
-            if ($blocked != $id && !exists $seen{$blocked}) {
-                push @stack, $blocked;
+    if ($display eq 'web') {
+        my $sth = $dbh->prepare(q{SELECT blocked, dependson
+                                    FROM dependencies
+                                   WHERE blocked = ? OR dependson = ?});
+
+        foreach my $id (@stack) {
+            my $dependencies = $dbh->selectall_arrayref($sth, undef, ($id, $id));
+            foreach my $dependency (@$dependencies) {
+                my ($blocked, $dependson) = @$dependency;
+                if ($blocked != $id && !exists $seen{$blocked}) {
+                    push @stack, $blocked;
+                }
+                if ($dependson != $id && !exists $seen{$dependson}) {
+                    push @stack, $dependson;
+                }
+                AddLink($blocked, $dependson, $fh);
             }
-            if ($dependson != $id && !exists $seen{$dependson}) {
-                push @stack, $dependson;
+        }
+    }
+    # This is the default: a tree instead of a spider web.
+    else {
+        my @blocker_stack = @stack;
+        foreach my $id (@blocker_stack) {
+            my $blocker_ids = Bugzilla::Bug::EmitDependList('blocked', 'dependson', $id);
+            foreach my $blocker_id (@$blocker_ids) {
+                push(@blocker_stack, $blocker_id) unless $seen{$blocker_id};
+                AddLink($id, $blocker_id, $fh);
             }
-            AddLink($blocked, $dependson, $fh);
+        }
+        my @dependent_stack = @stack;
+        foreach my $id (@dependent_stack) {
+            my $dep_bug_ids = Bugzilla::Bug::EmitDependList('dependson', 'blocked', $id);
+            foreach my $dep_bug_id (@$dep_bug_ids) {
+                push(@dependent_stack, $dep_bug_id) unless $seen{$dep_bug_id};
+                AddLink($dep_bug_id, $id, $fh);
+            }
         }
     }
-}
-# This is the default: a tree instead of a spider web.
-else {
-    my @blocker_stack = @stack;
-    foreach my $id (@blocker_stack) {
-        my $blocker_ids = Bugzilla::Bug::EmitDependList('blocked', 'dependson', $id);
-        foreach my $blocker_id (@$blocker_ids) {
-            push(@blocker_stack, $blocker_id) unless $seen{$blocker_id};
-            AddLink($id, $blocker_id, $fh);
-        }
-    }
-    my @dependent_stack = @stack;
-    foreach my $id (@dependent_stack) {
-        my $dep_bug_ids = Bugzilla::Bug::EmitDependList('dependson', 'blocked', $id);
-        foreach my $dep_bug_id (@$dep_bug_ids) {
-            push(@dependent_stack, $dep_bug_id) unless $seen{$dep_bug_id};
-            AddLink($dep_bug_id, $id, $fh);
-        }
-    }
-}
 
-foreach my $k (keys(%baselist)) {
-    $seen{$k} = 1;
+    foreach my $k (keys(%baselist)) {
+        $seen{$k} = 1;
+    }
 }
 
 my $sth = $dbh->prepare(

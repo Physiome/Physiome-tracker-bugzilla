@@ -47,12 +47,6 @@ sub get_param_list {
   },
 
   {
-   name    => 'ajax_user_autocompletion', 
-   type    => 'b', 
-   default => '1', 
-  },
-
-  {
    name    => 'maxusermatches',
    type    => 't',
    default => '1000',

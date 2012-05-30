@@ -153,12 +153,6 @@ name="Saved_and_Shared_Queries"
 
 <dd>
 <p>An arrayref of group ids. The user can share their own queries with these groups.</p>
-
-<dt><a name="tags"
-><code  class="code">tags</code></a></dt>
-
-<dd>
-<p>Returns a hashref with tag IDs as key, and a hashref with tag &#39;id&#39;, &#39;name&#39; and &#39;bug_count&#39; as value.</p>
 </dd>
 </dl>
 
@@ -259,12 +253,6 @@ name="Other_Methods"
 
 <dd>
 <p>Returns a hash of hashes which holds the user&#39;s settings. The first key is the name of the setting, as found in setting.name. The second key is one of: is_enabled - true if the user is allowed to set the preference themselves; false to force the site defaults for themselves or must accept the global site default value default_value - the global site default for this setting value - the value of this setting for this user. Will be the same as the default_value if the user is not logged in, or if is_default is true. is_default - a boolean to indicate whether the user has chosen to make a preference for themself or use the site default.</p>
-
-<dt><a name="setting(name)"
-><code  class="code">setting(name)</code></a></dt>
-
-<dd>
-<p>Returns the value for the specified setting.</p>
 
 <dt><a name="timezone"
 ><code  class="code">timezone</code></a></dt>
@@ -440,23 +428,6 @@ name="Other_Methods"
 
  Returns:     On success, a product object. On failure, an error is thrown.</pre>
 
-<dt><a name="check_can_admin_flagtype($flagtype_id)"
-><code  class="code">check_can_admin_flagtype($flagtype_id)</code></a></dt>
-
-<dd>
-<pre  class="code"> Description: Checks whether the user is allowed to edit properties of the flag type.
-              If the flag type is also used by some products for which the user
-              hasn&#39;t editcomponents privs, then the user is only allowed to edit
-              the inclusion and exclusion lists for products he can administrate.
-
- Params:      $flagtype_id - a flag type ID.
-
- Returns:     On success, a flag type object. On failure, an error is thrown.
-              In list context, a boolean indicating whether the user can edit
-              all properties of the flag type is also returned. The boolean
-              is false if the user can only edit the inclusion and exclusions
-              lists.</pre>
-
 <dt><a name="can_request_flag($flag_type)"
 ><code  class="code">can_request_flag($flag_type)</code></a></dt>
 
@@ -535,6 +506,12 @@ name="Other_Methods"
 <dd>
 <p>Returns true if the user wants mail for a given set of events. This method is more general than <code  class="code">wants_bug_mail</code>, allowing you to check e.g. permissions for flag mail.</p>
 
+<dt><a name="is_mover"
+><code  class="code">is_mover</code></a></dt>
+
+<dd>
+<p>Returns true if the user is in the list of users allowed to move bugs to another database. Note that this method doesn&#39;t check whether bug moving is enabled.</p>
+
 <dt><a name="is_insider"
 ><code  class="code">is_insider</code></a></dt>
 
@@ -570,18 +547,6 @@ name="CLASS_FUNCTIONS"
 
 <dd>
 <p>Takes a username as its only argument. Throws an error if there is no user with that username. Returns a <code  class="code">Bugzilla::User</code> object.</p>
-
-<dt><a name="check_account_creation_enabled"
-><code  class="code">check_account_creation_enabled</code></a></dt>
-
-<dd>
-<p>Checks that users can create new user accounts, and throws an error if user creation is disabled.</p>
-
-<dt><a name="check_and_send_account_creation_confirmation($login)"
-><code  class="code">check_and_send_account_creation_confirmation($login)</code></a></dt>
-
-<dd>
-<p>If the user request for a new account passes validation checks, an email is sent to this user for confirmation. Otherwise an error is thrown indicating why the request has been rejected.</p>
 
 <dt><a name="is_available_username"
 ><code  class="code">is_available_username</code></a></dt>

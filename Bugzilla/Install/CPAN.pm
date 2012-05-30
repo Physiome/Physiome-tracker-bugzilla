@@ -33,7 +33,6 @@ use Bugzilla::Constants;
 use Bugzilla::Install::Requirements qw(have_vers);
 use Bugzilla::Install::Util qw(bin_loc install_string);
 
-use Config;
 use CPAN;
 use Cwd qw(abs_path);
 use File::Path qw(rmtree);
@@ -70,6 +69,13 @@ use constant REQUIREMENTS => (
 # We need it often enough (and at compile time, in install-module.pl) so 
 # we make it a constant.
 use constant BZ_LIB => abs_path(bz_locations()->{ext_libpath});
+
+# These modules are problematic to install with "notest" (sometimes they
+# get installed when they shouldn't). So we always test their installation
+# and never ignore test failures.
+use constant ALWAYS_TEST => qw(
+    Math::Random::Secure
+);
 
 # CPAN requires nearly all of its parameters to be set, or it will start
 # asking questions to the user. We want to avoid that, so we have
@@ -110,8 +116,6 @@ use constant CPAN_DEFAULTS => {
 sub check_cpan_requirements {
     my ($original_dir, $original_args) = @_;
 
-    _require_compiler();
-
     my @install;
     foreach my $module (REQUIREMENTS) {
         my $installed = have_vers($module, 1);
@@ -130,26 +134,6 @@ sub check_cpan_requirements {
         chdir $original_dir;
         exec($^X, $0, @$original_args);
     }
-}
-
-sub _require_compiler {
-    my @errors;
-
-    my $cc_name = $Config{cc};
-    my $cc_exists = bin_loc($cc_name);
-
-    if (!$cc_exists) {
-        push(@errors, install_string('install_no_compiler'));
-    }
-
-    my $make_name = $CPAN::Config->{make};
-    my $make_exists = bin_loc($make_name);
-
-    if (!$make_exists) {
-        push(@errors, install_string('install_no_make'));
-    }
-
-    die @errors if @errors;
 }
 
 sub install_module {
@@ -180,22 +164,13 @@ sub install_module {
     if (!$module) {
         die install_string('no_such_module', { module => $name }) . "\n";
     }
-    my $version = $module->cpan_version;
-    my $module_name = $name;
-
-    if ($name eq 'LWP::UserAgent' && $^V lt v5.8.8) {
-        # LWP 6.x requires Perl 5.8.8 or newer.
-        # As PAUSE only indexes the very last version of each module,
-        # we have to specify the path to the tarball ourselves.
-        $name = 'GAAS/libwww-perl-5.837.tar.gz';
-        # This tarball contains LWP::UserAgent 5.835.
-        $version = '5.835';
-    }
-
     print install_string('install_module', 
-              { module => $module_name, version => $version }) . "\n";
+              { module => $name, version => $module->cpan_version }) . "\n";
 
-    if ($test) {
+    if (_always_test($name)) {
+        CPAN::Shell->install($name);
+    }
+    elsif ($test) {
         CPAN::Shell->force('install', $name);
     }
     else {
@@ -208,6 +183,11 @@ sub install_module {
     }
 
     $CPAN::Config->{makepl_arg} = $original_makepl;
+}
+
+sub _always_test {
+    my ($name) = @_;
+    return grep(lc($_) eq lc($name), ALWAYS_TEST) ? 1 : 0;
 }
 
 sub set_cpan_config {
@@ -237,7 +217,7 @@ sub set_cpan_config {
 
         # If we can't make one, we finally try to use the Bugzilla directory.
         if (!-w $dir) {
-            print STDERR install_string('cpan_bugzilla_home'), "\n";
+            print "WARNING: Using the Bugzilla directory as the CPAN home.\n";
             $dir = "$bzlib/.cpan";
         }
     }

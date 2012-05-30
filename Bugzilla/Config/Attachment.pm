@@ -58,6 +58,11 @@ sub get_param_list {
   type => 'b',
   default => 0
   },
+  {
+  name => 'allow_attach_url',
+  type => 'b',
+  default => 0
+  },
 
   {
    name => 'maxattachmentsize',

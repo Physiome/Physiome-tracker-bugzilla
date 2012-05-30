@@ -20,8 +20,7 @@
 
 [% PROCESS "global/field-descs.none.tmpl" %]
   
-<select name="[% name FILTER html %]" title="Search type"
-        class="[% class FILTER css_class_quote %]">
+<select name="[% name FILTER html %]">
   [% FOREACH type = types %]
     <option value="[% type FILTER html %]"
             [%- ' selected="selected"' IF type == selected %]>

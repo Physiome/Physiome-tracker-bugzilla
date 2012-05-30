@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -64,9 +64,6 @@ my $token          = $cgi->param('token');
 $vars->{'editusers'} = $editusers;
 mirrorListSelectionValues();
 
-Bugzilla::Hook::process('admin_editusers_action',
-    { vars => $vars, user => $user, action => $action });
-
 ###########################################################################
 if ($action eq 'search') {
     # Allow to restrict the search to any group the user is allowed to bless.
@@ -77,10 +74,10 @@ if ($action eq 'search') {
 ###########################################################################
 } elsif ($action eq 'list') {
     my $matchvalue    = $cgi->param('matchvalue') || '';
-    my $matchstr      = trim($cgi->param('matchstr'));
+    my $matchstr      = $cgi->param('matchstr');
     my $matchtype     = $cgi->param('matchtype');
     my $grouprestrict = $cgi->param('grouprestrict') || '0';
-    my $query = 'SELECT DISTINCT userid, login_name, realname, is_enabled ' .
+    my $query = 'SELECT DISTINCT userid, login_name, realname, disabledtext ' .
                 'FROM profiles';
     my @bindValues;
     my $nextCondition;
@@ -140,7 +137,7 @@ if ($action eq 'search') {
                 $expr = "profiles.login_name";
             }
 
-            if ($matchtype =~ /^(regexp|notregexp|exact)$/) {
+            if ($matchstr =~ /^(regexp|notregexp|exact)$/) {
                 $matchstr ||= '.';
             }
             else {
@@ -216,9 +213,7 @@ if ($action eq 'search') {
         cryptpassword => $password,
         realname      => scalar $cgi->param('name'),
         disabledtext  => scalar $cgi->param('disabledtext'),
-        disable_mail  => scalar $cgi->param('disable_mail'),
-        extern_id     => scalar $cgi->param('extern_id'),
-        });
+        disable_mail  => scalar $cgi->param('disable_mail')});
 
     userDataToVars($new_user->id);
 
@@ -261,8 +256,6 @@ if ($action eq 'search') {
             if $cgi->param('password');
         $otherUser->set_disabledtext($cgi->param('disabledtext'));
         $otherUser->set_disable_mail($cgi->param('disable_mail'));
-        $otherUser->set_extern_id($cgi->param('extern_id'))
-            if defined($cgi->param('extern_id'));
         $changes = $otherUser->update();
     }
 

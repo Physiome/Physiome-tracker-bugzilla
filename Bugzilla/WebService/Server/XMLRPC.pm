@@ -23,27 +23,9 @@ package Bugzilla::WebService::Server::XMLRPC;
 use strict;
 use XMLRPC::Transport::HTTP;
 use Bugzilla::WebService::Server;
-if ($ENV{MOD_PERL}) {
-    our @ISA = qw(XMLRPC::Transport::HTTP::Apache Bugzilla::WebService::Server);
-} else {
-    our @ISA = qw(XMLRPC::Transport::HTTP::CGI Bugzilla::WebService::Server);
-}
+our @ISA = qw(XMLRPC::Transport::HTTP::CGI Bugzilla::WebService::Server);
 
 use Bugzilla::WebService::Constants;
-
-# Allow WebService methods to call XMLRPC::Lite's type method directly
-BEGIN {
-    *Bugzilla::WebService::type = sub {
-        my ($self, $type, $value) = @_;
-        if ($type eq 'dateTime') {
-            # This is the XML-RPC implementation,  see the README in Bugzilla/WebService/.
-            # Our "base" implementation is in Bugzilla::WebService::Server.
-            $value = Bugzilla::WebService::Server->datetime_format_outbound($value);
-            $value =~ s/-//g;
-        }
-        return XMLRPC::Data->type($type)->value($value);
-    };
-}
 
 sub initialize {
     my $self = shift;
@@ -86,21 +68,10 @@ use XMLRPC::Lite;
 our @ISA = qw(XMLRPC::Deserializer);
 
 use Bugzilla::Error;
-use Bugzilla::WebService::Constants qw(XMLRPC_CONTENT_TYPE_WHITELIST);
 use Scalar::Util qw(tainted);
 
 sub deserialize {
     my $self = shift;
-
-    # Only allow certain content types to protect against CSRF attacks
-    my $content_type = lc($ENV{'CONTENT_TYPE'});
-    # Remove charset, etc, if provided
-    $content_type =~ s/^([^;]+);.*/$1/;
-    if (!grep($_ eq $content_type, XMLRPC_CONTENT_TYPE_WHITELIST)) {
-        ThrowUserError('xmlrpc_illegal_content_type',
-                       { content_type => $ENV{'CONTENT_TYPE'} });
-    }
-
     my ($xml) = @_;
     my $som = $self->SUPER::deserialize(@_);
     if (tainted($xml)) {

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -25,11 +25,14 @@
 #                 Jean-Sebastien Guay <jean_seb@hybride.com>
 #                 Frédéric Buclin <LpSolit@gmail.com>
 
+# Run me out of cron at midnight to collect Bugzilla statistics.
+#
+# To run new charts for a specific date, pass it in on the command line in
+# ISO (2004-08-14) format.
+
 use strict;
 use lib qw(. lib);
 
-use Getopt::Long qw(:config bundling);
-use Pod::Usage;
 use List::Util qw(first);
 use Cwd;
 
@@ -41,13 +44,6 @@ use Bugzilla::Search;
 use Bugzilla::User;
 use Bugzilla::Product;
 use Bugzilla::Field;
-use Bugzilla::Install::Filesystem qw(fix_dir_permissions);
-
-my %switch;
-GetOptions(\%switch, 'help|h', 'regenerate');
-
-# Print the help message if that switch was selected.
-pod2usage({-verbose => 1, -exitval => 1}) if $switch{'help'};
 
 # Turn off output buffering (probably needed when displaying output feedback
 # in the regenerate mode).
@@ -66,6 +62,14 @@ if (chdir($graphsdir)) {
 }
 
 my $dbh = Bugzilla->switch_to_shadow_db();
+
+
+# To recreate the daily statistics,  run "collectstats.pl --regenerate" .
+my $regenerate = 0;
+if ($#ARGV >= 0 && $ARGV[0] eq "--regenerate") {
+    shift(@ARGV);
+    $regenerate = 1;
+}
 
 # As we can now customize statuses and resolutions, looking at the current list
 # of legal values only is not enough as some now removed statuses and resolutions
@@ -108,7 +112,7 @@ my @resolutions = @{$fields->{'resolution'}};
 # per bug, per day. Instead, we now just get all the data out of the DB
 # at once and stuff it into some data structures.
 my (%bug_status, %bug_resolution, %removed);
-if ($switch{'regenerate'}) {
+if ($regenerate) {
     %bug_resolution = @{ $dbh->selectcol_arrayref(
         'SELECT bug_id, resolution FROM bugs', {Columns=>[1,2]}) };
     %bug_status = @{ $dbh->selectcol_arrayref(
@@ -140,27 +144,31 @@ my $tstart = time;
 my @myproducts = Bugzilla::Product->get_all;
 unshift(@myproducts, "-All-");
 
-my $dir = "$datadir/mining";
-if (!-d $dir) {
-    mkdir $dir or die "mkdir $dir failed: $!";
-    fix_dir_permissions($dir);
-}
-
 foreach (@myproducts) {
-    if ($switch{'regenerate'}) {
+    my $dir = "$datadir/mining";
+
+    &check_data_dir ($dir);
+
+    if ($regenerate) {
         regenerate_stats($dir, $_, \%bug_resolution, \%bug_status, \%removed);
     } else {
         &collect_stats($dir, $_);
     }
 }
-# Fix permissions for all files in mining/.
-fix_dir_permissions($dir);
-
 my $tend = time;
 # Uncomment the following line for performance testing.
 #print "Total time taken " . delta_time($tstart, $tend) . "\n";
 
 CollectSeriesData();
+
+sub check_data_dir {
+    my $dir = shift;
+
+    if (! -d $dir) {
+        mkdir $dir, 0755;
+        chmod 0755, $dir;
+    }
+}
 
 sub collect_stats {
     my $dir = shift;
@@ -247,6 +255,7 @@ FIN
     }
     print DATA (join '|', @row) . "\n";
     close DATA;
+    chmod 0644, $file;
 }
 
 sub get_old_data {
@@ -402,13 +411,14 @@ FIN
             foreach (@resolutions) { print DATA "|$bugcount{$_}"; }
             print DATA "\n";
         }
-
+        
         # Finish up output feedback for this product.
         my $tend = time;
         print "\rRegenerating $product \[100.0\%] - " .
             delta_time($tstart, $tend) . "\n";
-
+            
         close DATA;
+        chmod 0640, $file;
     }
 }
 
@@ -466,7 +476,7 @@ sub CollectSeriesData {
     # (days_since_epoch + series_id) % frequency = 0. So they'll run every
     # <frequency> days, but the start date depends on the series_id.
     my $days_since_epoch = int(time() / (60 * 60 * 24));
-    my $today = today_dash();
+    my $today = $ARGV[0] || today_dash();
 
     # We save a copy of the main $dbh and then switch to the shadow and get
     # that one too. Remember, these may be the same.
@@ -500,11 +510,10 @@ sub CollectSeriesData {
         # Do not die if Search->new() detects invalid data, such as an obsolete
         # login name or a renamed product or component, etc.
         eval {
-            my $search = new Bugzilla::Search('params' => scalar $cgi->Vars,
+            my $search = new Bugzilla::Search('params' => $cgi,
                                               'fields' => ["bug_id"],
-                                              'allow_unlimited' => 1,
                                               'user'   => $user);
-            my $sql = $search->sql;
+            my $sql = $search->getSQL();
             $data = $shadow_dbh->selectall_arrayref($sql);
         };
 
@@ -519,39 +528,3 @@ sub CollectSeriesData {
     }
 }
 
-__END__
-
-=head1 NAME
-
-collectstats.pl - Collect data about Bugzilla bugs.
-
-=head1 SYNOPSIS
-
- ./collectstats.pl [--regenerate] [--help]
-
-Collects data about bugs to be used in Old and New Charts.
-
-=head1 OPTIONS
-
-=over
-
-=item B<--help>
-
-Print this help page.
-
-=item B<--regenerate>
-
-Recreate all the data about bugs, from day 1. This option is only relevant
-for Old Charts, and has no effect for New Charts.
-This option will overwrite all existing collected data and can take a huge
-amount of time. You normally don't need to use this option (do not use it
-in a cron job).
-
-=back
-
-=head1 DESCRIPTION
-
-This script collects data about all bugs for Old Charts, triaged by product
-and by bug status and resolution. It also collects data for New Charts, based
-on existing series. For New Charts, data is only collected once a series is
-defined; this script cannot recreate data prior to this date.

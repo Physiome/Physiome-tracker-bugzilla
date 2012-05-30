@@ -24,6 +24,7 @@ our @EXPORT = qw(
     WS_ERROR_CODE
     ERROR_UNKNOWN_FATAL
     ERROR_UNKNOWN_TRANSIENT
+    XMLRPC_CONTENT_TYPE_WHITELIST
 
     WS_DISPATCH
 );
@@ -108,9 +109,9 @@ use constant WS_ERROR_CODE => {
     # Dup errors
     dupe_loop_detected => 118,
     dupe_id_required => 119,
-    # Group errors
-    group_change_denied => 120,
-    group_invalid_restriction => 120,
+    # Bug-related group errors
+    group_invalid_removal => 120,
+    group_restriction_not_allowed => 120,
     # Status/Resolution errors
     missing_resolution => 121,
     resolution_not_allowed => 122,
@@ -130,6 +131,7 @@ use constant WS_ERROR_CODE => {
     # User errors are 500-600.
     account_exists        => 500,
     illegal_email_address => 501,
+    auth_cant_create_account    => 501,
     account_creation_disabled   => 501,
     account_creation_restricted => 501,
     password_too_short    => 502,
@@ -142,15 +144,28 @@ use constant WS_ERROR_CODE => {
     user_access_by_match_denied => 505,
 
     # Attachment errors are 600-700.
-    patch_too_large        => 600,
-    local_file_too_large   => 600,
     file_too_large         => 600,
     invalid_content_type   => 601,
-    attachment_illegal_url => 602,
+    # Error 602 attachment_illegal_url no longer exists.
     file_not_specified     => 603,
     missing_attachment_description => 604,
-    attachment_url_disabled => 605,
+    # Error 605 attachment_url_disabled no longer exists.
     zero_length_file       => 606,
+
+    # Product erros are 700-800
+    product_blank_name => 700,
+    product_name_too_long => 701,
+    product_name_already_in_use => 702,
+    product_name_diff_in_case => 702,
+    product_must_have_description => 703,
+    product_must_have_version => 704,
+    product_must_define_defaultmilestone => 705,
+
+    # Group errors are 800-900
+    empty_group_name => 800,
+    group_exists => 801,
+    empty_group_description => 802,
+    invalid_regexp => 803,
 
     # Errors thrown by the WebService itself. The ones that are negative 
     # conform to http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
@@ -158,6 +173,8 @@ use constant WS_ERROR_CODE => {
     unknown_method       => -32601,
     json_rpc_post_only   => 32610,
     json_rpc_invalid_callback => 32611,
+    xmlrpc_illegal_content_type   => 32612, 
+    json_rpc_illegal_content_type => 32613, 
 };
 
 # These are the fallback defaults for errors not in ERROR_CODE.
@@ -165,6 +182,11 @@ use constant ERROR_UNKNOWN_FATAL     => -32000;
 use constant ERROR_UNKNOWN_TRANSIENT => 32000;
 
 use constant ERROR_GENERAL       => 999;
+
+use constant XMLRPC_CONTENT_TYPE_WHITELIST => qw(
+    text/xml
+    application/xml
+);
 
 sub WS_DISPATCH {
     # We "require" here instead of "use" above to avoid a dependency loop.
@@ -177,6 +199,7 @@ sub WS_DISPATCH {
         'Bug'      => 'Bugzilla::WebService::Bug',
         'User'     => 'Bugzilla::WebService::User',
         'Product'  => 'Bugzilla::WebService::Product',
+        'Group'    => 'Bugzilla::WebService::Group',
         %hook_dispatch
     };
     return $dispatch;

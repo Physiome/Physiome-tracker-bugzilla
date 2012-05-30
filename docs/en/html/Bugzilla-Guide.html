@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->The Bugzilla Guide - 4.0.1 
+>The Bugzilla Guide - 4.2.1 
     Release</TITLE
 ><META
 NAME="GENERATOR"
@@ -43,7 +43,7 @@ CLASS="TITLEPAGE"
 CLASS="title"
 ><A
 NAME="AEN2"
->The Bugzilla Guide - 4.0.1 
+>The Bugzilla Guide - 4.2.1 
     Release</A
 ></H1
 ><H3
@@ -51,7 +51,7 @@ CLASS="corpauthor"
 >The Bugzilla Team</H3
 ><P
 CLASS="pubdate"
->2011-04-27<BR></P
+>2012-04-18<BR></P
 ><DIV
 ><DIV
 CLASS="abstract"
@@ -614,7 +614,7 @@ NAME="copyright"
 >1.1. Copyright Information</A
 ></H2
 ><P
->This document is copyright (c) 2000-2011 by the various
+>This document is copyright (c) 2000-2012 by the various
     Bugzilla contributors who wrote it.</P
 ><A
 NAME="AEN26"
@@ -683,8 +683,10 @@ NAME="newversions"
 >1.3. New Versions</A
 ></H2
 ><P
->&#13;      This is the 4.0.1 version of The Bugzilla Guide. It is so named 
+>&#13;      This is the 4.2.1 version of The Bugzilla Guide. It is so named 
       to match the current version of Bugzilla. 
+       This version of the guide, like its associated Bugzilla version, is a
+      development version. 
     </P
 ><P
 >&#13;      The latest version of this guide can always be found at <A
@@ -1377,7 +1379,7 @@ HREF="http://www.mysql.com"
 TARGET="_top"
 >http://www.mysql.com</A
 >. You need MySQL version
-          4.1.2 or higher.
+          5.0.15 or higher.
           </P
 ><DIV
 CLASS="note"
@@ -1456,7 +1458,7 @@ HREF="http://www.postgresql.org/"
 TARGET="_top"
 >http://www.postgresql.org/</A
 >. You need PostgreSQL
-          version 8.00.0000 or higher.
+          version 8.03.0000 or higher.
           </P
 ><P
 >If you install from something other than a packaging/installation
@@ -1841,12 +1843,12 @@ TYPE="1"
 ></LI
 ><LI
 ><P
->&#13;            DBI (1.41)
+>&#13;            DBI (1.614)
           </P
 ></LI
 ><LI
 ><P
->&#13;            DBD::mysql (4.00) if using MySQL
+>&#13;            DBD::mysql (4.001) if using MySQL
           </P
 ></LI
 ><LI
@@ -1881,7 +1883,7 @@ TYPE="1"
 ></LI
 ><LI
 ><P
->&#13;            URI (any)
+>&#13;            URI (1.37)
           </P
 ></LI
 ></OL
@@ -1936,7 +1938,7 @@ TYPE="1"
 ></LI
 ><LI
 ><P
->&#13;            PatchReader (0.9.4) for pretty HTML view of patches
+>&#13;            PatchReader (0.9.6) for pretty HTML view of patches
           </P
 ></LI
 ><LI
@@ -1977,7 +1979,7 @@ TYPE="1"
 ><LI
 ><P
 >&#13;            HTML::Parser
-            (3.40) for More HTML in Product/Group Descriptions
+            (3.67) for More HTML in Product/Group Descriptions
           </P
 ></LI
 ><LI
@@ -2233,7 +2235,7 @@ CLASS="filename"
         the user you will create for your database. Pick a strong
         password (for simplicity, it should not contain single quote
         characters) and put it here. $db_driver can be either 'mysql',
-        'Pg' or 'oracle'.
+        'Pg', 'Oracle' or 'Sqlite'.
       </P
 ><DIV
 CLASS="note"
@@ -2346,11 +2348,14 @@ HREF="#mysql"
         PostgreSQL (<A
 HREF="#postgresql"
 >Section 2.2.2.3</A
->) and Oracle (<A
+>), Oracle (<A
 HREF="#oracle"
 >Section 2.2.2.4</A
 >)
-        are available.
+        and SQLite (<A
+HREF="#sqlite"
+>Section 2.2.2.5</A
+>) are available.
       </P
 ><DIV
 CLASS="section"
@@ -2482,7 +2487,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN438"
+NAME="AEN439"
 >2.2.2.2.2. Allow small words in full-text indexes</A
 ></H5
 ><P
@@ -2623,7 +2628,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN465"
+NAME="AEN466"
 >2.2.2.2.4. Permit attachments table to grow beyond 4GB</A
 ></H5
 ><P
@@ -2723,7 +2728,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN481"
+NAME="AEN482"
 >2.2.2.3.1. Add a User to PostgreSQL</A
 ></H5
 ><P
@@ -2802,39 +2807,13 @@ CLASS="filename"
 >.
           The created user will not be a superuser (-S) and will not be able to create
           new users (-R). He will only have the ability to create databases (-d).</P
-><DIV
-CLASS="note"
-><P
-></P
-><TABLE
-CLASS="note"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="../images/note.gif"
-HSPACE="5"
-ALT="Note"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
-><P
->If your are running PostgreSQL 8.0, you must replace -dRSP by -dAP.</P
-></TD
-></TR
-></TABLE
-></DIV
 ></DIV
 ><DIV
 CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN499"
+NAME="AEN498"
 >2.2.2.3.2. Configure PostgreSQL</A
 ></H5
 ><P
@@ -2895,7 +2874,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN515"
+NAME="AEN514"
 >2.2.2.4.1. Create a New Tablespace</A
 ></H5
 ><P
@@ -2947,7 +2926,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN523"
+NAME="AEN522"
 >2.2.2.4.2. Add a User to Oracle</A
 ></H5
 ><P
@@ -3003,7 +2982,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN531"
+NAME="AEN530"
 >2.2.2.4.3. Configure the Web Server</A
 ></H5
 ><P
@@ -3035,13 +3014,70 @@ CLASS="programlisting"
           </P
 ></DIV
 ></DIV
+><DIV
+CLASS="section"
+><HR><H4
+CLASS="section"
+><A
+NAME="sqlite"
+>2.2.2.5. SQLite</A
+></H4
+><DIV
+CLASS="caution"
+><P
+></P
+><TABLE
+CLASS="caution"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="../images/caution.gif"
+HSPACE="5"
+ALT="Caution"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>&#13;            Due to SQLite's <A
+HREF="http://sqlite.org/faq.html#q5"
+TARGET="_top"
+>concurrency
+            limitations</A
+> we recommend SQLite only for small and development
+            Bugzilla installations.
+          </P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>&#13;          No special configuration is required to run Bugzilla on SQLite.
+          The database will be stored in <TT
+CLASS="filename"
+>data/db/$db_name</TT
+>,
+          where <TT
+CLASS="literal"
+>$db_name</TT
+> is the database name defined
+          in <TT
+CLASS="filename"
+>localconfig</TT
+>.
+        </P
+></DIV
 ></DIV
 ><DIV
 CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN537"
+NAME="AEN545"
 >2.2.3. checksetup.pl</A
 ></H3
 ><P
@@ -3881,7 +3917,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN688"
+NAME="AEN696"
 >2.3.1. Bug Graphs</A
 ></H3
 ><P
@@ -3928,7 +3964,7 @@ WIDTH="100%"
 COLOR="#000000"
 ><PRE
 CLASS="programlisting"
->5 0 * * * cd &#60;your-bugzilla-directory&#62; ; ./collectstats.pl</PRE
+>5 0 * * * cd &#60;your-bugzilla-directory&#62; &#38;&#38; ./collectstats.pl</PRE
 ></FONT
 ></TD
 ></TR
@@ -4001,7 +4037,7 @@ WIDTH="100%"
 COLOR="#000000"
 ><PRE
 CLASS="programlisting"
->55 0 * * * cd &#60;your-bugzilla-directory&#62; ; ./whineatnews.pl</PRE
+>55 0 * * * cd &#60;your-bugzilla-directory&#62; &#38;&#38; ./whineatnews.pl</PRE
 ></FONT
 ></TD
 ></TR
@@ -4075,7 +4111,7 @@ WIDTH="100%"
 COLOR="#000000"
 ><PRE
 CLASS="programlisting"
->*/15 * * * * cd &#60;your-bugzilla-directory&#62; ; ./whine.pl</PRE
+>*/15 * * * * cd &#60;your-bugzilla-directory&#62; &#38;&#38; ./whine.pl</PRE
 ></FONT
 ></TD
 ></TR
@@ -5007,7 +5043,7 @@ CLASS="section"
 ><H3
 CLASS="section"
 ><A
-NAME="AEN851"
+NAME="AEN859"
 >2.6.1. Introduction</A
 ></H3
 ><P
@@ -5027,7 +5063,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN855"
+NAME="AEN863"
 >2.6.2. MySQL</A
 ></H3
 ><P
@@ -5083,7 +5119,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN863"
+NAME="AEN871"
 >2.6.2.1. Running MySQL as Non-Root</A
 ></H4
 ><DIV
@@ -5091,7 +5127,7 @@ CLASS="section"
 ><H5
 CLASS="section"
 ><A
-NAME="AEN865"
+NAME="AEN873"
 >2.6.2.1.1. The Custom Configuration Method</A
 ></H5
 ><P
@@ -5135,7 +5171,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN869"
+NAME="AEN877"
 >2.6.2.1.2. The Custom Built Method</A
 ></H5
 ><P
@@ -5158,7 +5194,7 @@ CLASS="section"
 ><HR><H5
 CLASS="section"
 ><A
-NAME="AEN874"
+NAME="AEN882"
 >2.6.2.1.3. Starting the Server</A
 ></H5
 ><P
@@ -5286,7 +5322,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN890"
+NAME="AEN898"
 >2.6.3. Perl</A
 ></H3
 ><P
@@ -5390,7 +5426,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN912"
+NAME="AEN920"
 >2.6.5. HTTP Server</A
 ></H3
 ><P
@@ -5404,7 +5440,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN915"
+NAME="AEN923"
 >2.6.5.1. Running Apache as Non-Root</A
 ></H4
 ><P
@@ -5486,7 +5522,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN924"
+NAME="AEN932"
 >2.6.6. Bugzilla</A
 ></H3
 ><P
@@ -5612,13 +5648,17 @@ NAME="upgrade"
 ></H2
 ><P
 >Upgrading to new Bugzilla releases is very simple. There is
-      a script included with Bugzilla that will automatically
-      do all of the database migration for you.</P
+      a script named <TT
+CLASS="filename"
+>checksetup.pl</TT
+> included with
+      Bugzilla that will automatically do all of the database migration
+      for you.</P
 ><P
 >The following sections explain how to upgrade from one
       version of Bugzilla to another. Whether you are upgrading
-      from one bug-fix version to another (such as 3.0.1 to 3.0.2)
-      or from one major version to another (such as from 3.0 to 3.2),
+      from one bug-fix version to another (such as 4.2 to 4.2.1)
+      or from one major version to another (such as from 4.0 to 4.2),
       the instructions are always the same.</P
 ><DIV
 CLASS="note"
@@ -5642,7 +5682,7 @@ ALIGN="LEFT"
 VALIGN="TOP"
 ><P
 >&#13;        Any examples in the following sections are written as though the
-        user were updating to version 2.22.1, but the procedures are the
+        user were updating to version 4.2.1, but the procedures are the
         same no matter what version you're updating to. Also, in the
         examples, the user's Bugzilla installation is found at
         <TT
@@ -5796,15 +5836,15 @@ NAME="upgrade-files"
 CLASS="variablelist"
 ><DL
 ><DT
->CVS (<A
-HREF="#upgrade-cvs"
+>Bzr (<A
+HREF="#upgrade-bzr"
 >Section 2.7.2.2</A
 >)</DT
 ><DD
 ><P
->&#13;              If have <B
+>&#13;              If you have <B
 CLASS="command"
->cvs</B
+>bzr</B
 > installed on your machine
               and you have Internet access, this is the easiest way to
               upgrade, particularly if you have made modifications
@@ -5832,11 +5872,11 @@ HREF="#upgrade-patches"
 ><P
 >&#13;              If you have made modifications to your Bugzilla, and
               you don't have Internet access or you don't want to use
-              cvs, then this is the best way to upgrade.
+              bzr, then this is the best way to upgrade.
             </P
 ><P
->&#13;              You can only do minor upgrades (such as 3.0 to 3.0.1 or
-              3.0.1 to 3.0.2) with patches.
+>&#13;              You can only do minor upgrades (such as 4.2 to 4.2.1 or
+              4.2.1 to 4.2.2) with patches.
             </P
 ></DD
 ></DL
@@ -5862,8 +5902,8 @@ HREF="#template-method"
 ><P
 >&#13;          The larger the jump you are trying to make, the more difficult it
           is going to be to upgrade if you have made local customizations.
-          Upgrading from 3.0 to 3.0.1 should be fairly painless even if
-          you are heavily customized, but going from 2.18 to 3.0 is going
+          Upgrading from 4.2 to 4.2.1 should be fairly painless even if
+          you are heavily customized, but going from 2.18 to 4.2 is going
           to mean a fair bit of work re-writing your local changes to use
           the new files, logic, templates, etc. If you have done no local
           changes at all, however, then upgrading should be approximately
@@ -5876,19 +5916,58 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="upgrade-cvs"
->2.7.2.2. Upgrading using CVS</A
+NAME="upgrade-bzr"
+>2.7.2.2. Upgrading using Bzr</A
 ></H4
 ><P
->&#13;          This requires that you have cvs installed (most Unix machines do),
-          and requires that you are able to access cvs-mirror.mozilla.org
-          on port 2401, which may not be an option if you are behind a
-          highly restrictive firewall or don't have Internet access.
+>&#13;          This requires that you have bzr installed (most Unix machines do),
+          and requires that you are able to access
+          <A
+HREF="http://bzr.mozilla.org/bugzilla/"
+TARGET="_top"
+>bzr.mozilla.org</A
+>,
+          which may not be an option if you don't have Internet access.
         </P
 ><P
 >&#13;          The following shows the sequence of commands needed to update a
-          Bugzilla installation via CVS, and a typical series of results.
+          Bugzilla installation via Bzr, and a typical series of results.
+          These commands assume that you already have Bugzilla installed
+          using Bzr.
         </P
+><DIV
+CLASS="warning"
+><P
+></P
+><TABLE
+CLASS="warning"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="../images/warning.gif"
+HSPACE="5"
+ALT="Warning"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>&#13;            If your installation is still using CVS, you must first convert
+            it to Bzr. A very detailed step by step documentation can be
+            found on <A
+HREF="https://wiki.mozilla.org/Bugzilla:Moving_From_CVS_To_Bazaar"
+TARGET="_top"
+>wiki.mozilla.org</A
+>.
+          </P
+></TD
+></TR
+></TABLE
+></DIV
 ><TABLE
 BORDER="0"
 BGCOLOR="#E0E0E0"
@@ -5905,23 +5984,21 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->cvs login</B
->
-Logging in to :pserver:anonymous@cvs-mirror.mozilla.org:2401/cvsroot
-CVS password: <EM
->('anonymous', or just leave it blank)</EM
->
+>bzr switch 4.2</B
+> (only run this command when not yet running 4.2)
 bash$ <B
 CLASS="command"
->cvs -q update -r BUGZILLA-2_22_1 -dP</B
+>bzr up -r tag:bugzilla-4.2.1</B
 >
-P checksetup.pl
-P collectstats.pl
-P docs/rel_notes.txt
-P template/en/default/list/quips.html.tmpl
-<EM
->(etc.)</EM
->
++N  extensions/MoreBugUrl/
++N  extensions/MoreBugUrl/Config.pm
++N  extensions/MoreBugUrl/Extension.pm
+...
+ M  Bugzilla/Attachment.pm
+ M  Bugzilla/Attachment/PatchReader.pm
+ M  Bugzilla/Bug.pm
+...
+All changes applied successfully.
         </PRE
 ></FONT
 ></TD
@@ -5950,15 +6027,12 @@ VALIGN="TOP"
 ><P
 >&#13;            If a line in the output from <B
 CLASS="command"
->cvs update</B
-> begins
-            with a <SAMP
-CLASS="computeroutput"
->C</SAMP
->, then that represents a
-            file with local changes that CVS was unable to properly merge. You
-            need to resolve these conflicts manually before Bugzilla (or at
-            least the portion using that file) will be usable.
+>bzr up</B
+> mentions
+            a conflict, then that represents a file with local changes that
+            Bzr was unable to properly merge. You need to resolve these
+            conflicts manually before Bugzilla (or at least the portion using
+            that file) will be usable.
           </P
 ></TD
 ></TR
@@ -5974,7 +6048,7 @@ NAME="upgrade-tarball"
 >2.7.2.3. Upgrading using the tarball</A
 ></H4
 ><P
->&#13;          If you are unable (or unwilling) to use CVS, another option that's
+>&#13;          If you are unable (or unwilling) to use Bzr, another option that's
           always available is to obtain the latest tarball from the <A
 HREF="http://www.bugzilla.org/download/"
 TARGET="_top"
@@ -6009,23 +6083,23 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-2.22.1.tar.gz</B
+>wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-4.2.1.tar.gz</B
 >
 <EM
 >(Output omitted)</EM
 >
 bash$ <B
 CLASS="command"
->tar xzvf bugzilla-2.22.1.tar.gz</B
+>tar xzvf bugzilla-4.2.1.tar.gz</B
 >
-bugzilla-2.22.1/
-bugzilla-2.22.1/.cvsignore
+bugzilla-4.2.1/
+bugzilla-4.2.1/colchange.cgi
 <EM
 >(Output truncated)</EM
 >
 bash$ <B
 CLASS="command"
->cd bugzilla-2.22.1</B
+>cd bugzilla-4.2.1</B
 >
 bash$ <B
 CLASS="command"
@@ -6045,7 +6119,7 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->mv bugzilla-2.22.1 bugzilla</B
+>mv bugzilla-4.2.1 bugzilla</B
 >
         </PRE
 ></FONT
@@ -6084,6 +6158,39 @@ CLASS="command"
 ></TR
 ></TABLE
 ></DIV
+><DIV
+CLASS="caution"
+><P
+></P
+><TABLE
+CLASS="caution"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="../images/caution.gif"
+HSPACE="5"
+ALT="Caution"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>&#13;            If you have some extensions installed, you will have to copy them
+            to the new bugzilla directory too. Extensions are located in
+            <TT
+CLASS="filename"
+>bugzilla/extensions/</TT
+>. Only copy those you
+            installed, not those managed by the Bugzilla team.
+          </P
+></TD
+></TR
+></TABLE
+></DIV
 ><P
 >&#13;          This upgrade method will give you a clean install of Bugzilla.
           That's fine if you don't have any local customizations that you
@@ -6105,8 +6212,8 @@ NAME="upgrade-patches"
         </P
 ><P
 >&#13;          If you are doing a bug-fix upgrade&#8212;that is, one where only the 
-          last number of the revision changes, such as from 2.22 to
-          2.22.1&#8212;then you have the option of obtaining and applying a
+          last number of the revision changes, such as from 4.2 to
+          4.2.1&#8212;then you have the option of obtaining and applying a
           patch file from the <A
 HREF="http://www.bugzilla.org/download/"
 TARGET="_top"
@@ -6134,21 +6241,21 @@ CLASS="command"
 >
 bash$ <B
 CLASS="command"
->wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-2.22-to-2.22.1.diff.gz</B
+>wget http://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-4.2-to-4.2.1.diff.gz</B
 >
 <EM
 >(Output omitted)</EM
 >
 bash$ <B
 CLASS="command"
->gunzip bugzilla-2.22-to-2.22.1.diff.gz</B
+>gunzip bugzilla-4.2-to-4.2.1.diff.gz</B
 >
 bash$ <B
 CLASS="command"
->patch -p1 &#60; bugzilla-2.22-to-2.22.1.diff</B
+>patch -p1 &#60; bugzilla-4.2-to-4.2.1.diff</B
 >
-patching file checksetup.pl
-patching file collectstats.pl
+patching file Bugzilla/Constants.pm
+patching file enter_bug.cgi
 <EM
 >(etc.)</EM
 >
@@ -6181,11 +6288,11 @@ VALIGN="TOP"
 >&#13;            Be aware that upgrading from a patch file does not change the
             entries in your <TT
 CLASS="filename"
->CVS</TT
+>.bzr</TT
 > directory.
-            This could make it more difficult to upgrade using CVS
+            This could make it more difficult to upgrade using Bzr
             (<A
-HREF="#upgrade-cvs"
+HREF="#upgrade-bzr"
 >Section 2.7.2.2</A
 >) in the future.
           </P
@@ -6325,7 +6432,7 @@ ALT="Caution"></TD
 ALIGN="LEFT"
 VALIGN="TOP"
 ><P
->&#13;              If this is a major upgrade (say, 2.22 to 3.0 or similar),
+>&#13;              If this is a major upgrade (say, 3.6 to 4.2 or similar),
               running <B
 CLASS="command"
 >checksetup.pl</B
@@ -7486,6 +7593,54 @@ CLASS="filename"
               </P
 ></DD
 ><DT
+>smtpserver</DT
+><DD
+><P
+>&#13;                This is the SMTP server address, if the <SPAN
+CLASS="QUOTE"
+>"mail_delivery_method"</SPAN
+>
+                parameter is set to SMTP.  Use "localhost" if you have a local MTA
+                running, otherwise use a remote SMTP server.  Append ":" and the port
+                number, if a non-default port is needed.
+              </P
+></DD
+><DT
+>smtp_username</DT
+><DD
+><P
+>&#13;                Username to use for SASL authentication to the SMTP server.  Leave
+                this parameter empty if your server does not require authentication.
+              </P
+></DD
+><DT
+>smtp_password</DT
+><DD
+><P
+>&#13;                Password to use for SASL authentication to the SMTP server. This
+                parameter will be ignored if the <SPAN
+CLASS="QUOTE"
+>"smtp_username"</SPAN
+>
+                parameter is left empty.
+              </P
+></DD
+><DT
+>smtp_ssl</DT
+><DD
+><P
+>&#13;                Enable SSL support for connection to the SMTP server.
+              </P
+></DD
+><DT
+>smtp_debug</DT
+><DD
+><P
+>&#13;                This parameter allows you to enable detailed debugging output.
+                Log messages are printed the web server's error log.
+              </P
+></DD
+><DT
 >whinedays</DT
 ><DD
 ><P
@@ -7617,6 +7772,12 @@ NAME="admin-usermatching"
             of users. If users are selected via a text box, this page also
             contains parameters for how user names can be queried and matched
             when entered.
+          </P
+><P
+>&#13;            Another setting called 'ajax_user_autocompletion' enables certain
+            user fields to display a list of matched user names as a drop down after typing 
+            a few characters. Note that it is recommended to use mod_perl when
+            enabling 'ajax_user_autocompletion'.
           </P
 ></DIV
 ></DIV
@@ -10083,6 +10244,13 @@ BORDER="0"
 ><TBODY
 ><TR
 ><TD
+>&#13;                   Bug ID: A field where you can enter the ID of another bug from
+                   the same Bugzilla installation. To point to a bug in a remote
+                   installation, use the See Also field instead.
+                 </TD
+></TR
+><TR
+><TD
 >&#13;                   Large Text Box: A multiple line box for entering free text.
                  </TD
 ></TR
@@ -10141,6 +10309,20 @@ HREF="#edit-values-list"
 ><LI
 ><P
 >&#13;              <EM
+>Reverse Relationship Description:</EM
+>
+              When the custom field is of type <SPAN
+CLASS="QUOTE"
+>"Bug ID"</SPAN
+>, you can
+              enter text here which will be used as label in the referenced
+              bug to list bugs which point to it. This gives you the ability
+              to have a mutual relationship between two bugs.
+            </P
+></LI
+><LI
+><P
+>&#13;              <EM
 >Can be set on bug creation:</EM
 >
               Boolean that determines whether this field can be set on
@@ -10169,6 +10351,66 @@ HREF="#bugreports"
 >
               Boolean that determines whether this field should
               be displayed at all. Obsolete Custom Fields are hidden.
+            </P
+></LI
+><LI
+><P
+>&#13;              <EM
+>Is mandatory:</EM
+>
+              Boolean that determines whether this field must be set.
+              For single and multi-select fields, this means that a (non-default)
+              value must be selected, and for text and date fields, some text
+              must be entered.
+            </P
+></LI
+><LI
+><P
+>&#13;              <EM
+>Field only appears when:</EM
+>
+              A custom field can be made visible when some criteria is met.
+              For instance, when the bug belongs to one or more products,
+              or when the bug is of some given severity. If left empty, then
+              the custom field will always be visible, in all bugs.
+            </P
+></LI
+><LI
+><P
+>&#13;              <EM
+>Field that controls the values that appear in this field:</EM
+>
+              When the custom field is of type <SPAN
+CLASS="QUOTE"
+>"Drop Down"</SPAN
+> or
+              <SPAN
+CLASS="QUOTE"
+>"Multiple-Selection Box"</SPAN
+>, you can restrict the
+              availability of the values of the custom field based on the
+              value of another field. This criteria is independent of the
+              criteria used in the <SPAN
+CLASS="QUOTE"
+>"Field only appears when"</SPAN
+>
+              setting. For instance, you may decide that some given value
+              <SPAN
+CLASS="QUOTE"
+>"valueY"</SPAN
+> is only available when the bug status
+              is RESOLVED while the value <SPAN
+CLASS="QUOTE"
+>"valueX"</SPAN
+> should
+              always be listed.
+              Once you have selected the field which should control the
+              availability of the values of this custom field, you can
+              edit values of this custom field to set the criteria, see
+              <A
+HREF="#edit-values-list"
+>Section 3.11.1</A
+>.
             </P
 ></LI
 ></UL
@@ -10224,16 +10466,21 @@ NAME="edit-values"
 >3.11. Legal Values</A
 ></H2
 ><P
->&#13;      Since Bugzilla 2.20 RC1, legal values for Operating Systems, platforms,
-      bug priorities and severities can be edited from the User Interface
-      directly. This means that it is no longer required to manually edit
-      <TT
-CLASS="filename"
->localconfig</TT
->. Starting with Bugzilla 2.23.3, 
-      the list of valid resolutions can be customized from the same interface.
-      Since Bugzilla 3.1.1 the list of valid bug statuses can be customized
-      as well.
+>&#13;      Legal values for the operating system, platform, bug priority and
+      severity, custom fields of type <SPAN
+CLASS="QUOTE"
+>"Drop Down"</SPAN
+> and
+      <SPAN
+CLASS="QUOTE"
+>"Multiple-Selection Box"</SPAN
+> (see <A
+HREF="#custom-fields"
+>Section 3.10</A
+>),
+      as well as the list of valid bug statuses and resolutions can be
+      customized from the same interface. You can add, edit, disable and
+      remove values which can be used with these fields.
     </P
 ><DIV
 CLASS="section"
@@ -10248,7 +10495,7 @@ NAME="edit-values-list"
 CLASS="QUOTE"
 >"admin"</SPAN
 > privileges.
-        Select "Legal Values" from the Administration page. A list of all
+        Select "Field Values" from the Administration page. A list of all
         fields, both system fields and Custom Fields, for which legal values
         can be edited appears. Click a field name to edit its legal values.
       </P
@@ -10256,6 +10503,11 @@ CLASS="QUOTE"
 >&#13;        There is no limit to how many values a field can have, but each value 
         must be unique to that field. The sortkey is important to display these
         values in the desired order.
+      </P
+><P
+>&#13;        When the availability of the values of a custom field is controlled
+        by another field, you can select from here which value of the other field
+        must be set for the value of the custom field to appear.
       </P
 ></DIV
 ><DIV
@@ -10323,6 +10575,20 @@ CLASS="section"
 NAME="voting"
 >3.13. Voting</A
 ></H2
+><P
+>All of the code for voting in Bugzilla has been moved into an
+    extension, called "Voting", in the <TT
+CLASS="filename"
+>extensions/Voting/</TT
+>
+    directory. To enable it, you must remove the <TT
+CLASS="filename"
+>disabled</TT
+>
+    file from that directory, and run <TT
+CLASS="filename"
+>checksetup.pl</TT
+>.</P
 ><P
 >Voting allows users to be given a pot of votes which they can allocate
     to bugs, to indicate that they'd like them fixed. 
@@ -10392,14 +10658,14 @@ NAME="quips"
       is made from the pool of already existing quips.
     </P
 ><P
->&#13;      Quips are controlled by the <EM
->enablequips</EM
-> parameter.
-      It has several possible values: on, approved, frozen or off.
-      In order to enable quips approval you need to set this parameter
-      to "approved". In this way, users are free to submit quips for
-      addition but an administrator must explicitly approve them before
-      they are actually used.
+>&#13;      Quip submission is controlled by the <EM
+>quip_list_entry_control</EM
+>
+      parameter.  It has several possible values: open, moderated, or closed.
+      In order to enable quips approval you need to set this parameter to
+      "moderated". In this way, users are free to submit quips for addition
+      but an administrator must explicitly approve them before they are
+      actually used.
     </P
 ><P
 >&#13;      In order to see the user interface for the quips, it is enough to click
@@ -10412,7 +10678,7 @@ NAME="quips"
       be displayed.
     </P
 ><P
->&#13;      Next to each tip there is a checkbox, under the
+>&#13;      Next to each quip there is a checkbox, under the
       "Approved" column. Quips who have this checkbox checked are
       already approved and will appear next to the search results.
       The ones that have it unchecked are still preserved in the
@@ -10422,6 +10688,12 @@ NAME="quips"
 ><P
 >&#13;      Also, there is a delete link next to each quip,
       which can be used in order to permanently delete a quip.
+    </P
+><P
+>&#13;      Display of quips is controlled by the <EM
+>display_quips</EM
+>
+      user preference.  Possible values are "on" and "off".
     </P
 ></DIV
 ><DIV
@@ -10860,7 +11132,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2110"
+NAME="AEN2175"
 >3.15.4. Assigning Group Controls to Products</A
 ></H3
 ><P
@@ -11499,9 +11771,9 @@ NAME="myaccount"
     Bugzilla for the URL you should use to access it. If you're
     test-driving Bugzilla, use this URL: 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-4.0-branch/"
+HREF="http://landfill.bugzilla.org/bugzilla-4.2-branch/"
 TARGET="_top"
->http://landfill.bugzilla.org/bugzilla-4.0-branch/</A
+>http://landfill.bugzilla.org/bugzilla-4.2-branch/</A
 >.
     </P
 ><P
@@ -11651,7 +11923,7 @@ NAME="bug_page"
 >The core of Bugzilla is the screen which displays a particular
     bug. It's a good place to explain some Bugzilla concepts. 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-4.0-branch/show_bug.cgi?id=1"
+HREF="http://landfill.bugzilla.org/bugzilla-4.2-branch/show_bug.cgi?id=1"
 TARGET="_top"
 >&#13;    Bug 1 on Landfill</A
 >
@@ -11981,9 +12253,7 @@ CLASS="QUOTE"
 >Attachments:</EM
 >
           You can attach files (e.g. testcases or patches) to bugs. If there
-          are any attachments, they are listed in this section.  Attachments are
-          normally stored in the Bugzilla database, unless they are marked as
-          Big Files, which are stored directly on disk.
+          are any attachments, they are listed in this section.
         </P
 ></LI
 ><LI
@@ -12074,9 +12344,9 @@ NAME="query"
     any bug report, comment, or patch currently in the Bugzilla system. You
     can play with it here: 
     <A
-HREF="http://landfill.bugzilla.org/bugzilla-4.0-branch/query.cgi"
+HREF="http://landfill.bugzilla.org/bugzilla-4.2-branch/query.cgi"
 TARGET="_top"
->http://landfill.bugzilla.org/bugzilla-4.0-branch/query.cgi</A
+>http://landfill.bugzilla.org/bugzilla-4.2-branch/query.cgi</A
 >.</P
 ><P
 >The Search page has controls for selecting different possible
@@ -12198,7 +12468,7 @@ NAME="negation"
 >&#13;          At first glance, negation seems redundant. Rather than
           searching for
           <A
-NAME="AEN2438"
+NAME="AEN2503"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12209,7 +12479,7 @@ CLASS="BLOCKQUOTE"
 >
           one could search for 
           <A
-NAME="AEN2440"
+NAME="AEN2505"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12220,7 +12490,7 @@ CLASS="BLOCKQUOTE"
 >
           However, the search 
           <A
-NAME="AEN2442"
+NAME="AEN2507"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12232,7 +12502,7 @@ CLASS="BLOCKQUOTE"
           would find every bug where anyone on the CC list did not contain 
           "@mozilla.org" while
           <A
-NAME="AEN2444"
+NAME="AEN2509"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12246,7 +12516,7 @@ CLASS="BLOCKQUOTE"
           complex expressions to be built using terms OR'd together and then
           negated. Negation permits queries such as
           <A
-NAME="AEN2446"
+NAME="AEN2511"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12259,7 +12529,7 @@ CLASS="BLOCKQUOTE"
           to find bugs that are neither 
           in the update product or in the documentation component or
           <A
-NAME="AEN2448"
+NAME="AEN2513"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12287,7 +12557,7 @@ NAME="multiplecharts"
           a bug that has two different people cc'd on it, then you need 
           to use two boolean charts. A search for
           <A
-NAME="AEN2453"
+NAME="AEN2518"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12302,7 +12572,7 @@ CLASS="BLOCKQUOTE"
           containing "foo@" and someone else containing "@mozilla.org",
           then you would need two boolean charts.
           <A
-NAME="AEN2455"
+NAME="AEN2520"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -12490,15 +12760,6 @@ BORDER="0"
 ></P
 >
       </P
-><P
->&#13;        If you would like to access the bug list from another program
-        it is often useful to have the list returned in something other
-        than HTML. By adding the ctype=type parameter into the bug list URL
-        you can specify several alternate formats. Besides the types described
-        above, the following formats are also supported: ECMAScript, also known
-        as JavaScript (ctype=js), and Resource Description Framework RDF/XML
-        (ctype=rdf).
-      </P
 ></DIV
 ><DIV
 CLASS="section"
@@ -12569,7 +12830,7 @@ NAME="fillingbugs"
 >Years of bug writing experience has been distilled for your
       reading pleasure into the 
       <A
-HREF="http://landfill.bugzilla.org/bugzilla-4.0-branch/page.cgi?id=bug-writing.html"
+HREF="http://landfill.bugzilla.org/bugzilla-4.2-branch/page.cgi?id=bug-writing.html"
 TARGET="_top"
 >&#13;      Bug Writing Guidelines</A
 >. 
@@ -12621,7 +12882,7 @@ VALIGN="TOP"
 >&#13;              If you want to file a test bug to see how Bugzilla works,
               you can do it on one of our test installations on
               <A
-HREF="http://landfill.bugzilla.org/bugzilla-4.0-branch/"
+HREF="http://landfill.bugzilla.org/bugzilla-4.2-branch/"
 TARGET="_top"
 >Landfill</A
 >.
@@ -12794,37 +13055,17 @@ CLASS="filename"
 >.
     </P
 ><P
->&#13;      If you have a really large attachment, something that does not need to
-      be recorded forever (as most attachments are), or something that is too
-      big for your database, you can mark your attachment as a
-      <SPAN
-CLASS="QUOTE"
->"Big File"</SPAN
->, assuming the administrator of the installation
-      has enabled this feature.  Big Files are stored directly on disk instead
-      of in the database.  The maximum size of a <SPAN
-CLASS="QUOTE"
->"Big File"</SPAN
-> is
-      normally larger than the maximum size of a regular attachment. Independently
-      of the storage system used, an administrator can delete these attachments
-      at any time. Nevertheless, if these files are stored in the database, the
-      <SPAN
-CLASS="QUOTE"
->"allow_attachment_deletion"</SPAN
-> parameter (which is turned off
-      by default) must be enabled in order to delete them.
-    </P
-><P
->&#13;      Also, if the administrator turned on the <SPAN
-CLASS="QUOTE"
->"allow_attach_url"</SPAN
->
-      parameter, you can enter the URL pointing to the attachment instead of
+>&#13;      Also, you can enter the URL pointing to the attachment instead of
       uploading the attachment itself. For example, this is useful if you want to
       point to an external application, a website or a very large file. Note that
       there is no guarantee that the source file will always be available, nor
       that its content will remain unchanged.
+    </P
+><P
+>&#13;      Another way to attach data is to paste text directly in the text field,
+      and Bugzilla will convert it into an attachment. This is pretty useful
+      when you do copy and paste, and you don't want to put the text in a temporary
+      file first.
     </P
 ><DIV
 CLASS="section"
@@ -13008,7 +13249,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2591"
+NAME="AEN2651"
 >5.8.1. Autolinkification</A
 ></H3
 ><P
@@ -13646,6 +13887,13 @@ CLASS="variablelist"
             </P
 ></DD
 ><DT
+>bz_quip_moderators</DT
+><DD
+><P
+>&#13;             Indicates user can moderate quips.
+            </P
+></DD
+><DT
 >bz_sudoers</DT
 ><DD
 ><P
@@ -13883,7 +14131,7 @@ CLASS="section"
 ><HR><H4
 CLASS="section"
 ><A
-NAME="AEN2788"
+NAME="AEN2852"
 >5.11.2.1. Creating Charts</A
 ></H4
 ><P
@@ -14352,7 +14600,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN2848"
+NAME="AEN2912"
 >5.13.4. Saving Your Changes</A
 ></H3
 ><P
@@ -14829,17 +15077,9 @@ TARGET="_top"
         This means that if the data can possibly contain special HTML characters
         such as &#60;, and the data was not intended to be HTML, they need to be
         converted to entity form, i.e. &#38;lt;.  You use the 'html' filter in the
-        Template Toolkit to do this.  If you forget, you may open up
-        your installation to cross-site scripting attacks.
-      </P
-><P
->&#13;        Also note that Bugzilla adds a few filters of its own, that are not
-        in standard Template Toolkit.  In particular, the 'url_quote' filter
-        can convert characters that are illegal or have special meaning in URLs,
-        such as &#38;, to the encoded form, i.e. %26.  This actually encodes most
-        characters (but not the common ones such as letters and numbers and so
-        on), including the HTML-special characters, so there's never a need to
-        HTML filter afterwards.
+        Template Toolkit to do this (or the 'uri' filter to encode special
+        characters in URLs).  If you forget, you may open up your installation
+        to cross-site scripting attacks.
       </P
 ><P
 >&#13;        Editing templates is a good way of doing a <SPAN
@@ -15851,7 +16091,7 @@ NAME="trbl-relogin-everyone-share"
 >Example A-1. Examples of urlbase/cookiepath pairs for sharing login cookies</B
 ></P
 ><A
-NAME="AEN3090"
+NAME="AEN3153"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -15892,7 +16132,7 @@ NAME="trbl-relogin-everyone-restrict"
 >Example A-2. Examples of urlbase/cookiepath pairs to restrict the login cookie</B
 ></P
 ><A
-NAME="AEN3097"
+NAME="AEN3160"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -16655,13 +16895,13 @@ NAME="gfdl"
 ><P
 >Version 1.1, March 2000</P
 ><A
-NAME="AEN3255"
+NAME="AEN3318"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
 ><P
->Copyright (C) 2000 Free Software Foundation, Inc. 59 Temple Place,
-    Suite 330, Boston, MA 02111-1307 USA Everyone is permitted to copy and
+>Copyright (C) 2000 Free Software Foundation, Inc. 51 Franklin Street,
+    Fifth Floor, Boston, MA 02110-1301 USA Everyone is permitted to copy and
     distribute verbatim copies of this license document, but changing it is
     not allowed.</P
 ></BLOCKQUOTE
@@ -17118,7 +17358,7 @@ NAME="gfdl-howto"
     of the License in the document and put the following copyright and
     license notices just after the title page:</P
 ><A
-NAME="AEN3345"
+NAME="AEN3408"
 ></A
 ><BLOCKQUOTE
 CLASS="BLOCKQUOTE"
@@ -17155,7 +17395,7 @@ CLASS="glossdiv"
 ><H1
 CLASS="glossdiv"
 ><A
-NAME="AEN3350"
+NAME="AEN3413"
 >0-9, high ascii</A
 ></H1
 ><DL
@@ -17676,7 +17916,7 @@ NAME="gloss-mysql"
 ></DT
 ><DD
 ><P
->MySQL is currently the required
+>MySQL is one of the supported
         <A
 HREF="#gloss-rdbms"
 ><I
@@ -18050,7 +18290,7 @@ NAME="gloss-zarro"
         Terry had the following to say:
         </P
 ><A
-NAME="AEN3591"
+NAME="AEN3654"
 ></A
 ><TABLE
 BORDER="0"

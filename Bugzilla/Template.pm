@@ -253,6 +253,12 @@ sub quoteUrls {
                 ("\0\0" . ($count-1) . "\0\0")
               ~egmix;
 
+    $text =~ s~\b(revision\s*\#?\s*X(\d+))
+              ~($things[$count++] = "<a\ href\=\"https://svn\.physiomeproject\." .
+                                    "org/svn/opencmissextras/\!svn/bc/$2/\">$1</a>") &&
+                ("\0\0" . ($count-1) . "\0\0")
+              ~egmix;
+
     $text =~ s~\b(revision\s*\#?\s*O(\d+))
               ~($things[$count++] = "<a\ href\=\"http://svnviewer\." .
                 "bioeng\.auckland\.ac\.nz/projects/opencmiss/changeset/" .
@@ -297,6 +303,11 @@ sub quoteUrls {
 
     $text =~ s~\b(changeset\W+CBG\W*\#?\W*([0-9|a-f|A-F]+))
               ~($things[$count++] = "<a\ href=\"https://github.com/cellmlapi/cellml-build/commit/$2/\">$1</a>") &&
+               ("\0\0". ($count-1) . "\0\0")
+              ~egmix;
+
+    $text =~ s~\b(changeset\W+OCG\W*\#?\W*([0-9|a-f|A-F]+))
+              ~($things[$count++] = "<a\ href=\"https://github.com/OpenCMISS/cm/commit/$2/\">$1</a>") &&
                ("\0\0". ($count-1) . "\0\0")
               ~egmix;
 

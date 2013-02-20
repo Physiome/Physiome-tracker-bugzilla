@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/env perl
 # -*- Mode: perl; indent-tabs-mode: nil -*-
 #
 # The contents of this file are subject to the Mozilla Public
@@ -134,6 +134,7 @@ foreach my $field (qw(cc groups)) {
     next if !$cgi->should_set($field);
     $bug_params{$field} = [$cgi->param($field)];
 }
+
 $bug_params{'comment'} = $comment;
 
 my @multi_selects = grep {$_->type == FIELD_TYPE_MULTI_SELECT && $_->enter_bug}
@@ -208,7 +209,7 @@ if (defined($cgi->upload('data')) || $cgi->param('attach_text')) {
         $vars->{'message'} = 'attachment_creation_failed';
     }
 }
-
+    
 # Set bug flags.
 my ($flags, $new_flags) = Bugzilla::Flag->extract_flags_from_cgi($bug, undef, $vars,
                                                              SKIP_REQUESTEE_ON_ERROR);

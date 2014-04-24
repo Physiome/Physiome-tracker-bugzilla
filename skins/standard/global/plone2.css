@@ -210,9 +210,10 @@ dd.portletFooter {
 #portal-logo {
     border-bottom: 1px solid #ce0226;
     border-right: 1px solid #ce0226;
-    background: url(http://www.physiome.org.nz/Physiome-logo-small2.gif) no-repeat;
+    background: url(/images/logo-physiome.png) no-repeat;
     margin: 0.1em 0em 0.1em 2em;
     padding: 0;
+    margin-top: 10px;
     width: 154px;
 }
 #portal-logo a {
@@ -222,9 +223,9 @@ dd.portletFooter {
     border: 0;
     margin: 10;
     padding: 0;
-    padding-top: 100px;
+    padding-top: 90px;
     height: 0px !important;
-    height /**/: 100px;
+    height /**/: 90px;
     width: 154px;
     cursor: pointer;
 }

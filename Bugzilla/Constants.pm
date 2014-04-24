@@ -655,6 +655,6 @@ sub _bz_locations {
 
 # This makes us not re-compute all the bz_locations data every time it's
 # called.
-BEGIN { memoize('_bz_locations') };
+#BEGIN { memoize('_bz_locations') };
 
 1;

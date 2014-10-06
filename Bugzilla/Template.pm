@@ -253,6 +253,13 @@ sub quoteUrls {
                ("\x{FDD2}" . ($count-1) . "\x{FDD3}")
               ~egmix;
 
+    $text =~ s~\b(revision\s*\#?\s*D(\d+))
+              ~($things[$count++] = "<a\ href\=\"http://svnviewer\." .
+                "bioeng\.auckland\.ac\.nz/projects/opencmiss/changeset/" .
+                "$2\">$1</a>") &&
+               ("\x{FDD2}" . ($count-1) . "\x{FDD3}")
+              ~egmix;
+
     $text =~ s~\b(revision\s*\#?\s*X(\d+))
               ~($things[$count++] = "<a\ href\=\"https://svn\.physiomeproject\." .
                                     "org/svn/opencmissextras/\!svn/bc/$2/\">$1</a>") &&
